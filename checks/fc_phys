@@ -1,0 +1,32 @@
+# --------------------------------------------------------------------------------
+# 1. Fibre Channel physical info
+# Polls the .1.3.6.1.2.1.75.1.2.2.1 oid, FIBRE-CHANNEL-FE-MIB::fcFxPortPhysTable
+# "A table that contains, one entry for each FxPort in the Fabric Element, physical level status and parameters of the FxPorts."
+# Reads:
+#  .1.3.6.1.2.1.75.1.2.2.1.1, FIBRE-CHANNEL-FE-MIB::fcFxPortPhysAdminStatus, Values: online(1), offline(2), testing(3)
+#  .1.3.6.1.2.1.75.1.2.2.1.2, FIBRE-CHANNEL-FE-MIB::fcFxPortPhysOperStatus, Values: online(1), offline(2), testing(3), linkFailure(4)
+#  .1.3.6.1.2.1.75.1.2.2.1.3, FIBRE-CHANNEL-FE-MIB::fcFxPortPhysLastChange, Textual Convention: TimeStamp
+#  .1.3.6.1.2.1.75.1.2.2.1.4, FIBRE-CHANNEL-FE-MIB::fcFxPortPhysRttov, Textual Convention: MilliSeconds
+
+def inventory_fc_phys(checkname, info):
+  inventory = []
+  for id, index, type, state in info:
+    if state == "2" or state == "3":
+      inventory.append( (index, None) )
+  return inventory
+
+def check_fc_phys(item, _no_params, info):
+  for id, index, type, state in info:
+    if index == item:
+      if status == "3" or status == "9":
+        return (0, "OK - " + speed + "mps")
+      else:
+        return (2, "CRITICAL - " + speed + "mps")
+  return (3, "UNKNOWN - Port info not found")
+
+check_info["fc_phys"] = \
+      (check_fc_phys, "Port %s", 0, inventory_fc_phys)
+
+snmp_info["fc_phys"] = ( ".1.3.6.1.2.1.75.1.2.2.1", [ "1", "2", "3", "4" ] )
+snmp_scan_functions['fc_phys'] = \
+  lambda oid: oid(".1.3.6.1.2.1.75.1.1.1") != None

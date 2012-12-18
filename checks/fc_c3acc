@@ -1,0 +1,33 @@
+# --------------------------------------------------------------------------------
+# 1. Fibre Channel Module Entry info
+# Polls the .1.3.6.1.2.1.75.1.4.3 oid, FIBRE-CHANNEL-FE-MIB::fcFxPortC3AccountingTable
+# "A table that contains, one entry for each FxPort in the Fabric Element, Class 3 accounting information recorded since the management agent has re-initialized."
+# Reads:
+#  .1.3.6.1.2.1.75.1.4.3.1.1, FIBRE-CHANNEL-FE-MIB::fcFxPortC3InFrames,  Textual Convention: MilliSeconds
+#  .1.3.6.1.2.1.75.1.4.3.1.2, FIBRE-CHANNEL-FE-MIB::fcFxPortC3OutFrames,  Textual Convention: MilliSeconds
+#  .1.3.6.1.2.1.75.1.4.3.1.3, FIBRE-CHANNEL-FE-MIB::fcFxPortC3InOctets, Textual Convention: MilliSeconds
+#  .1.3.6.1.2.1.75.1.4.3.1.4, FIBRE-CHANNEL-FE-MIB::fcFxPortC3OutOctets, Textual Convention: MilliSeconds
+#  .1.3.6.1.2.1.75.1.4.3.1.5, FIBRE-CHANNEL-FE-MIB::fcFxPortC3Discards, Textual Convention: MilliSeconds
+
+def inventory_fc_c3acc(checkname, info):
+  inventory = []
+  for id, index, type, state in info:
+    if state == "2" or state == "3":
+      inventory.append( (index, None) )
+  return inventory
+
+def check_fc_c3acc(item, _no_params, info):
+  for id, index, type, state in info:
+    if index == item:
+      if status == "3" or status == "9":
+        return (0, "OK - " + speed + "mps")
+      else:
+        return (2, "CRITICAL - " + speed + "mps")
+  return (3, "UNKNOWN - Port info not found")
+
+check_info["fc_c3acc"] = \
+      (check_fc_c3acc, "Port %s", 0, inventory_fc_c3acc)
+
+snmp_info["fc_c3acc"] = ( ".1.3.6.1.2.1.75.1.4.3.1", [ "1", "2", "3", "4", "5" ] )
+snmp_scan_functions['fc_c3acc'] = \
+  lambda oid: oid(".1.3.6.1.2.1.75.1.1.1") != None
