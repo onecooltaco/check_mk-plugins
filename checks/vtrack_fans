@@ -1,0 +1,30 @@
+# --------------------------------------------------------------------------------
+# 1. Promise VTrack Fan status
+def inventory_vtrack_fans(checkname, info):
+  inventory = []
+  for index, type, status, speed in info:
+    if type == '0':
+      model = 'fan'
+    elif type == '1':
+      model = 'blower'
+    else:
+      return []
+    inventory.append( (index, None) )
+  return inventory
+
+def check_vtrack_fans(item, _no_params, info):
+  for index, type, status, speed in info:
+    if index == item:
+      perfdata = [ ( "DeviceSpeed", speed) ]
+      if status == "Functional":
+        return (0, "OK - running at " + speed, perfdata)
+      else:
+        return (2, "CRITICAL - " + speed, perfdata)
+  return (3, "UNKNOWN - fans not found")
+
+check_info["vtrack_fans"] = \
+      (check_vtrack_fans, "Fan %s", 1, inventory_vtrack_fans)
+
+snmp_info["vtrack_fans"] = ( ".1.3.6.1.4.1.7933.1.20.1.11.1", [ "1.1.1", "2.1.1", "3.1.1", "4.1.1" ] )
+snmp_scan_functions['vtrack_fan_status'] = \
+  lambda oid: "promise" in oid(".1.3.6.1.4.1.7933.1.20.1.2.1.3").lower()

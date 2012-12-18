@@ -1,0 +1,54 @@
+# --------------------------------------------------------------------------------
+# 1. Promise VTrack chassis status
+def inventory_vtrack_chassis(checkname, info):
+   inventory = []
+   for role, status, readiness, present, offline, pfa, rebuilding, missing, unconfigured, hours, cachedirty, cacheused in info:
+     if readiness == "Active":
+       inventory.append( (role, None) )
+   return inventory
+
+def check_vtrack_chassis(item, _no_params, info):
+  crit = 'NO'
+  warn = 'NO'
+  str_list = []
+  for role, status, readiness, present, offline, pfa, rebuilding, missing, unconfigured, hours, cachedirty, cacheused in info:
+    if role == item:
+      str_list.append(status)
+      str_list.append(readiness)
+      if offline != '0':
+        crit = 'YES'
+        str_list.append(offline + "/" + present + " offline")
+
+      if pfa != '0':
+        crit = 'YES'
+        str_list.append(pfa + "/" + present + " Predictive Failure Analysis (PFA)")
+
+      if rebuilding != '0':
+        warn = 'YES'
+        str_list.append(rebuilding + "/" + present + " rebuilding")
+
+      if missing != '0':
+        crit = 'YES'
+        str_list.append(missing + "/" + present + " missing")
+
+      if unconfigured != '0':
+        warn = 'YES'
+        str_list.append(unconfigured + "/" + present + " unconfigured")
+
+      out_str = ', '.join(str_list)
+      perfdata = [ ( "PowerOnHours", hours),("DirtyCachePercentage",cachedirty,"","",0,100),("CacheUsagePercentage",cacheused,"","",0,100) ]
+      if crit != 'NO':
+        return (2, "CRITICAL - " + out_str,perfdata)
+      elif warn != 'NO':
+        return (1, "WARN - " + out_str,perfdata)
+      elif status == "OK" and readiness == "Active":
+        return (0, "OK - looks good - " + out_str,perfdata)
+
+  return (3, "UNKNOWN - info not found")
+
+check_info["vtrack_chassis"] = \
+      (check_vtrack_chassis, "Array %s", 1, inventory_vtrack_chassis)
+
+snmp_info["vtrack_chassis"] = ( ".1.3.6.1.4.1.7933.1.20.1.3.1", [ "16.1", "15.1", "17.1", "19.1", "21.1", "22.1", "23.1", "24.1", "25.1", "27.1", "38.1", "39.1" ] )
+snmp_scan_functions['vtrack_chassis_status'] = \
+  lambda oid: "promise" in oid(".1.3.6.1.4.1.7933.1.20.1.2.1.3").lower()

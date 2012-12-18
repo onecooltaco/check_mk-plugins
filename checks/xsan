@@ -1,0 +1,64 @@
+def inventory_xsan_fsm(checkname, info):
+  inventory = []
+  for line in info:
+    vol = line[1]
+    field = line[0]
+    if field == "fsm":
+      inventory.append( (vol, "", None) )
+  return inventory
+
+def check_xsan_fsm(item, params, info):
+  for line in info:
+    if line[1] == item and line[0] == "fsm":
+      pid = int(line[3])
+      port = int(line[4])
+      state = line[5]
+      launchcounts = int(line[8])
+      coredumps = int(line[9])
+      master = line[11]
+
+  perfdata = [ ( "launch_count", launchcounts ), ( "core_dumps", coredumps ) ]
+  if state != "REGISTERED":
+    return (2, "CRITICAL - %s" % state, perfdata)
+  else:
+    return (0, "OK - %s" % state, perfdata)
+  return (3, "UNKNOWN - Vol %s not found in agent output" % item)
+
+check_info['xsan.fsm'] = \
+  (check_xsan_fsm, "XSAN Vol %s", 1, inventory_xsan_fsm)
+
+def inventory_xsan_stats(checkname, info):
+  inventory = []
+  for line in info:
+    vol = line[1]
+    field = line[0]
+    if field == "stats":
+      inventory.append( (vol, "", None) )
+  return inventory
+
+def check_xsan_stats(item, params, info):
+  for line in info:
+    if line[1] == item and line[0] == "stats":
+      blocksize = line[7]
+      msg_buffer = line[8]
+      disks = int(line[9])
+      stripe_groups = int(line[10])
+      blocks = int(line[11])
+      blocks_nice = float(line[12])
+      blocks_units = line[13]
+      blocks_free = int(line[14])
+      blocks_free_nice = float(line[15])
+      blocks_free_unit = line[16]
+      blocks_free_percent = int(line[17])
+
+  perfdata = [ ( "percent_blocks_free", blocks_free_percent ), ( "blocks_free", blocks_free ) ]
+  if blocks_free_percent < 20:
+    return (2, "CRITICAL - %d%%" % blocks_free_percent, perfdata)
+  elif blocks_free_percent < 25:
+    return (1, "WARNING - %d%%" % blocks_free_percent, perfdata)
+  else:
+    return (0, "OK - %d%%" % blocks_free_percent, perfdata)
+  return (3, "UNKNOWN - Vol %s not found in agent output" % item)
+
+check_info['xsan.stats'] = \
+  (check_xsan_stats, "XSAN Stats %s", 1, inventory_xsan_stats)

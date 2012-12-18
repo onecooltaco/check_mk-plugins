@@ -1,0 +1,28 @@
+# --------------------------------------------------------------------------------
+# 1. Promise VTrack Battery status
+def inventory_vtrack_battery(checkname, info):
+  inventory = []
+  for index, temperature, status, capacity, chargethreshold, dischargethreshold, voltage, cyclecount, chemistry, cells in info:
+    try:
+      float(temperature)
+    except ValueError:
+      continue
+    inventory.append( (index, None) )
+  return inventory
+
+def check_vtrack_battery(item, _no_params, info):
+  for index, temperature, status, capacity, chargethreshold, dischargethreshold, voltage, cyclecount, chemistry, cells in info:
+    if index == item:
+      perfdata = [ ("Temperature",temperature,chargethreshold,dischargethreshold),("RemainCapacity",capacity,"","",0,100),("Voltage",voltage),("CycleCount",cyclecount)]
+      if status in ["Charging", "FullyCharged"]:
+        return (0, "OK - " + status + ' - ' + temperature + 'C',perfdata)
+      else:
+        return (2, "CRITICAL - " + status + ' - ' + temperature + 'C',perfdata)
+  return (3, "UNKNOWN - Battery not found")
+
+check_info["vtrack_battery"] = \
+      (check_vtrack_battery, "Battery %s", 1, inventory_vtrack_battery)
+
+snmp_info["vtrack_battery"] = ( ".1.3.6.1.4.1.7933.1.20.1.15.1", [ "1.1.1", "7.1.1", "14.1.1", "11.1.1", "8.1.1", "9.1.1", "12.1.1", "10.1.1", "", "15.1.1" ] )
+snmp_scan_functions['vtrack_battery_status'] = \
+  lambda oid: "promise" in oid(".1.3.6.1.4.1.7933.1.20.1.2.1.3").lower()

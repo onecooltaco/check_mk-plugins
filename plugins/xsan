@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+
+import os
+import re
+import subprocess
+import sys
+
+if os.path.isfile('/usr/sbin/cvadmin'): pass
+else: sys.exit()
+
+def get_fsm(lines):
+  dict = {}
+  regex = re.compile(r'(\*|\s)(\w+)\[(\d)\]  port (\d+), pid (\d+)\n +State: (\w+) (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\n +Launches (\d+), core dumps (\d+), flags \<(.*)\>')
+  for line in lines.split("\n\n"):
+    m = regex.search(line)
+    if m:
+      attribs = []
+      for x in m.groups(): attribs.append(x)
+      if (attribs.pop(0)).isspace(): attribs.append("standby")
+      else: attribs.append("controler")
+      dict[attribs.pop(0)] = attribs
+  return dict
+
+def parse_show(key):
+  cmd = "/usr/sbin/cvadmin -F %s -e show long" % (key)
+  procs = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+  show_list = procs.communicate()
+  for group in show_list[0].split("\n\n"):
+    if group.startswith( "Stripe Group" ):
+      m1 = re.search("Stripe Group (?P<number>\d)\s\[(?P<name>.+)\]  Status:(?P<status>.*)\n\s+Total Blocks:(?P<total>\d+) .* Reserved:(?P<reserved>\d+) .* Free:(?P<free>\d+) .* \((?P<percent>.*)%\)", group)
+      attribs = ['stripe']
+      attribs.append(key)
+      for x in m1.groups(): attribs.append(x)
+      print "\t".join((attribs))
+
+def parse_stat(key):
+  attribs = ['stats']
+  attribs.append(key)
+  cmd = "/usr/sbin/cvadmin -F %s -e stat" % (key)
+  procs = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+  stat_list = procs.communicate()
+  for line in stat_list[0].split("\n"):
+    match = re.search("\w.*\w\s+\:\s+(\w.*[\w\)]?)",line)
+    if match:
+      v = re.sub ( "\(|\)|%", "", match.group(1) )
+      attribs.append(v)
+  print "\t".join(attribs)
+
+def parse_paths(key):
+  cmd = "/usr/sbin/cvadmin -F %s -e paths" % (key)
+  procs = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+  paths_list = procs.communicate()
+  for groups in paths_list[0].split("\n\n"):
+    if groups.startswith( "Controller" ):
+      m1 = re.search("Controller: <(\w+)>",groups)
+      con = m1.group(1)
+      for line in groups.split("\n"):
+        match = re.search("(?x)(\w+)\s+on.device:.(\wdisk\d+)\s+hba:.(\d+)\sctl:.(\d+)\slun:.(\d+)\sstate:.(\w+)",line)
+        if match:
+          attribs = ['paths']
+          attribs.append(key)
+          for x in match.groups(): attribs.append(x)
+          attribs.append(con)
+          print "\t".join((attribs))
+
+def parse_disks(key):
+  cmd = "/usr/sbin/cvadmin -F %s -e disks" % (key)
+  procs = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+  disks_list = procs.communicate()
+  for line in disks_list[0].split("\n"):
+    match = re.search("^(\w+)\s+on device:(\wdisk\d+)\ssectors: (\d+)\s+sector size: (\d+)",line)
+    if match:
+      attribs = ['disks']
+      attribs.append(key)
+      for x in match.groups(): attribs.append(x)
+      print "\t".join((attribs))
+
+fsm_cmd = "/usr/sbin/cvadmin -e fsmlist"
+process = subprocess.Popen(fsm_cmd, shell=True, stdout=subprocess.PIPE)
+fsmlist = process.communicate()
+
+fsm_dict = get_fsm(fsmlist[0])
+if fsm_dict:
+  print '<<<xsan>>>'
+for key in fsm_dict:
+  print 'fsm\t' + key + "\t" + "\t".join(fsm_dict[key])
+  parse_stat(key)
+  parse_show(key)
+  parse_paths(key)
+  parse_disks(key)

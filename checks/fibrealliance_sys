@@ -1,0 +1,21 @@
+# --------------------------------------------------------------------------------
+# 1. Fibre Alliance base info
+def inventory_fibrealliance_sys(checkname, info):
+  inventory = []
+  for state, status, product, sn, numsensors, name, contact, location in info:
+    inventory.append( (product, None) )
+  return inventory
+
+def check_fibrealliance_sys(item, _no_params, info):
+  for state, status, product, sn, numsensors, name, contact, location in info:
+    if product == item:
+      if state == "2" and status == "3":
+        return (0, "OK - online")
+      else:
+        return (2, "CRITICAL - ")
+  return (3, "UNKNOWN - Switch info not found")
+
+check_info["fibrealliance_sys"] = \
+      (check_fibrealliance_sys, "%s", 0, inventory_fibrealliance_sys)
+
+snmp_info["fibrealliance_sys"] = ( ".1.3.6.1.3.94.1.6.1", [ "5", "6", "7", "8", "14", "20", "23", "24" ] )
