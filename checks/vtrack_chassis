@@ -50,5 +50,5 @@ check_info["vtrack_chassis"] = \
       (check_vtrack_chassis, "Array %s", 1, inventory_vtrack_chassis)
 
 snmp_info["vtrack_chassis"] = ( ".1.3.6.1.4.1.7933.1.20.1.3.1", [ "16.1", "15.1", "17.1", "19.1", "21.1", "22.1", "23.1", "24.1", "25.1", "27.1", "38.1", "39.1" ] )
-snmp_scan_functions['vtrack_chassis_status'] = \
+snmp_scan_functions['vtrack_chassis'] = \
   lambda oid: "promise" in oid(".1.3.6.1.4.1.7933.1.20.1.2.1.3").lower()
