@@ -1,13 +1,23 @@
 # --------------------------------------------------------------------------------
 # 1. Fibre Alliance base info
+# Polls the .1.3.6.1.3.94.1.6 oid, FCMGMT-MIB::connUnitEntry
+# "A connectivity unit entry containing objects for a particular unit."
+# Reads:
+#  .1.3.6.1.3.94.1.6.1.5, FCMGMT-MIB::connUnitState, INTEGER {unknown(1), online(2), offline(3)}
+#  .1.3.6.1.3.94.1.6.1.6, FCMGMT-MIB::connUnitStatus, INTEGER {unknown(1), unused(2), ok(3), warning(4), failed(5)}'
+#  .1.3.6.1.3.94.1.6.1.7, FCMGMT-MIB::connUnitProduct, OCTET STRING (0..79)
+#  .1.3.6.1.3.94.1.6.1.8, FCMGMT-MIB::connUnitSn, OCTET STRING (0..79)
+#  .1.3.6.1.3.94.1.6.1.14, FCMGMT-MIB::connUnitNumSensors, INTEGER
+#  .1.3.6.1.3.94.1.6.1.20, FCMGMT-MIB::connUnitName, OCTET STRING (0..79)
+
 def inventory_fibrealliance_sys(checkname, info):
   inventory = []
-  for state, status, product, sn, numsensors, name, contact, location in info:
+  for state, status, product, sn, numsensors, name in info:
     inventory.append( (product, None) )
   return inventory
 
 def check_fibrealliance_sys(item, _no_params, info):
-  for state, status, product, sn, numsensors, name, contact, location in info:
+  for state, status, product, sn, numsensors, name in info:
     if product == item:
       if state == "2" and status == "3":
         return (0, "OK - online")
@@ -18,6 +28,6 @@ def check_fibrealliance_sys(item, _no_params, info):
 check_info["fibrealliance_sys"] = \
       (check_fibrealliance_sys, "%s", 0, inventory_fibrealliance_sys)
 
-snmp_info["fibrealliance_sys"] = ( ".1.3.6.1.3.94.1.6.1", [ "5", "6", "7", "8", "14", "20", "23", "24" ] )
+snmp_info["fibrealliance_sys"] = ( ".1.3.6.1.3.94.1.6.1", [ "5", "6", "7", "8", "14", "20"] )
 snmp_scan_functions['fibrealliance_sys'] = \
-  lambda oid: oid(".1.3.6.1.3.94.1.6.1.3.16.0.0.*") is "4"
+  lambda oid: oid(".1.3.6.1.3.94.1.1.0") != None
