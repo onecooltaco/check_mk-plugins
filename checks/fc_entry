@@ -13,13 +13,13 @@
 
 def inventory_fc_entry(checkname, info):
   inventory = []
-  for id, index, type, state in info:
+  for index, descr, objectid, operstatus, lastchange, fxportcapacity, name in info:
     if state == "2" or state == "3":
       inventory.append( (index, None) )
   return inventory
 
 def check_fc_entry(item, _no_params, info):
-  for id, index, type, state in info:
+  for index, descr, objectid, operstatus, lastchange, fxportcapacity, name in info:
     if index == item:
       if status == "3" or status == "9":
         return (0, "OK - " + speed + "mps")

@@ -18,13 +18,18 @@
 
 def inventory_fc_error(checkname, info):
   inventory = []
-  for id, index, type, state in info:
-    if state == "2" or state == "3":
-      inventory.append( (index, None) )
+  count = 1
+  for linkfailures, synclosses, siglosses, primseqprotoerrors, invalidtxwords, \
+  invalidcrcs, delimitererrors, addressiderrors, linkresetins, linkresetouts, \
+  olsins, olsouts in info:
+    inventory.append( (count, None) )
+    count += 1
   return inventory
 
 def check_fc_error(item, _no_params, info):
-  for id, index, type, state in info:
+  for linkfailures, synclosses, siglosses, primseqprotoerrors, invalidtxwords, \
+  invalidcrcs, delimitererrors, addressiderrors, linkresetins, linkresetouts, \
+  olsins, olsouts in info:
     if index == item:
       if status == "3" or status == "9":
         return (0, "OK - " + speed + "mps")
