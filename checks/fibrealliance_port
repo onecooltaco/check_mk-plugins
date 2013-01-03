@@ -12,26 +12,33 @@
 #  .1.3.6.1.3.94.1.10.1.9, FCMGMT-MIB::connUnitPortModuleType, INTEGER {unknown(1), other(2), gbic(3), embedded(4), glm(5), gbicSerialId(6), gbicNoSerialId(7), gbicNotInstalled(8), smallFormFactor(9)}
 #  .1.3.6.1.3.94.1.10.1.15, FCMGMT-MIB::connUnitPortSpeed, INTEGER
 #  .1.3.6.1.3.94.1.10.1.23, FCMGMT-MIB::FCMGMT-MIB::connUnitPortHWState, INTEGER {unknown(1), failed(2), bypassed(3), active(4), loopback(5), txfault(6), noMedia(7), linkDown(8)}
+check_default_levels["fibrealliance_port"] = "fibrealliance_port_default_levels"
+factory_settings["fibrealliance_port_default_levels"] = {
+    "allowed_states" : [ 2, 3, 4, 5 ],
+}
 
 def inventory_fibrealliance_port(checkname, info):
   inventory = []
-  for id, index, type, state, status, speed in info:
-    if state == "2" or state == "3":
-      inventory.append( (index, None) )
+  for id, index, type, state, status, transmitter, module, speed, hwstate in info:
+    if state != "1"
+      inventory.append( (index, {"state": state, "status": status, "transmitter": transmitter, "module": module, "speed": speed, "hwstate": hwstate}) )
   return inventory
 
-def check_fibrealliance_port(item, _no_params, info):
-  for id, index, type, state, status, speed in info:
+def check_fibrealliance_port(item, params, info):
+  for id, index, type, state, status, transmitter, module, speed, hwstate in info:
     if index == item:
-      if status == "3" or status == "9":
+      if status == params["status"]:
         return (0, "OK - " + speed + "mps")
+      elif status == "3":
+        return (1, "WARN - port used, but should not be")
       else:
         return (2, "CRITICAL - " + speed + "mps")
+
   return (3, "UNKNOWN - Port info not found")
 
 check_info["fibrealliance_port"] = \
-      (check_fibrealliance_port, "Port %s", 0, inventory_fibrealliance_port)
+  (check_fibrealliance_port, "Port %s", 0, inventory_fibrealliance_port)
 
-snmp_info["fibrealliance_port"] = ( ".1.3.6.1.3.94.1.10.1", [ "1", "2", "3", "6", "7", "15" ] )
+snmp_info["fibrealliance_port"] = ( ".1.3.6.1.3.94.1.10.1", [ "1", "2", "3", "6", "7", "8", "9", "15", "23" ] )
 snmp_scan_functions['fibrealliance_port'] = \
   lambda oid: oid(".1.3.6.1.3.94.1.1.0") != None
