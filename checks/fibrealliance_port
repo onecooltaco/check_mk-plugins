@@ -14,21 +14,17 @@
 #  .1.3.6.1.3.94.1.10.1.23, FCMGMT-MIB::FCMGMT-MIB::connUnitPortHWState, INTEGER {unknown(1), failed(2), bypassed(3), active(4), loopback(5), txfault(6), noMedia(7), linkDown(8)}
 
 def inventory_fibrealliance_port(checkname, info):
-  inventory = []
-  for id, index, type, state, status, transmitter, module, speed, hwstate in info:
-    if state != "1":
-      inventory.append( (index, {"state": state, "status": status, "transmitter": transmitter, "module": module, "speed": speed, "hwstate": hwstate}) )
-  return inventory
+  return [ (i[1], i[3], i[4]) for i in info if len(i) == 9 ]
 
-def check_fibrealliance_port(item, params, info):
-  for id, index, type, state, status, transmitter, module, speed, hwstate in info:
-    if index == item:
-      if state == params["state"]:
-        return (0, "OK - status is %s" % state)
-      elif state == "2":
+def check_fibrealliance_port(item, targetstate, info):
+  for i in info:
+    if i[0] == item:
+      if i[3] == targetstate:
+        return (0, "OK - status is %s" % i[3])
+      elif i[3] == "2":
         return (1, "WARN - port used, but should not be")
       else:
-        return (2, "CRITICAL - status is %s" % state)
+        return (2, "CRITICAL - status is %s" % i[3])
 
   return (3, "UNKNOWN - Port info not found")
 
