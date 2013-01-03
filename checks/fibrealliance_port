@@ -12,27 +12,23 @@
 #  .1.3.6.1.3.94.1.10.1.9, FCMGMT-MIB::connUnitPortModuleType, INTEGER {unknown(1), other(2), gbic(3), embedded(4), glm(5), gbicSerialId(6), gbicNoSerialId(7), gbicNotInstalled(8), smallFormFactor(9)}
 #  .1.3.6.1.3.94.1.10.1.15, FCMGMT-MIB::connUnitPortSpeed, INTEGER
 #  .1.3.6.1.3.94.1.10.1.23, FCMGMT-MIB::FCMGMT-MIB::connUnitPortHWState, INTEGER {unknown(1), failed(2), bypassed(3), active(4), loopback(5), txfault(6), noMedia(7), linkDown(8)}
-check_default_levels["fibrealliance_port"] = "fibrealliance_port_default_levels"
-factory_settings["fibrealliance_port_default_levels"] = {
-    "allowed_states" : [ 2, 3, 4, 5 ],
-}
 
 def inventory_fibrealliance_port(checkname, info):
   inventory = []
   for id, index, type, state, status, transmitter, module, speed, hwstate in info:
-    if state != "1"
+    if state != "1":
       inventory.append( (index, {"state": state, "status": status, "transmitter": transmitter, "module": module, "speed": speed, "hwstate": hwstate}) )
   return inventory
 
 def check_fibrealliance_port(item, params, info):
   for id, index, type, state, status, transmitter, module, speed, hwstate in info:
     if index == item:
-      if status == params["status"]:
-        return (0, "OK - " + speed + "mps")
-      elif status == "3":
+      if state == params["state"]:
+        return (0, "OK - status is %s" % state)
+      elif state == "2":
         return (1, "WARN - port used, but should not be")
       else:
-        return (2, "CRITICAL - " + speed + "mps")
+        return (2, "CRITICAL - status is %s" % state)
 
   return (3, "UNKNOWN - Port info not found")
 
