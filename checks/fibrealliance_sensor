@@ -17,22 +17,28 @@ def fibrealliance_sensor_characteristicname(st):
 
 def inventory_fibrealliance_sensor(checkname, info):
   inventory = []
-  for name, status, message in info:
-    if status != "1":
-      inventory.append( (name, None) )
+  for index, id, status, message, type, character in info:
+    if status != "1" and type != "1" and character != "1":
+      inventory.append( (index, (id,type,character)) )
   return inventory
 
-def check_fibrealliance_sensor(item, _no_params, info):
-  for name, status, message in info:
-    if name == item:
-      if status == "3":
-        return (0, "OK - " + message)
-      else:
-        return (2, "CRITICAL - " + message)
+def check_fibrealliance_sensor(item, params, info):
+  for index, id, status, message, type, character in info:
+    if index == item:
+      stat_name = fibrealliance_sensor_statusname(status)
+      type_name = fibrealliance_sensor_typename(type)
+      character_name = fibrealliance_sensor_characteristicname(character)
+      check_text = "%s - %s - %s %s %s" % (id, stat_name, type_name, character_name, message)
+      if status == "5":
+      	return (2,  check_text)
+      elif status == "4":
+        return (1, check_text)
+      elif status == "3" or status == "2":
+        return (0, check_text)
   return (3, "UNKNOWN - Sensor info not found")
 
 check_info["fibrealliance_sensor"] = \
-      (check_fibrealliance_sensor, "%s", 0, inventory_fibrealliance_sensor)
+      (check_fibrealliance_sensor, "Sensor %s", 0, inventory_fibrealliance_sensor)
 
 snmp_info["fibrealliance_sensor"] = \
 	( ".1.3.6.1.3.94.1.8.1", [
@@ -43,5 +49,6 @@ snmp_info["fibrealliance_sensor"] = \
 		"7",	# connUnitSensorType			Values: unknown(1), other(2), battery(3), fan(4), power-supply(5), transmitter(6), enclosure(7), board(8), receiver(9)
 		"8",	# connUnitSensorCharacteristic	Values: unknown(1), other(2), temperature(3), pressure(4), emf(5), currentValue(6), airflow(7), frequency(8), power(9), door(10)
 	] )
+
 snmp_scan_functions['fibrealliance_sensor'] = \
   lambda oid: oid(".1.3.6.1.3.94.1.1.0") != None

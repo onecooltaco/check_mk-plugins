@@ -5,6 +5,8 @@
 # Polls the .1.3.6.1.3.94.1.6 oid, FCMGMT-MIB::connUnitEntry
 # "A connectivity unit entry containing objects for a particular unit."
 
+def fibrealliance_sys_itemname(id):
+	return '.'.join(str(x) for x in (ord(byte) for byte in id))
 def fibrealliance_sys_statename(st):
     names = { '1': "unknown", '2': "onlined", '3': "offline" }
     return names.get(st, st)
@@ -14,13 +16,13 @@ def fibrealliance_sys_statusname(st):
 
 def inventory_fibrealliance_sys(checkname, info):
   inventory = []
-  for state, status, product, sn, numsensors, name in info:
-    inventory.append( (product, None) )
+  for id, type, ports, state, status, product, sn, uptime, url, master, principal, sensors, name, event in info:
+    inventory.append( (fibrealliance_sys_itemname(id), (type,ports,sensors)) )
   return inventory
 
 def check_fibrealliance_sys(item, _no_params, info):
-  for state, status, product, sn, numsensors, name in info:
-    if product == item:
+  for id, type, ports, state, status, product, sn, uptime, url, master, principal, sensors, name, event in info:
+    if fibrealliance_sys_itemname(id) == item:
       if state == "2" and status == "3":
         return (0, "OK - online")
       else:
@@ -28,7 +30,7 @@ def check_fibrealliance_sys(item, _no_params, info):
   return (3, "UNKNOWN - Switch info not found")
 
 check_info["fibrealliance_sys"] = \
-      (check_fibrealliance_sys, "%s", 0, inventory_fibrealliance_sys)
+      (check_fibrealliance_sys, "Chasis %s", 0, inventory_fibrealliance_sys)
 
 snmp_info["fibrealliance_sys"] = \
 	( ".1.3.6.1.3.94.1.6.1", [
@@ -47,5 +49,6 @@ snmp_info["fibrealliance_sys"] = \
 		"20",	# connUnitName
 		"25",	# connUnitEventFilter	Values: unknown(1), emergency(2), alert(3), critical(4), error(5), warning(6), notify(7), info(8), debug(9), mark(10)
 	] )
+
 snmp_scan_functions['fibrealliance_sys'] = \
   lambda oid: oid(".1.3.6.1.3.94.1.1.0") != None
