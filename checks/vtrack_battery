@@ -1,8 +1,15 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
 # --------------------------------------------------------------------------------
 # 1. Promise VTrack Battery status
+
+def vtrack_battery_celltypename(st):
+    names = { '1': "one-cell", '2': "two-cell", '4': "four-cell", '5': "unknown" }
+    return names.get(st, st)
+
 def inventory_vtrack_battery(checkname, info):
   inventory = []
-  for index, temperature, status, capacity, chargethreshold, dischargethreshold, voltage, cyclecount, chemistry, cells in info:
+  for index, chemistry, temperature, chargethreshold, dischargethreshold, cyclecount, capacity, voltage, current, status, cells, holdtime in info:
     try:
       float(temperature)
     except ValueError:
@@ -11,7 +18,7 @@ def inventory_vtrack_battery(checkname, info):
   return inventory
 
 def check_vtrack_battery(item, _no_params, info):
-  for index, temperature, status, capacity, chargethreshold, dischargethreshold, voltage, cyclecount, chemistry, cells in info:
+  for index, chemistry, temperature, chargethreshold, dischargethreshold, cyclecount, capacity, voltage, current, status, cells, holdtime in info:
     if index == item:
       perfdata = [ ("Temperature",temperature,chargethreshold,dischargethreshold),("RemainCapacity",capacity,"","",0,100),("Voltage",voltage),("CycleCount",cyclecount)]
       if status in ["Charging", "FullyCharged"]:
@@ -23,6 +30,20 @@ def check_vtrack_battery(item, _no_params, info):
 check_info["vtrack_battery"] = \
       (check_vtrack_battery, "Battery %s", 1, inventory_vtrack_battery)
 
-snmp_info["vtrack_battery"] = ( ".1.3.6.1.4.1.7933.1.20.1.15.1", [ "1.1.1", "7.1.1", "14.1.1", "11.1.1", "8.1.1", "9.1.1", "12.1.1", "10.1.1", "", "15.1.1" ] )
+snmp_info["vtrack_battery"] = \
+  ( ".1.3.6.1.4.1.7933.1.20.1.15.1", [
+    "1",  # raidv4BatteryIndex    Range: 0..255
+    "6",  # raidv4BatteryDeviceChemistry    DisplayString
+    "7",  # raidv4BatteryTemperature    Integer32
+    "8",  # raidv4BatteryTempChargeThreshold    Integer32
+    "9",  # raidv4BatteryTempDisChargeThreshold    Integer32
+    "10", # raidv4BatteryCycleCount    Integer32
+    "11", # raidv4BatteryRemainCapacity    Integer32
+    "12", # raidv4BatteryVoltage    Integer32
+    "13", # raidv4BatteryCurrent    Integer32
+    "14", # raidv4BatteryStatus    DisplayString
+    "15", # raidv4BatteryCellType    Values: one-cell(1), two-cell(2), four-cell(4), unknown(255)
+    "16", # raidv4BatteryHoldTime    Integer32
+  ] )
 snmp_scan_functions['vtrack_battery'] = \
   lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")

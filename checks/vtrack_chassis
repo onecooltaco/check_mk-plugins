@@ -1,5 +1,8 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
 # --------------------------------------------------------------------------------
 # 1. Promise VTrack chassis status
+
 def inventory_vtrack_chassis(checkname, info):
    inventory = []
    for role, status, readiness, present, offline, pfa, rebuilding, missing, unconfigured, hours, cachedirty, cacheused in info:
@@ -49,6 +52,43 @@ def check_vtrack_chassis(item, _no_params, info):
 check_info["vtrack_chassis"] = \
       (check_vtrack_chassis, "Array %s", 1, inventory_vtrack_chassis)
 
-snmp_info["vtrack_chassis"] = ( ".1.3.6.1.4.1.7933.1.20.1.3.1", [ "16.1", "15.1", "17.1", "19.1", "21.1", "22.1", "23.1", "24.1", "25.1", "27.1", "38.1", "39.1" ] )
+snmp_info["vtrack_chassis"] = \
+	( ".1.3.6.1.4.1.7933.1.20.1.3.1", [
+		"1",	# raidv4CtrlIndex
+		"3",	# raidv4CtrlWWN
+		"6",	# raidv4CtrlPartNumber
+		"7",	# raidv4CtrlSerialNumber
+		"8",	# raidv4CtrlRevision
+		"10",	# raidv4CtrlSCSIProtocol	Values: unknown(0), other(1), scsi-2(2), scsi-3(3)
+		"12",	# raidv4CtrlBootLoaderRev
+		"13",	# raidv4CtrlFirmwareRev
+		"14",	# raidv4CtrlSoftwareRev
+		"15",	# raidv4CtrlOpStatus
+		"16",	# raidv4CtrlRole			Values: na(-1), primary(1), secondary(0)
+		"17",	# raidv4CtrlReadinessStatus
+		"18",	# raidv4CtrlNumOfArrayPresent
+		"19",	# raidv4CtrlNumOfPhyDrvPresent
+		"20",	# raidv4CtrlNumOfPhyDrvOnline
+		"21",	# raidv4CtrlNumOfPhyDrvOffline
+		"22",	# raidv4CtrlNumOfPhyDrvWithPFA
+		"23",	# raidv4CtrlNumOfPhyDrvRebuilding
+		"24",	# raidv4CtrlNumOfPhyDrvMissing
+		"25",	# raidv4CtrlNumOfPhyDrvUnconfigured
+		"26",	# raidv4CtrlNumOfLogDrvPresent
+		"27",	# raidv4CtrlNumOfLogDrvOnline
+		"28",	# raidv4CtrlNumOfLogDrvOffline
+		"29",	# raidv4CtrlNumOfLogDrvCritical
+		"30",	# raidv4CtrlNumOfGlobalSparePresent
+		"31",	# raidv4CtrlNumOfDedicateSparePresent
+		"32",	# raidv4CtrlNumOfRevertibleGlobalSparePresent
+		"33",	# raidv4CtrlNumOfRevertibleGlobalSpareUsed
+		"34",	# raidv4CtrlNumOfRevertibleDedicatedSparePresent
+		"35",	# raidv4CtrlNumOfRevertibleDedicatedSpareUsed
+		"36",	# raidv4CtrlNumOfBGAs
+		"37",	# raidv4CtrlPowerOnHours
+		"38",	# raidv4CtrlDirtyCachePercentage	Values: na(-1)
+		"39",	# raidv4CtrlCacheUsagePercentage	Values: na(-1)
+		"64",	# raidv4CtrlNumOfLogDrvDegraded
+	] )
 snmp_scan_functions['vtrack_chassis'] = \
   lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")

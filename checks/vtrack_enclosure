@@ -1,14 +1,17 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
 # --------------------------------------------------------------------------------
 # 1. Promise VTrack Enclosure status
+
 def inventory_vtrack_enclosure(checkname, info):
   inventory = []
-  for descrip, status, message in info:
+  for index, descrip, status, message in info:
     if 'VTrak' in descrip:
       inventory.append( (descrip, None) )
   return inventory
 
 def check_vtrack_enclosure(item, _no_params, info):
-  for descrip, status, message in info:
+  for index, descrip, status, message in info:
     if descrip == item:
       if status == "OK":
         return (0, "OK - " + message)
@@ -19,6 +22,12 @@ def check_vtrack_enclosure(item, _no_params, info):
 check_info["vtrack_enclosure"] = \
       (check_vtrack_enclosure, "%s", 0, inventory_vtrack_enclosure)
 
-snmp_info["vtrack_enclosure"] = ( ".1.3.6.1.4.1.7933.1.20.1.10.1", [ "2.1", "3.1", "4.1" ] )
+snmp_info["vtrack_enclosure"] = \
+	( ".1.3.6.1.4.1.7933.1.20.1.10.1", [
+		"1",	# raidv4EnclosureIndex
+		"2",	# raidv4EnclosureType
+		"3",	# raidv4EnclosureStatus
+		"4",	# raidv4EnclosureStatusDescription
+	] )
 snmp_scan_functions['vtrack_enclosure'] = \
   lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")

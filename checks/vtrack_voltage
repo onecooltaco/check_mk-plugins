@@ -1,5 +1,8 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
 # --------------------------------------------------------------------------------
 # 1. Promise VTrack Voltage Sensor status
+
 def inventory_vtrack_voltage(checkname, info):
   inventory = []
   for index, voltage in info:
@@ -20,6 +23,10 @@ def check_vtrack_voltage(item, _no_params, info):
 check_info["vtrack_voltage"] = \
       (check_vtrack_voltage, "VoltageSensor %s", 1, inventory_vtrack_voltage)
 
-snmp_info["vtrack_voltage"] = ( ".1.3.6.1.4.1.7933.1.20.1.14.1", [ "1.1.1", "2.1.1" ] )
+snmp_info["vtrack_voltage"] = \
+	( ".1.3.6.1.4.1.7933.1.20.1.14.1", [
+		"1",	# raidv4VoltageSensorIndex
+		"2",	# raidv4VoltageSensorVoltage
+	] )
 snmp_scan_functions['vtrack_voltage'] = \
   lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")
