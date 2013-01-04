@@ -1,0 +1,7 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+# --------------------------------------------------------------------------------
+# Functions and definitions used by fa
+
+def fa_hex2string(hexcode):
+	return '.'.join(str(x) for x in (ord(byte) for byte in hexcode))

@@ -5,29 +5,39 @@
 # Polls the .1.3.6.1.3.94.1.8.1 oid, FCMGMT-MIB::connUnitSensorEntry
 # "Each entry contains the information for a specific sensor."
 
-def fibrealliance_sensor_statusname(st):
-    names = { '1': "unknown", '2': "other", '3': "ok", '4': "warning", '5': "failed" }
+def fa_sensor_statusname(st):
+    names = { '1': "unknown", '2': "other",
+            '3': "ok", '4': "warning",
+            '5': "failed" }
     return names.get(st, st)
-def fibrealliance_sensor_typename(st):
-    names = { '1': "unknown", '2': "other", '3': "battery", '4': "fan", '5': "power-supply", '6': "transmitter", '7': "enclosure", '8': "board", '9': "receiver" }
+def fa_sensor_typename(st):
+    names = { '1': "unknown", '2': "other",
+            '3': "battery", '4': "fan",
+            '5': "power-supply", '6': "transmitter",
+            '7': "enclosure", '8': "board",
+            '9': "receiver" }
     return names.get(st, st)
-def fibrealliance_sensor_characteristicname(st):
-    names = { '1': "unknown", '2': "other", '3': "temperature", '4': "pressure", '5': "emf", '6': "currentValue", '7': "airflow", '8': "frequency", '9': "power", '10': "door" }
+def fa_sensor_characteristicname(st):
+    names = { '1': "unknown", '2': "other",
+            '3': "temperature", '4': "pressure",
+            '5': "emf", '6': "currentValue",
+            '7': "airflow", '8': "frequency",
+            '9': "power", '10': "door" }
     return names.get(st, st)
 
-def inventory_fibrealliance_sensor(checkname, info):
+def inventory_fa_sensor(checkname, info):
   inventory = []
   for index, id, status, message, type, character in info:
     if status != "1" and type != "1" and character != "1":
       inventory.append( (index, (id,type,character)) )
   return inventory
 
-def check_fibrealliance_sensor(item, params, info):
+def check_fa_sensor(item, params, info):
   for index, id, status, message, type, character in info:
     if index == item:
-      stat_name = fibrealliance_sensor_statusname(status)
-      type_name = fibrealliance_sensor_typename(type)
-      character_name = fibrealliance_sensor_characteristicname(character)
+      stat_name = fa_sensor_statusname(status)
+      type_name = fa_sensor_typename(type)
+      character_name = fa_sensor_characteristicname(character)
       check_text = "%s - %s - %s %s %s" % (id, stat_name, type_name, character_name, message)
       if status == "5":
       	return (2,  check_text)
@@ -37,10 +47,10 @@ def check_fibrealliance_sensor(item, params, info):
         return (0, check_text)
   return (3, "UNKNOWN - Sensor info not found")
 
-check_info["fibrealliance_sensor"] = \
-      (check_fibrealliance_sensor, "Sensor %s", 0, inventory_fibrealliance_sensor)
+check_info["fa_sensor"] = \
+      (check_fa_sensor, "Sensor %s", 0, inventory_fa_sensor)
 
-snmp_info["fibrealliance_sensor"] = \
+snmp_info["fa_sensor"] = \
 	( ".1.3.6.1.3.94.1.8.1", [
 		"2",	# connUnitSensorIndex
 		"3",	# connUnitSensorUnitId
@@ -50,5 +60,5 @@ snmp_info["fibrealliance_sensor"] = \
 		"8",	# connUnitSensorCharacteristic	Values: unknown(1), other(2), temperature(3), pressure(4), emf(5), currentValue(6), airflow(7), frequency(8), power(9), door(10)
 	] )
 
-snmp_scan_functions['fibrealliance_sensor'] = \
+snmp_scan_functions['fa_sensor'] = \
   lambda oid: oid(".1.3.6.1.3.94.1.1.0") != None
