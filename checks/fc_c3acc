@@ -27,11 +27,11 @@ check_info["fc_c3acc"] = \
 
 snmp_info["fc_c3acc"] = \
 	( ".1.3.6.1.2.1.75.1.4.3.1", [
-		"1",	# fcFxPortC3InFrames
-		"2",	# fcFxPortC3OutFrames
-		"3",	# fcFxPortC3InOctets
-		"4",	# fcFxPortC3OutOctets
-		"5",	# fcFxPortC3Discards
+		"4.3.1.1",	# fcFxPortC3InFrames
+		"4.3.1.2",	# fcFxPortC3OutFrames
+		"4.3.1.3",	# fcFxPortC3InOctets
+		"4.3.1.4",	# fcFxPortC3OutOctets
+		"4.3.1.5",	# fcFxPortC3Discards
 	] )
 snmp_scan_functions['fc_c3acc'] = \
-  lambda oid: oid(".1.3.6.1.2.1.75.1.1.1") != None
+  lambda oid: oid(".1.3.6.1.2.1.75.1.1.1.0") != None
