@@ -1,0 +1,37 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+# --------------------------------------------------------------------------------
+# 1. Fibre Channel Module Entry info
+# Polls the .1.3.6.1.2.1.75.1.4.3 oid, FIBRE-CHANNEL-FE-MIB::fcFxPortC3AccountingTable
+# "A table that contains, one entry for each FxPort in the Fabric Element, Class 3 accounting information recorded since the management agent has re-initialized."
+
+def inventory_fc_c3acc(checkname, info):
+  inventory = []
+  count = 1
+  for inframes, outframes, inoctets, outoctets, discards in info:
+    inventory.append( (count, None) )
+    count += 1
+  return inventory
+
+def check_fc_c3acc(item, _no_params, info):
+  for inframes, outframes, inoctets, outoctets, discards in info:
+    if index == item:
+      if status == "3" or status == "9":
+        return (0, "OK - " + speed + "mps")
+      else:
+        return (2, "CRITICAL - " + speed + "mps")
+  return (3, "UNKNOWN - Port info not found")
+
+check_info["fc_c3acc"] = \
+      (check_fc_c3acc, "Port %s", 0, inventory_fc_c3acc)
+
+snmp_info["fc_c3acc"] = \
+	( ".1.3.6.1.2.1.75.1.4.3.1", [
+		"1",	# fcFxPortC3InFrames
+		"2",	# fcFxPortC3OutFrames
+		"3",	# fcFxPortC3InOctets
+		"4",	# fcFxPortC3OutOctets
+		"5",	# fcFxPortC3Discards
+	] )
+snmp_scan_functions['fc_c3acc'] = \
+  lambda oid: oid(".1.3.6.1.2.1.75.1.1.1") != None
