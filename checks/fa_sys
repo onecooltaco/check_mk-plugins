@@ -24,11 +24,12 @@ def inventory_fa_sys(checkname, info):
 
 def check_fa_sys(item, _no_params, info):
   for id, type, ports, state, status, product, sn, uptime, url, master, principal, sensors, name, event in info:
+    msg_text = "%s %s %s - %s %s %s %s %s %s %s %s %s %s" % (product, type, state, status, sn, uptime, ports, url, master, principal, sensors, name, event)
     if fa_hex2string(id) == item:
       if state == "2" and status == "3":
-        return (0, "OK - online")
+        return (0, "OK - %s" % msg_text)
       else:
-        return (2, "CRITICAL - ")
+        return (2, "CRITICAL - %s" % msg_text)
   return (3, "UNKNOWN - Switch info not found")
 
 check_info["fa_sys"] = \

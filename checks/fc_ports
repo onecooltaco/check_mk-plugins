@@ -22,8 +22,8 @@ def inventory_fc_ports(checkname, info):
     nxportname, linkfailures, synclosses, siglosses, primseqprotoerrors, invalidtxwords, \
     invalidcrcs, delimitererrors, addressiderrors, linkresetins, linkresetouts, olsins, \
     olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards in info:
-
-    inventory.append( (fc_hex2string(id), None) )
+    if opermode in ["1","2","3",]:
+      inventory.append( (fc_hex2string(id), None) )
   return inventory
 
 def check_fc_ports(item, _no_params, info):
@@ -33,13 +33,13 @@ def check_fc_ports(item, _no_params, info):
     olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards in info:
     if fc_hex2string(id) == item:
       msg_text = "%s %s - %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" % (name, id, opermode, physadminstatus, physoperstatus, physrttov, cossuppagreed, \
-       nxportname, linkfailures, synclosses, siglosses, primseqprotoerrors, invalidtxwords, \
+        nxportname, linkfailures, synclosses, siglosses, primseqprotoerrors, invalidtxwords, \
         invalidcrcs, delimitererrors, addressiderrors, linkresetins, linkresetouts, olsins, \
         olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards,)
       if physadminstatus == "1" and physoperstatus == "1":
-        return (0, "OK - %s", msg_text)
+        return (0, "OK - %s" % msg_text)
       else:
-        return (2, "CRITICAL - %s", msg_text)
+        return (2, "CRITICAL - %s" % msg_text)
   return (3, "UNKNOWN - Port info not found")
 
 check_info["fc_ports"] = \
