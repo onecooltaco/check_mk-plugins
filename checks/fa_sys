@@ -5,6 +5,8 @@
 # Polls the .1.3.6.1.3.94.1.6 oid, FCMGMT-MIB::connUnitEntry
 # "A connectivity unit entry containing objects for a particular unit."
 
+check_includes['fa'] = [ "fa.include" ]
+
 def fa_sys_itemname(id):
 	return '.'.join(str(x) for x in (ord(byte) for byte in id))
 def fa_sys_statename(st):
@@ -17,12 +19,12 @@ def fa_sys_statusname(st):
 def inventory_fa_sys(checkname, info):
   inventory = []
   for id, type, ports, state, status, product, sn, uptime, url, master, principal, sensors, name, event in info:
-    inventory.append( (fa_sys_itemname(id), (type,ports,sensors)) )
+    inventory.append( (fa_hex2string(id), (type,ports,sensors)) )
   return inventory
 
 def check_fa_sys(item, _no_params, info):
   for id, type, ports, state, status, product, sn, uptime, url, master, principal, sensors, name, event in info:
-    if fa_sys_itemname(id) == item:
+    if fa_hex2string(id) == item:
       if state == "2" and status == "3":
         return (0, "OK - online")
       else:

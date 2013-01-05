@@ -16,7 +16,7 @@
 # .1.3.6.1.2.1.75.1.4.3.1	fcFxPortC3AccountingTable
 check_includes['fc'] = [ "fc.include" ]
 
-def inventory_fc_phys(checkname, info):
+def inventory_fc_ports(checkname, info):
   inventory = []
   count = 1
   for adminstatus, operstatus, lastchange, rttov in info:
@@ -24,7 +24,7 @@ def inventory_fc_phys(checkname, info):
     count += 1
   return inventory
 
-def check_fc_phys(item, _no_params, info):
+def check_fc_ports(item, _no_params, info):
   for adminstatus, operstatus, lastchange, rttov in info:
     if index == item:
       if status == "3" or status == "9":
@@ -33,10 +33,10 @@ def check_fc_phys(item, _no_params, info):
         return (2, "CRITICAL - " + speed + "mps")
   return (3, "UNKNOWN - Port info not found")
 
-check_info["fc_phys"] = \
-      (check_fc_phys, "Port %s", 0, inventory_fc_phys)
+check_info["fc_ports"] = \
+      (check_fc_ports, "Port %s", 0, inventory_fc_ports)
 
-snmp_info["fc_phys"] = \
+snmp_info["fc_ports"] = \
 	( ".1.3.6.1.2.1.75.1.2.2.1", [
 		"1",	# fcFxPortPhysAdminStatus	Values: online(1), offline(2), testing(3)
 		"2",	# fcFxPortPhysOperStatus	Values: online(1), offline(2), testing(3), linkFailure(4)
@@ -44,5 +44,5 @@ snmp_info["fc_phys"] = \
 		"4",	# fcFxPortPhysRttov
 	] )
 
-snmp_scan_functions['fc_unit'] = \
+snmp_scan_functions['fc_ports'] = \
   lambda oid: oid(".1.3.6.1.2.1.75.1.1.1.0") != None
