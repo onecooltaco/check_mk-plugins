@@ -48,7 +48,7 @@ def check_fa_sensor(item, params, info):
   return (3, "UNKNOWN - Sensor info not found")
 
 check_info["fa_sensor"] = \
-      (check_fa_sensor, "Sensor %s", 0, inventory_fa_sensor)
+      (check_fa_sensor, "FA Sensor %s", 0, inventory_fa_sensor)
 
 snmp_info["fa_sensor"] = \
 	( ".1.3.6.1.3.94.1.8.1", [

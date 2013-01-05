@@ -25,7 +25,7 @@ def check_fc_unit(item, params, info):
   return (3, "UNKNOWN - System info not found")
 
 check_info["fc_unit"] = \
-      (check_fc_unit, "Unit %s", 0, inventory_fc_unit)
+      (check_fc_unit, "FC Unit %s", 0, inventory_fc_unit)
 
 snmp_info["fc_unit"] = \
 	( ".1.3.6.1.2.1.75.1.1.4.1", [
