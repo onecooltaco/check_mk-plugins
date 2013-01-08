@@ -1,5 +1,30 @@
 #!/usr/bin/python
 # -*- encoding: utf-8; py-indent-offset: 4 -*-
+# +------------------------------------------------------------------+
+# |             ____ _               _        __  __ _  __           |
+# |            / ___| |__   ___  ___| | __   |  \/  | |/ /           |
+# |           | |   | '_ \ / _ \/ __| |/ /   | |\/| | ' /            |
+# |           | |___| | | |  __/ (__|   <    | |  | | . \            |
+# |            \____|_| |_|\___|\___|_|\_\___|_|  |_|_|\_\           |
+# |                                                                  |
+# | Copyright Mathias Kettner 2012             mk@mathias-kettner.de |
+# +------------------------------------------------------------------+
+#
+# This file is part of Check_MK.
+# The official homepage is at http://mathias-kettner.de/check_mk.
+#
+# check_mk is free software;  you can redistribute it and/or modify it
+# under the  terms of the  GNU General Public License  as published by
+# the Free Software Foundation in version 2.  check_mk is  distributed
+# in the hope that it will be useful, but WITHOUT ANY WARRANTY;  with-
+# out even the implied warranty of  MERCHANTABILITY  or  FITNESS FOR A
+# PARTICULAR PURPOSE. See the  GNU General Public License for more de-
+# ails.  You should have  received  a copy of the  GNU  General Public
+# License along with GNU Make; see the file  COPYING.  If  not,  write
+# to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
+# Boston, MA 02110-1301 USA.
+
+# Author: Jeremy Leggat <jleggat@asu.edu>
 # --------------------------------------------------------------------------------
 # 1. Fibre Alliance base info
 # Polls the .1.3.6.1.3.94.1.6 oid, FCMGMT-MIB::connUnitEntry
@@ -10,7 +35,7 @@ check_includes['fa'] = [ "fa.include" ]
 def fa_sys_itemname(id):
 	return '.'.join(str(x) for x in (ord(byte) for byte in id))
 def fa_sys_statename(st):
-    names = { '1': "unknown", '2': "onlined", '3': "offline" }
+    names = { '1': "unknown", '2': "online", '3': "offline" }
     return names.get(st, st)
 def fa_sys_statusname(st):
     names = { '1': "unknown", '2': "unused", '3': "ok", '4': "warning", '5': "failed" }
@@ -18,19 +43,32 @@ def fa_sys_statusname(st):
 
 def inventory_fa_sys(checkname, info):
   inventory = []
-  for id, type, ports, state, status, product, sn, uptime, url, master, principal, sensors, name, event in info:
-    inventory.append( (fa_hex2string(id), (type,ports,sensors)) )
+  uidlist = []
+  for id, ports, state, status, product, sn, uptime, url, sensors, name in info:
+    uid = fa_hex2string(id)
+    iname = fa_unitid_genitem(uid,uidlist)
+    inventory.append((iname,{"numports": ports,"state":state,"status":status,"numsensors":sensors}))
   return inventory
 
-def check_fa_sys(item, _no_params, info):
-  for id, type, ports, state, status, product, sn, uptime, url, master, principal, sensors, name, event in info:
-    msg_text = "%s %s %s - %s %s %s %s %s %s %s %s %s %s" % (product, type, state, status, sn, uptime, ports, url, master, principal, sensors, name, event)
-    if fa_hex2string(id) == item:
-      if state == "2" and status == "3":
-        return (0, "OK - %s" % msg_text)
+def check_fa_sys(item, params, info):
+  uidlist = []
+  for id, ports, state, status, product, sn, uptime, url, sensors,\
+    name, in info:
+    uid = fa_hex2string(id)
+    iname = fa_unitid_genitem(uid,uidlist)
+    unit_text = "%s %s, %s ports %s sensors, %s, %s" % \
+    	(name, product, ports, sensors, url, sn)
+    if iname == item:
+      if state != params["state"] and status != params["status"]:
+        if state == "5" or status == "3":
+          return (2, "CRITICAL - State %s Status %s - %s" % (state, status, unit_text))
+        else:
+          return (1, "WARNING - State %s Status %s - %s" % (state, status, unit_text))
       else:
-        return (2, "CRITICAL - %s" % msg_text)
-  return (3, "UNKNOWN - Switch info not found")
+        msg_text = "%s and %s" % (fa_sys_statename(state), fa_sys_statusname(status))
+      return (0, "OK - %s - %s" % (msg_text, unit_text))
+
+  return (3, "UNKNOWN - Unit info not found")
 
 check_info["fa_sys"] = \
       (check_fa_sys, "FA Chasis %s", 0, inventory_fa_sys)
@@ -38,7 +76,10 @@ check_info["fa_sys"] = \
 snmp_info["fa_sys"] = \
 	( ".1.3.6.1.3.94.1.6.1", [
 		"1",	# connUnitId
-		"3",	# connUnitType	Values: unknown(1), other(2), hub(3), switch(4), gateway(5), converter(6), hba(7), proxy-agent(8), storage-device(9), host(10), storage-subsystem(11), module(12), swdriver(13), storage-access-device(14), wdm(15), ups(16), nas(17)
+#		"3",	# connUnitType	Values: unknown(1), other(2), hub(3), switch(4), gateway(5),
+				#				converter(6), hba(7), proxy-agent(8), storage-device(9),
+				#				host(10), storage-subsystem(11), module(12), swdriver(13),
+				#				storage-access-device(14), wdm(15), ups(16), nas(17)
 		"4",	# connUnitNumports
 		"5",	# connUnitState	Values: unknown(1), online(2), offline(3)
 		"6",	# connUnitStatus	Values: unknown(1), unused(2), ok(3), warning(4), failed(5)
@@ -46,11 +87,10 @@ snmp_info["fa_sys"] = \
 		"8",	# connUnitSn
 		"9",	# connUnitUpTime
 		"10",	# connUnitUrl
-		"12",	# connUnitProxyMaster	Values: unknown(1), no(2), yes(3)
-		"13",	# connUnitPrincipal		Values: unknown(1), no(2), yes(3)
+#		"12",	# connUnitProxyMaster	Values: unknown(1), no(2), yes(3)
+#		"13",	# connUnitPrincipal		Values: unknown(1), no(2), yes(3)
 		"14",	# connUnitNumSensors
 		"20",	# connUnitName
-		"25",	# connUnitEventFilter	Values: unknown(1), emergency(2), alert(3), critical(4), error(5), warning(6), notify(7), info(8), debug(9), mark(10)
 	] )
 
 snmp_scan_functions['fa_sys'] = \
