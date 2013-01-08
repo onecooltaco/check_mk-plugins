@@ -30,13 +30,15 @@
 # Tracks port state and speed on compatable fibre switches
 # Polls oid .1.3.6.1.3.94.1.10 , FCMGMT-MIB::connUnitPortTable
 # "Generic information on ports for a specific connUnit."
+factory_settings["fa_port_default_levels"] = {
+    "allowed_states" : [ 2, 3, ],
+}
 
-check_includes['fa'] = [ "fa.include", "if.include" ]
-
-def fa_port_itemname(id,index,idlist):
+def fa_port_itemname(info,id,index,idlist):
 	uid = fa_hex2string(id)
+	fullindex = fa_pad_with_zeroes(info,index)
 	iname = fa_unitid_genitem(uid,idlist)
-	return "%d_%s" % (iname, index)
+	return "%d_%s" % (iname, fullindex)
 def fa_port_statename(st):
     names = { '1': "unknown", '2': "online", '3': "offline", '4': "bypassed",
              '5': "diagnostics" }
@@ -67,14 +69,15 @@ def inventory_fa_port(checkname, info):
   inventory = []
   uidlist = []
   for id, index, state, status, transmitter, module, speed, hwstate in info:
-    name = fa_port_itemname(id,index,uidlist)
-    inventory.append((name,{"state":state,"status":status,"speed":speed,"hwstate":hwstate}))
+    name = fa_port_itemname(info,id,index,uidlist)
+    inventory.append((name,'{"state": %s,"status": %s,"speed": %s,"hwstate": %s}'
+      % (state,status,speed,hwstate)))
   return inventory
 
 def check_fa_port(item, params, info):
   uidlist = []
   for id, index, state, status, transmitter, module, speed, hwstate in info:
-    name = fa_port_itemname(id,index,uidlist)
+    name = fa_port_itemname(info,id,index,uidlist)
     if name == item:
       statename = fa_port_statename(state)
       statusname = fa_port_statusname(status)
@@ -93,8 +96,14 @@ def check_fa_port(item, params, info):
 
       return (3, "UNKNOWN - Port info not found")
 
-check_info["fa_port"] = \
-  (check_fa_port, "FA Port %s", 0, inventory_fa_port)
+check_info["fa_port"] = {
+    "inventory_function"       : inventory_fa_port,
+    "check_function"           : check_fa_port,
+    "has_perfdata"             : False,
+    "service_description"      : "FA Port %s",
+    "default_levels_variable"  : "fa_port_default_levels",
+    "includes"                 : [ "fa.include" ],
+}
 
 snmp_info["fa_port"] = \
 	( ".1.3.6.1.3.94.1.10.1", [

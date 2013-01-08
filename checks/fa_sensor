@@ -29,8 +29,9 @@
 # 1. Fibre Alliance sensor info
 # Polls the .1.3.6.1.3.94.1.8.1 oid, FCMGMT-MIB::connUnitSensorEntry
 # "Each entry contains the information for a specific sensor."
-
-check_includes['fa'] = [ "fa.include", "if.include" ]
+factory_settings["fa_sensor_default_levels"] = {
+    "allowed_states" : [ 3, 4, 5, ],
+}
 
 def fa_sensor_statusname(st):
     names = { '1': "unknown", '2': "other",
@@ -55,14 +56,14 @@ def fa_sensor_characteristicname(st):
 def inventory_fa_sensor(checkname, info):
   inventory = []
   for index, id, status, message, type, character in info:
-    name = if_pad_with_zeroes(info, index)
+    name = fa_pad_with_zeroes(info,index)
     if status != "1" and type != "1" and character != "1":
-      inventory.append((name,(id,type,character)))
+      inventory.append((name,{}))
   return inventory
 
 def check_fa_sensor(item, params, info):
   for index, id, status, message, type, character in info:
-    if if_pad_with_zeroes(info, index) == item:
+    if fa_pad_with_zeroes(info,index) == item:
       stat_name = fa_sensor_statusname(status)
       type_name = fa_sensor_typename(type)
       character_name = fa_sensor_characteristicname(character)
@@ -75,8 +76,14 @@ def check_fa_sensor(item, params, info):
         return (0, check_text)
   return (3, "UNKNOWN - Sensor info not found")
 
-check_info["fa_sensor"] = \
-      (check_fa_sensor, "FA Sensor %s", 0, inventory_fa_sensor)
+check_info["fa_sensor"] = {
+    "inventory_function"       : inventory_fa_sensor,
+    "check_function"           : check_fa_sensor,
+    "has_perfdata"             : False,
+    "service_description"      : "FA Sensor %s",
+    "default_levels_variable"  : "fa_sensor_default_levels",
+    "includes"                 : [ "fa.include" ],
+}
 
 snmp_info["fa_sensor"] = \
 	( ".1.3.6.1.3.94.1.8.1", [
