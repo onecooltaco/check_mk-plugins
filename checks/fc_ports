@@ -39,12 +39,14 @@
 # .1.3.6.1.2.1.75.1.4.1.1	fcFxPortC1AccountingTable
 # .1.3.6.1.2.1.75.1.4.2.1	fcFxPortC2AccountingTable
 # .1.3.6.1.2.1.75.1.4.3.1	fcFxPortC3AccountingTable
-check_includes['fc'] = [ "fc.include" ]
+factory_settings["fc_port_default_levels"] = {
+    "allowed_states" : [ 1, 2, ],
+}
 
 def fc_opermode(st):
     names = {'1': "unknown", '2': "fPort", '3': "flPort" }
     return names.get(st, st)
-def inventory_fc_ports(checkname, info):
+def inventory_fc_port(checkname, info):
   inventory = []
   for name, id, opermode, physadminstatus, physoperstatus, physrttov,\
     linkfailures, synclosses, primseqprotoerrors, invalidtxwords,\
@@ -57,7 +59,7 @@ def inventory_fc_ports(checkname, info):
       "adminstatus" : physadminstatus,"operstatus": physoperstatus, "rxtimeout": physrttov}) )
   return inventory
 
-def check_fc_ports(item, _no_params, info):
+def check_fc_port(item, _no_params, info):
   for name, id, opermode, physadminstatus, physoperstatus, physrttov,\
     linkfailures, synclosses, primseqprotoerrors, invalidtxwords,\
     invalidcrcs, addressiderrors, linkresetins, linkresetouts, olsins,\
@@ -79,10 +81,17 @@ def check_fc_ports(item, _no_params, info):
         return (2, "CRITICAL - %s" % msg_text)
   return (3, "UNKNOWN - Port info not found")
 
-check_info["fc_ports"] = \
-      (check_fc_ports, "FC Port %s", 0, inventory_fc_ports)
+check_info["fc_port"] = check_info["fc_port"] = {
+    "inventory_function"       : inventory_fc_port,
+    "check_function"           : check_fc_port,
+    "has_perfdata"             : False,
+    "service_description"      : "FC Port %s",
+    "default_levels_variable"  : "fc_port_default_levels",
+    "includes"                 : [ "fc.include" ],
+}
+      (check_fc_port, "FC Port %s", 0, inventory_fc_port)
 
-snmp_info["fc_ports"] = \
+snmp_info["fc_port"] = \
 	( ".1.3.6.1.2.1.75.1", [
 		"1.5.1.2",	# fcFxPortName					Hex-STRING
 		"2.1.1.1",	# fcFxPortID					Hex-STRING
@@ -108,5 +117,5 @@ snmp_info["fc_ports"] = \
 		"4.3.1.5",	# fcFxPortC3Discards			Gauge32
 	] )
 
-snmp_scan_functions['fc_ports'] = \
+snmp_scan_functions['fc_port'] = \
   lambda oid: oid(".1.3.6.1.2.1.75.1.1.1.0") != None

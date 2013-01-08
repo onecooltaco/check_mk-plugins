@@ -48,8 +48,7 @@ def inventory_fa_sys(checkname, info):
   for id, ports, state, status, product, sn, uptime, url, sensors, name in info:
     uid = fa_hex2string(id)
     iname = fa_unitid_genitem(uid,uidlist)
-    inventory.append((iname,'{"numports": %s,"state": %s,"status": %s,"numsensors": %s}'
-      % (ports,state,status,sensors)))
+    inventory.append((iname,{"numports": ports,"state": state,"status": status,"numsensors": sensors}))
   return inventory
 
 def check_fa_sys(item, params, info):
@@ -58,24 +57,24 @@ def check_fa_sys(item, params, info):
     name, in info:
     uid = fa_hex2string(id)
     iname = fa_unitid_genitem(uid,uidlist)
-    unit_text = "%s %s, %s ports %s sensors, %s, %s" % \
-    	(name, product, ports, sensors, url, sn)
     if iname == item:
+      unit_text = "%s %s, %s ports %s sensors, %s SN#%s" % (name, product, ports, sensors, url, sn)
+      perfdata = [ ( "uptime", uptime ) ]
       if state != params["state"] and status != params["status"]:
-        if state == "5" or status == "3":
-          return (2, "CRITICAL - State %s Status %s - %s" % (state, status, unit_text))
+        if state == "3" or status == "5":
+          return (2, "CRITICAL - State %s Status %s - %s" % (fa_sys_statename(state), fa_sys_statusname(status), unit_text), perfdata)
         else:
-          return (1, "WARNING - State %s Status %s - %s" % (state, status, unit_text))
+          return (1, "WARNING - State %s Status %s - %s" % (fa_sys_statename(state), fa_sys_statusname(status), unit_text), perfdata)
       else:
         msg_text = "%s and %s" % (fa_sys_statename(state), fa_sys_statusname(status))
-      return (0, "OK - %s - %s" % (msg_text, unit_text))
+      return (0, "OK - %s - %s" % (msg_text, unit_text), perfdata)
 
   return (3, "UNKNOWN - Unit info not found")
 
 check_info["fa_sys"] = {
     "inventory_function"       : inventory_fa_sys,
     "check_function"           : check_fa_sys,
-    "has_perfdata"             : False,
+    "has_perfdata"             : True,
     "service_description"      : "FA Chasis %s",
     "default_levels_variable"  : "fa_sys_default_levels",
     "includes"                 : [ "fa.include" ],

@@ -36,9 +36,9 @@ factory_settings["fa_port_default_levels"] = {
 
 def fa_port_itemname(info,id,index,idlist):
 	uid = fa_hex2string(id)
-	fullindex = fa_pad_with_zeroes(info,index)
+#	fullindex = fa_pad_with_zeroes(info,index)
 	iname = fa_unitid_genitem(uid,idlist)
-	return "%d_%s" % (iname, fullindex)
+	return "%d_%s" % (iname, index)
 def fa_port_statename(st):
     names = { '1': "unknown", '2': "online", '3': "offline", '4': "bypassed",
              '5': "diagnostics" }
@@ -70,8 +70,7 @@ def inventory_fa_port(checkname, info):
   uidlist = []
   for id, index, state, status, transmitter, module, speed, hwstate in info:
     name = fa_port_itemname(info,id,index,uidlist)
-    inventory.append((name,'{"state": %s,"status": %s,"speed": %s,"hwstate": %s}'
-      % (state,status,speed,hwstate)))
+    inventory.append((name,{"state": state,"status": status,"speed": speed,"hwstate": hwstate}))
   return inventory
 
 def check_fa_port(item, params, info):

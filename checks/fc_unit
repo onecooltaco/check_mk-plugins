@@ -29,12 +29,14 @@
 # 1. Fibre Channel Module unit info
 # Polls the .1.3.6.1.2.1.75.1.1.4 oid, FIBRE-CHANNEL-FE-MIB::fcFeModuleTable
 # "A table that contains, one unit for each module in the Fabric Element, information of the modules."
-check_includes['fc'] = [ "fc.include" ]
+factory_settings["fc_unit_default_levels"] = {
+    "allowed_states" : [ 1, 2, ],
+}
 
 def inventory_fc_unit(checkname, info):
   inventory = []
   for descr, status, portcapacity, name in info:
-    inventory.append( (fc_hex2string(name), {"state" : status,"capacity" : portcapacity}) )
+    inventory.append( (fc_hex2string(name), {"status" : status, "capacity" : portcapacity}) )
   return inventory
 
 def check_fc_unit(item, params, info):
@@ -49,8 +51,14 @@ def check_fc_unit(item, params, info):
         return (2, "CRITICAL - " + msg_text)
   return (3, "UNKNOWN - System info not found")
 
-check_info["fc_unit"] = \
-      (check_fc_unit, "FC Unit %s", 0, inventory_fc_unit)
+check_info["fc_unit"] = {
+    "inventory_function"       : inventory_fc_unit,
+    "check_function"           : check_fc_unit,
+    "has_perfdata"             : False,
+    "service_description"      : "FC Chasis %s",
+    "default_levels_variable"  : "fc_unit_default_levels",
+    "includes"                 : [ "fc.include" ],
+}
 
 snmp_info["fc_unit"] = \
 	( ".1.3.6.1.2.1.75.1.1.4.1", [
