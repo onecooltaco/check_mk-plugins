@@ -39,57 +39,63 @@
 # .1.3.6.1.2.1.75.1.4.1.1	fcFxPortC1AccountingTable
 # .1.3.6.1.2.1.75.1.4.2.1	fcFxPortC2AccountingTable
 # .1.3.6.1.2.1.75.1.4.3.1	fcFxPortC3AccountingTable
-factory_settings["fc_port_default_levels"] = {
-    "allowed_states" : [ 1, 2, ],
-}
+factory_settings["fc_port_default_levels"] = {}
 
 def fc_opermode(st):
     names = {'1': "unknown", '2': "fPort", '3': "flPort" }
     return names.get(st, st)
+
 def inventory_fc_port(checkname, info):
   inventory = []
-  for name, id, opermode, physadminstatus, physoperstatus, physrttov,\
+  for id, opermode, adminstatus, operstatus, physrttov,\
     linkfailures, synclosses, primseqprotoerrors, invalidtxwords,\
     invalidcrcs, addressiderrors, linkresetins, linkresetouts, olsins,\
     olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards in info:
-    portname = fc_hex2string(name)
-    portid = fc_hex2string(id)
     if opermode in ["1","2","3",]:
-      inventory.append( (fc_hex2string(id), {"opermode" : opermode,\
-      "adminstatus" : physadminstatus,"operstatus": physoperstatus, "rxtimeout": physrttov}) )
+      inventory.append((fc_hex2string(id), {"opermode": opermode, "adminstatus": adminstatus,\
+        "operstatus": operstatus, "rxtimeout": physrttov}))
   return inventory
 
 def check_fc_port(item, _no_params, info):
-  for name, id, opermode, physadminstatus, physoperstatus, physrttov,\
+  for id, opermode, adminstatus, operstatus, physrttov,\
     linkfailures, synclosses, primseqprotoerrors, invalidtxwords,\
     invalidcrcs, addressiderrors, linkresetins, linkresetouts, olsins,\
     olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards in info:
-    portname = fc_hex2string(name)
-    portid = fc_hex2string(id)
-    portopermode = fc_opermode(opermode)
-    portadminstatus = fc_statusname(physadminstatus)
-    portoperstatus = fc_statusname(physoperstatus)
-    if portid == item:
-      msg_text = "%s %s - %s %s %s - %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s" % \
-        (portname, portopermode, portadminstatus, portoperstatus, physrttov,\
-        linkfailures, synclosses, primseqprotoerrors, invalidtxwords, \
-        invalidcrcs, addressiderrors, linkresetins, linkresetouts, olsins, \
-        olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards,)
-      if physadminstatus == "1" and physoperstatus == "1":
-        return (0, "OK - %s" % msg_text)
+    if fc_hex2string(id) == item:
+      msg_text = "%s and %s - %s" % (fc_statusname(operstatus),fc_statusname(adminstatus),fc_opermode(opermode))
+      perfdata = [
+        ( "LinkFailures", linkfailures ),             # no levels, no range
+        ( "SyncLosses", synclosses ),
+        ( "PrimSeqProtoErrors", primseqprotoerrors ),
+        ( "InvalidTxWords", invalidtxwords ),
+        ( "InvalidCrcs", invalidcrcs ),
+        ( "AddressIdErrors", addressiderrors ),
+        ( "LinkResetIns", linkresetins ),
+        ( "LinkResetOuts", linkresetouts ),
+        ( "OlsIns", olsins ),
+        ( "OlsOuts", olsouts ),
+        ( "C3InFrames", c3inframes ),
+        ( "C3OutFrames", c3outframes ),
+        ( "C3InOctets", c3inoctets ),
+        ( "C3OutOctets", c3outoctets ),
+        ( "C3Discards", c3discards ),
+      ]
+      if adminstatus == params["adminstatus"] and operstatus == params["operstatus"]:
+        return (0, "OK - %s" % msg_text, perfdata)
+      elif adminstatus == "1" and operstatus == "1":
+        return (1, "WARN - State Change - %s" % msg_text, perfdata)
       else:
-        return (2, "CRITICAL - %s" % msg_text)
+        return (2, "CRITICAL - %s" % msg_text, perfdata)
   return (3, "UNKNOWN - Port info not found")
 
 check_info["fc_port"] = check_info["fc_port"] = {
     "inventory_function"       : inventory_fc_port,
     "check_function"           : check_fc_port,
-    "has_perfdata"             : False,
+    "has_perfdata"             : True,
     "service_description"      : "FC Port %s",
     "default_levels_variable"  : "fc_port_default_levels",
     "includes"                 : [ "fc.include" ],
 }
-      (check_fc_port, "FC Port %s", 0, inventory_fc_port)
 
 snmp_info["fc_port"] = \
 	( ".1.3.6.1.2.1.75.1", [
