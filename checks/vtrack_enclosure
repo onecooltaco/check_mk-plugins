@@ -28,24 +28,32 @@
 # --------------------------------------------------------------------------------
 # 1. Promise VTrack Enclosure status
 
+factory_settings["vtrack_enclosure_default_levels"] = {
+    "allowed_status" : ["OK"],
+}
+
 def inventory_vtrack_enclosure(checkname, info):
   inventory = []
   for index, descrip, status, message in info:
-    if 'VTrak' in descrip:
-      inventory.append( (descrip, None) )
+    inventory.append((index, {}))
   return inventory
 
-def check_vtrack_enclosure(item, _no_params, info):
+def check_vtrack_enclosure(item, params, info):
   for index, descrip, status, message in info:
-    if descrip == item:
-      if status == "OK":
-        return (0, "OK - " + message)
+    if index == item:
+      if status in params["allowed_status"]:
+        return (0, "%s - %s, %s" % (status, message, descrip))
       else:
-        return (2, "CRITICAL - " + message)
+        return (2, "CRITICAL - %s - %s, %s" % (status, message, descrip))
   return (3, "UNKNOWN - Enclosure not found")
 
-check_info["vtrack_enclosure"] = \
-      (check_vtrack_enclosure, "%s", 0, inventory_vtrack_enclosure)
+check_info["vtrack_enclosure"] = {
+    "inventory_function"       : inventory_vtrack_enclosure,
+    "check_function"           : check_vtrack_enclosure,
+    "has_perfdata"             : False,
+    "service_description"      : "Enclosure %s",
+    "default_levels_variable"  : "vtrack_enclosure_default_levels",
+}
 
 snmp_info["vtrack_enclosure"] = \
 	( ".1.3.6.1.4.1.7933.1.20.1.10.1", [
@@ -54,5 +62,6 @@ snmp_info["vtrack_enclosure"] = \
 		"3",	# raidv4EnclosureStatus
 		"4",	# raidv4EnclosureStatusDescription
 	] )
+
 snmp_scan_functions['vtrack_enclosure'] = \
-  lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")
+    lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")

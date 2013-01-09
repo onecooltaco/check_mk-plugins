@@ -28,66 +28,80 @@
 # --------------------------------------------------------------------------------
 # 1. Promise VTrack chassis status
 
+factory_settings["vtrack_chassis_default_levels"] = {
+    "allowed_status" : ["OK"],
+    "allowed_ready" : ["Active"],
+}
+
+def vtrack_chassis_scsiname(st):
+    names = { '0': "unknown", '1': "other", '2': "scsi-2", '3': "scsi-3" }
+    return names.get(st, st)
+
+def vtrack_chassis_rolename(st):
+    names = { '-1': "na", '1': "primary", '2': "secondary" }
+    return names.get(st, st)
+
 def inventory_vtrack_chassis(checkname, info):
    inventory = []
-   for role, status, readiness, present, offline, pfa, rebuilding, missing, unconfigured, hours, cachedirty, cacheused in info:
-     if readiness == "Active":
-       inventory.append( (role, None) )
+   for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, lcrit, hours, cachedirty, cacheused, ldrvdegraded in info:
+     if scsi in ["2", "3"]:
+       inventory.append( (index, {}) )
    return inventory
 
-def check_vtrack_chassis(item, _no_params, info):
-  crit = 'NO'
-  warn = 'NO'
-  str_list = []
-  for role, status, readiness, present, offline, pfa, rebuilding, missing, unconfigured, hours, cachedirty, cacheused in info:
-    if role == item:
-      str_list.append(status)
-      str_list.append(readiness)
-      if offline != '0':
-        crit = 'YES'
-        str_list.append(offline + "/" + present + " offline")
+def check_vtrack_chassis(item, params, info):
+  for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, crit, hours, cachedirty, cacheused, ldrvdegraded in info:
+    crit = False
+    warn = False
+    str_list = []
+    if index == item:
+      str_list.append("%s and %s" % (ops, readiness))
+      if poffline != '0':
+        crit = True
+        str_list.append("%s/%s offline" % (poffline, pdrives))
 
       if pfa != '0':
-        crit = 'YES'
-        str_list.append(pfa + "/" + present + " Predictive Failure Analysis (PFA)")
+        crit = True
+        str_list.append("%s/%s Predictive Failure Analysis (PFA)" % (pfa, pdrives))
 
       if rebuilding != '0':
-        warn = 'YES'
-        str_list.append(rebuilding + "/" + present + " rebuilding")
+        warn = True
+        str_list.append("%s/%s rebuilding" % (rebuilding, pdrives))
 
       if missing != '0':
-        crit = 'YES'
-        str_list.append(missing + "/" + present + " missing")
+        crit = True
+        str_list.append("%s/%s missing" % (missing, pdrives))
 
       if unconfigured != '0':
-        warn = 'YES'
-        str_list.append(unconfigured + "/" + present + " unconfigured")
+        warn = True
+        str_list.append("%s/%s unconfigured" % (unconfigured, pdrives))
 
-      out_str = ', '.join(str_list)
+      out_str = ' '.join(str_list)
       perfdata = [ ( "PowerOnHours", hours),("DirtyCachePercentage",cachedirty,"","",0,100),("CacheUsagePercentage",cacheused,"","",0,100) ]
-      if crit != 'NO':
-        return (2, "CRITICAL - " + out_str,perfdata)
-      elif warn != 'NO':
-        return (1, "WARN - " + out_str,perfdata)
-      elif status == "OK" and readiness == "Active":
-        return (0, "OK - looks good - " + out_str,perfdata)
+      if crit:
+        return (2, "CRITICAL - %s" % out_str, perfdata)
+      elif warn:
+        return (1, "WARN - %s" % out_str, perfdata)
+#      elif ops == "OK" and readiness == "Active":
+      else:
+        return (0, "OK - %s" % out_str, perfdata)
 
   return (3, "UNKNOWN - info not found")
 
-check_info["vtrack_chassis"] = \
-      (check_vtrack_chassis, "Array %s", 1, inventory_vtrack_chassis)
+check_info["vtrack_chassis"] = {
+    "inventory_function"       : inventory_vtrack_chassis,
+    "check_function"           : check_vtrack_chassis,
+    "has_perfdata"             : True,
+    "service_description"      : "Array %s",
+    "default_levels_variable"  : "vtrack_chassis_default_levels",
+}
 
 snmp_info["vtrack_chassis"] = \
 	( ".1.3.6.1.4.1.7933.1.20.1.3.1", [
 		"1",	# raidv4CtrlIndex
-		"3",	# raidv4CtrlWWN
-		"6",	# raidv4CtrlPartNumber
 		"7",	# raidv4CtrlSerialNumber
-		"8",	# raidv4CtrlRevision
 		"10",	# raidv4CtrlSCSIProtocol	Values: unknown(0), other(1), scsi-2(2), scsi-3(3)
 		"12",	# raidv4CtrlBootLoaderRev
 		"13",	# raidv4CtrlFirmwareRev
-		"14",	# raidv4CtrlSoftwareRev
 		"15",	# raidv4CtrlOpStatus
 		"16",	# raidv4CtrlRole			Values: na(-1), primary(1), secondary(0)
 		"17",	# raidv4CtrlReadinessStatus
@@ -103,17 +117,11 @@ snmp_info["vtrack_chassis"] = \
 		"27",	# raidv4CtrlNumOfLogDrvOnline
 		"28",	# raidv4CtrlNumOfLogDrvOffline
 		"29",	# raidv4CtrlNumOfLogDrvCritical
-		"30",	# raidv4CtrlNumOfGlobalSparePresent
-		"31",	# raidv4CtrlNumOfDedicateSparePresent
-		"32",	# raidv4CtrlNumOfRevertibleGlobalSparePresent
-		"33",	# raidv4CtrlNumOfRevertibleGlobalSpareUsed
-		"34",	# raidv4CtrlNumOfRevertibleDedicatedSparePresent
-		"35",	# raidv4CtrlNumOfRevertibleDedicatedSpareUsed
-		"36",	# raidv4CtrlNumOfBGAs
 		"37",	# raidv4CtrlPowerOnHours
 		"38",	# raidv4CtrlDirtyCachePercentage	Values: na(-1)
 		"39",	# raidv4CtrlCacheUsagePercentage	Values: na(-1)
 		"64",	# raidv4CtrlNumOfLogDrvDegraded
 	] )
+
 snmp_scan_functions['vtrack_chassis'] = \
-  lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")
+    lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")

@@ -28,58 +28,63 @@
 # --------------------------------------------------------------------------------
 # 1. Promise VTrack base info
 
+factory_settings["vtrack_info_default_levels"] = {
+    "allowed_redundancy" : ["1"],
+}
+
 def vtrack_info_typename(st):
     names = { '0': "hba", '1': "subsys" }
     return names.get(st, st)
-def vtrack_info_rstatusname(st):
+def vtrack_info_redundancyname(st):
     names = { '0': "not-redundant", '1': "redundant", '2': "critical", '3': "not-supported" }
     return names.get(st, st)
-def vtrack_info_connectiontypename(st):
+def vtrack_info_connectname(st):
     names = { '0': "not-supported", '1': "sas" }
     return names.get(st, st)
-def vtrack_info_interfacetypename(st):
-    names = { '0': "unknown", '1': "pci", '2': "iscsi", '3': "fc", '4': "scsi", '5': "sas" }
-    return names.get(st, st)
-def vtrack_info_rtypename(st):
-    names = { '0': "na", '1': "active-active", '2': "active-standby", '3': "not-supported" }
-    return names.get(st, st)
-def vtrack_info_mirroringname(st):
-    names = { '0': "na", '1': "true", '2': "not-supported", '3': "false" }
+def vtrack_info_interfacename(st):
+    names = { '0': "unknown", '1': "pci", '2': "iscsi", '3': "fibre channel", '4': "scsi", '5': "sas" }
     return names.get(st, st)
 
 def inventory_vtrack_info(checkname, info):
   inventory = []
-  for index, type, descrip, id, time, rstatus, controllers, connection, enclosures, interface, rtype, mirroring in info:
-    if 'VTrak' in descrip and controllers >= "1":
-      inventory.append( (descrip, None) )
+  for index, type, descrip, time, redundant, controllers, connection, enclosures, interface in info:
+    iname = "%s.%s" % (vtrack_info_typename(type),index)
+    inventory.append( (iname, {}) )
   return inventory
 
-def check_vtrack_info(item, _no_params, info):
-  for index, type, descrip, id, time, rstatus, controllers, connection, enclosures, interface, rtype, mirroring in info:
-    if descrip == item:
-      if redundant == "1":
-        return (0, "OK - Controller is redundant")
-    else:
-      return (2, "CRITICAL - Controller is " + redundant)
+def check_vtrack_info(item, params, info):
+  for index, type, descrip, time, redundant, controllers, connection, enclosures, interface in info:
+    iname = "%s.%s" % (vtrack_info_typename(type),index)
+    if iname == item:
+      msg = "%s %s is %s, %s controllers in %s enclosures" % ( vtrack_info_interfacename(interface), vtrack_info_connectname(connection), vtrack_info_redundancyname(redundant), controllers, enclosures )
+      if redundant in params["allowed_redundancy"]:
+        return (0, "OK - %s" % msg)
+      elif redundant == "2":
+        return (2, "CRITICAL - %s" % msg)
+      else:
+        return (1, "WARN - %s" % msg)
   return (3, "UNKNOWN - Controller not found")
 
-check_info["vtrack_info"] = \
-      (check_vtrack_info, "%s", 0, inventory_vtrack_info)
+check_info["vtrack_info"] = {
+    "inventory_function"       : inventory_vtrack_info,
+    "check_function"           : check_vtrack_info,
+    "has_perfdata"             : False,
+    "service_description"      : "%s",
+    "default_levels_variable"  : "vtrack_info_default_levels",
+}
 
 snmp_info["vtrack_info"] = \
 	( ".1.3.6.1.4.1.7933.1.20.1.1.1", [
 		"1",	# raidv4InstanceIndex
 		"2",	# raidv4InstanceType				Values: hba(0), subsys(1)
 		"3",	# raidv4InstanceDescription
-		"4",	# raidv4InstanceIdentification
 		"5",	# raidv4InstanceTime
 		"6",	# raidv4InstanceRedundancyStatus	Values: not-redundant(0), redundant(1), critical(2), not-supported(255)
 		"7",	# raidv4InstanceNumOfControllersPresent
 		"8",	# raidv4InstanceInterConnectionType	Values: not-supported(0), sas(1)
 		"9",	# raidv4InstanceNumOfEnclosuresPresent
 		"10",	# raidv4InstanceHostInterfaceType	Values: unknown(0), pci(1), iscsi(2), fc(3), scsi(4), sas(5)
-		"11",	# raidv4InstanceRedundancyType		Values: na(0), active-active(1), active-standby(2), not-supported(255)
-		"12",	# raidv4InstanceCacheMirroringEnabled	Values: na(0), true(1), not-supported(2), false(3)
 	] )
+
 snmp_scan_functions['vtrack_info'] = \
-  lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")
+    lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")
