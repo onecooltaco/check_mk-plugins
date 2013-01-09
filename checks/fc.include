@@ -28,31 +28,9 @@
 # --------------------------------------------------------------------------------
 # Functions and definitions used by fc checks
 
-fc_inventory_pad_numbers = True
-
 def fc_hex2string(hexcode):
 	return '.'.join(str(x) for x in (ord(byte) for byte in hexcode))
 
 def fc_statusname(st):
     names = { '1': "online", '2': "offline", '3': "testing", '4': "failed" }
     return names.get(st, st)
-
-# Pads port numbers with zeroes, so that items
-# nicely sort alphabetically
-# taken from if.include
-def fc_pad_with_zeroes(info, fcIndex):
-  if fc_inventory_pad_numbers:
-    max_index = max([int(line[0]) for line in info])
-    digits = len(str(max_index))
-    return ("%0"+str(digits)+"d") % int(fcIndex)
-  else:
-    return fcIndex
-
-# We do not want to use the end OID as item since it is ugly.
-def fc_unitid_genitem(item,list):
-    # decide oid is in list, if not append, return index plus 1 for human readability.
-    if item in list:
-        return list.index(item) + 1
-    else:
-        list.append(item)
-        return list.index(item) + 1

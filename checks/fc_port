@@ -39,7 +39,10 @@
 # .1.3.6.1.2.1.75.1.4.1.1	fcFxPortC1AccountingTable
 # .1.3.6.1.2.1.75.1.4.2.1	fcFxPortC2AccountingTable
 # .1.3.6.1.2.1.75.1.4.3.1	fcFxPortC3AccountingTable
-factory_settings["fc_port_default_levels"] = {}
+
+factory_settings["fc_port_default_levels"] = {
+    "allowed_states" : [ "1", "2", "3" ],
+}
 
 def fc_opermode(st):
     names = {'1': "unknown", '2': "fPort", '3': "flPort" }
@@ -51,12 +54,12 @@ def inventory_fc_port(checkname, info):
     linkfailures, synclosses, primseqprotoerrors, invalidtxwords,\
     invalidcrcs, addressiderrors, linkresetins, linkresetouts, olsins,\
     olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards in info:
-    if opermode in ["1","2","3",]:
-      inventory.append((fc_hex2string(id), {"opermode": opermode, "adminstatus": adminstatus,\
-        "operstatus": operstatus, "rxtimeout": physrttov}))
+    if opermode in [ "1", "2", "3" ]:
+      iname = fc_hex2string(id)
+      inventory.append((iname,{"opermode": opermode,"adminstatus": adminstatus,"operstatus": operstatus,"rxtimeout": physrttov}))
   return inventory
 
-def check_fc_port(item, _no_params, info):
+def check_fc_port(item, params, info):
   for id, opermode, adminstatus, operstatus, physrttov,\
     linkfailures, synclosses, primseqprotoerrors, invalidtxwords,\
     invalidcrcs, addressiderrors, linkresetins, linkresetouts, olsins,\
@@ -88,7 +91,7 @@ def check_fc_port(item, _no_params, info):
         return (2, "CRITICAL - %s" % msg_text, perfdata)
   return (3, "UNKNOWN - Port info not found")
 
-check_info["fc_port"] = check_info["fc_port"] = {
+check_info["fc_port"] = {
     "inventory_function"       : inventory_fc_port,
     "check_function"           : check_fc_port,
     "has_perfdata"             : True,
@@ -99,11 +102,10 @@ check_info["fc_port"] = check_info["fc_port"] = {
 
 snmp_info["fc_port"] = \
 	( ".1.3.6.1.2.1.75.1", [
-		"1.5.1.2",	# fcFxPortName					Hex-STRING
 		"2.1.1.1",	# fcFxPortID					Hex-STRING
 		"2.1.1.3",	# fcFxPortOperMode				Values: unknown(1), fPort(2), flPort(3)
 		"2.2.1.1",	# fcFxPortPhysAdminStatus		Values: online(1), offline(2), testing(3)
-		"2.2.1.2",	# fcFxPortPhysOperStatus		Values: online(1), offline(2),\
+		"2.2.1.2",	# fcFxPortPhysOperStatus		Values: online(1), offline(2),
 					#								testing(3), linkFailure(4)
 		"2.2.1.4",	# fcFxPortPhysRttov				Gauge32
 		"3.1.1.1",	# fcFxPortLinkFailures			Gauge32
@@ -124,4 +126,4 @@ snmp_info["fc_port"] = \
 	] )
 
 snmp_scan_functions['fc_port'] = \
-  lambda oid: oid(".1.3.6.1.2.1.75.1.1.1.0") != None
+    lambda oid: oid(".1.3.6.1.2.1.75.1.1.1.0") != None

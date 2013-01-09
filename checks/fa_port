@@ -121,4 +121,4 @@ snmp_info["fa_port"] = \
 	] )
 
 snmp_scan_functions['fa_port'] = \
-  lambda oid: oid(".1.3.6.1.3.94.1.1.0") != None
+    lambda oid: oid(".1.3.6.1.3.94.1.1.0") != None
