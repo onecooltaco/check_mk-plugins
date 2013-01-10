@@ -65,7 +65,7 @@ def check_fc_port(item, params, info):
     invalidcrcs, addressiderrors, linkresetins, linkresetouts, olsins,\
     olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards in info:
     if fc_hex2string(id) == item:
-      msg_text = "%s and %s - %s" % (fc_statusname(operstatus),fc_statusname(adminstatus),fc_opermode(opermode))
+      msg_text = "%s / %s / %s" % (fc_statusname(operstatus),fc_statusname(adminstatus),fc_opermode(opermode))
       perfdata = [
         ( "LinkFailures", linkfailures ),             # no levels, no range
         ( "SyncLosses", synclosses ),
@@ -84,7 +84,7 @@ def check_fc_port(item, params, info):
         ( "C3Discards", c3discards ),
       ]
       if adminstatus == params["adminstatus"] and operstatus == params["operstatus"]:
-        return (0, "OK - %s" % msg_text, perfdata)
+        return (0, "OK - as expected %s" % msg_text, perfdata)
       elif adminstatus == "1" and operstatus == "1":
         return (1, "WARN - State Change - %s" % msg_text, perfdata)
       else:

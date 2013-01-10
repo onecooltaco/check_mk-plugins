@@ -26,18 +26,21 @@
 
 # Author: Jeremy Leggat <jleggat@asu.edu>
 
+factory_settings["xsan_fsm_default_levels"] = {
+    "allowed_states" : ["REGISTERED"],
+}
+
 def inventory_xsan_fsm(checkname, info):
   inventory = []
   for line in info:
-    vol = line[1]
-    field = line[0]
-    if field == "fsm":
-      inventory.append( (vol, "", None) )
+    if line[0] == "fsm":
+      vol = line[1]
+      inventory.append((vol, {}))
   return inventory
 
 def check_xsan_fsm(item, params, info):
   for line in info:
-    if line[1] == item and line[0] == "fsm":
+    if line[0] == "fsm" and line[1] == item:
       pid = int(line[3])
       port = int(line[4])
       state = line[5]
@@ -45,48 +48,175 @@ def check_xsan_fsm(item, params, info):
       coredumps = int(line[9])
       master = line[11]
 
-  perfdata = [ ( "launch_count", launchcounts ), ( "core_dumps", coredumps ) ]
-  if state != "REGISTERED":
-    return (2, "CRITICAL - %s" % state, perfdata)
-  else:
-    return (0, "OK - %s" % state, perfdata)
+      perfdata = [ ( "launch_count", launchcounts ), ( "core_dumps", coredumps ) ]
+      if state in params["allowed_states"]:
+        return (0, "OK - %s" % state, perfdata)
+      else:
+        return (2, "CRITICAL - %s" % state, perfdata)
   return (3, "UNKNOWN - Vol %s not found in agent output" % item)
 
-check_info['xsan.fsm'] = \
-  (check_xsan_fsm, "XSAN Vol %s", 1, inventory_xsan_fsm)
+check_info['xsan.fsm'] = {
+    "inventory_function"       : inventory_xsan_fsm,
+    "check_function"           : check_xsan_fsm,
+    "has_perfdata"             : True,
+    "service_description"      : "XSAN Vol %s",
+    "default_levels_variable"  : "xsan_fsm_default_levels",
+}
+
+## XSAN Status
+
+factory_settings["xsan_stats_default_levels"] = {
+  "crit" : 20,
+  "warn" : 30,
+}
 
 def inventory_xsan_stats(checkname, info):
   inventory = []
   for line in info:
-    vol = line[1]
-    field = line[0]
-    if field == "stats":
-      inventory.append( (vol, "", None) )
+    if line[0] == "stats":
+      vol = line[1]
+      inventory.append((vol, {}))
+
   return inventory
 
 def check_xsan_stats(item, params, info):
   for line in info:
-    if line[1] == item and line[0] == "stats":
+    if line[0] == "stats" and line[1] == item:
       blocksize = line[7]
       msg_buffer = line[8]
-      disks = int(line[9])
-      stripe_groups = int(line[10])
-      blocks = int(line[11])
-      blocks_nice = float(line[12])
+      disks = line[9]
+      stripe_groups = line[10]
+      blocks = line[11]
+      blocks_nice = line[12]
       blocks_units = line[13]
       blocks_free = int(line[14])
-      blocks_free_nice = float(line[15])
+      blocks_free_nice = line[15]
       blocks_free_unit = line[16]
       blocks_free_percent = int(line[17])
 
-  perfdata = [ ( "percent_blocks_free", blocks_free_percent ), ( "blocks_free", blocks_free ) ]
-  if blocks_free_percent < 20:
-    return (2, "CRITICAL - %d%%" % blocks_free_percent, perfdata)
-  elif blocks_free_percent < 25:
-    return (1, "WARNING - %d%%" % blocks_free_percent, perfdata)
-  else:
-    return (0, "OK - %d%%" % blocks_free_percent, perfdata)
+      perfdata = [ ("percent_blocks_free", blocks_free_percent, "", "", 0, 100), ("blocks_free", blocks_free) ]
+      if blocks_free_percent < params["crit"]:
+        return (2, "CRITICAL - %d%% free" % blocks_free_percent, perfdata)
+      elif blocks_free_percent < params["warn"]:
+        return (1, "WARNING - %d%% free" % blocks_free_percent, perfdata)
+      else:
+        return (0, "OK - %d%% free" % blocks_free_percent, perfdata)
+
   return (3, "UNKNOWN - Vol %s not found in agent output" % item)
 
-check_info['xsan.stats'] = \
-  (check_xsan_stats, "XSAN Stats %s", 1, inventory_xsan_stats)
+check_info['xsan.stats'] = {
+  "inventory_function"       : inventory_xsan_stats,
+  "check_function"           : check_xsan_stats,
+  "has_perfdata"             : True,
+  "service_description"      : "XSAN Stats %s",
+  "default_levels_variable"  : "xsan_stats_default_levels",
+}
+
+## XSAN Stripe Groups
+
+factory_settings["xsan_stripe_default_levels"] = {
+    "allowed_status" : ["Up"],
+}
+
+def inventory_xsan_stripe(checkname, info):
+  inventory = []
+  for line in info:
+    if line[0] == "stripe":
+      vol = line[1]
+      index = line[2]
+      name = "%s.%s" % (vol, index)
+      inventory.append((name, {"status": line[4]}))
+
+  return inventory
+
+def check_xsan_stripe(item, params, info):
+  for line in info:
+    if line[0] == "stripe":
+      vol = line[1]
+      index = line[2]
+      name = "%s.%s" % (vol, index)
+      if name == item:
+        title = line[3]
+        status = line[4]
+        if status == params["status"]:
+          return (0, "OK - %s is %s" % (title,status))
+        else:
+          return (2, "CRITICAL - %s is %s" % (title,status))
+
+  return (3, "UNKNOWN - %s not found in agent output" % item)
+
+check_info['xsan.stripe'] = {
+  "inventory_function"       : inventory_xsan_stripe,
+  "check_function"           : check_xsan_stripe,
+  "has_perfdata"             : False,
+  "service_description"      : "XSAN Stripe Group %s",
+  "default_levels_variable"  : "xsan_stripe_default_levels",
+}
+
+## XSAN Paths
+
+factory_settings["xsan_paths_default_levels"] = {
+    "allowed_status" : ["Available"],
+}
+
+def inventory_xsan_paths(checkname, info):
+  inventory = []
+  for chk, vol, dev, hba, ctl, lun, state, controller in info:
+    if chk == "paths" and len(info[0]) == 8:
+      inventory.append((vol, {"disk": dev, "hba": hba, "ctl": ctl, "lun": lun, "state": state}))
+
+  return inventory
+
+def check_xsan_paths(item, params, info):
+  for chk, vol, dev, hba, ctl, lun, state, controller in info:
+    if line[0] == "paths" and line[2] == item:
+      disk = line[3]
+      status = line[7]
+
+      if disk == params["disk"] and status in params["allowed_status"]:
+        return (0, "OK - %s is %s" % (disk, status))
+      else:
+        return (2, "CRITICAL - %s is %s" % (disk, status))
+
+  return (3, "UNKNOWN - Path %s not found in agent output" % item)
+
+check_info['xsan.paths'] = {
+  "inventory_function"       : inventory_xsan_paths,
+  "check_function"           : check_xsan_paths,
+  "has_perfdata"             : False,
+  "service_description"      : "XSAN Path %s",
+  "default_levels_variable"  : "xsan_paths_default_levels",
+}
+
+## XSAN Disks
+factory_settings["xsan_disks_default_levels"] = {
+  "crit" : 20,
+}
+
+def inventory_xsan_disks(checkname, info):
+  inventory = []
+  for chk, vol, device, sectors, sect_size in info:
+    if chk == "disks" and len(info[0]) == 5:
+      inventory.append((vol,{"device": device,"sectors": sectors,"sect_size": sect_size}))
+  return inventory
+
+def check_xsan_disks(item, params, info):
+  for chk, vol, device, sectors, sect_size in info:
+    if chk == "disks" and vol:
+
+      if device != params["device"]:
+        return (2, "CRITICAL - %s changed from %s" % (device, params["device"]))
+      elif (sectors, sect_size) != (params["sectors"], params["sect_size"]):
+        return (1, "WARNING - %s sectors / %s sector size changed from  %s sectors / %s sector size" % (sectors, sect_size, params["sectors"], params["sect_size"]))
+      else:
+        return (0, "OK - %s / %s sectors / %s" % (device, sectors, sect_size))
+
+  return (3, "UNKNOWN - Disk %s not found in agent output" % item)
+
+check_info['xsan.disks'] = {
+  "inventory_function"       : inventory_xsan_disks,
+  "check_function"           : check_xsan_disks,
+  "has_perfdata"             : False,
+  "service_description"      : "XSAN Stats %s",
+  "default_levels_variable"  : "xsan_disks_default_levels",
+}

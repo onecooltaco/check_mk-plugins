@@ -30,6 +30,7 @@
 # Tracks port state and speed on compatable fibre switches
 # Polls oid .1.3.6.1.3.94.1.10 , FCMGMT-MIB::connUnitPortTable
 # "Generic information on ports for a specific connUnit."
+
 factory_settings["fa_port_default_levels"] = {
     "allowed_states" : [ 2, 3, ],
 }
@@ -64,7 +65,6 @@ def fa_port_modulename(st):
             '9': "smallFormFactor" }
     return names.get(st, st)
 
-
 def inventory_fa_port(checkname, info):
   inventory = []
   uidlist = []
@@ -81,7 +81,7 @@ def check_fa_port(item, params, info):
       statename = fa_port_statename(state)
       statusname = fa_port_statusname(status)
       hwstatename = fa_port_hwstatename(hwstate)
-      msg_text = "%s and %s %s" % (statename, statusname, hwstatename,)
+      msg_text = "%s / %s / %s" % (statename, statusname, hwstatename,)
       if (state, status, hwstate) != (params["state"], params["status"], params["hwstate"]):
         if state == "3" or status == "5" or hwstatename == "2":
           return (2, "CRITICAL - %s" % (msg_text))

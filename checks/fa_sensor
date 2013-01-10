@@ -29,6 +29,7 @@
 # 1. Fibre Alliance sensor info
 # Polls the .1.3.6.1.3.94.1.8.1 oid, FCMGMT-MIB::connUnitSensorEntry
 # "Each entry contains the information for a specific sensor."
+
 factory_settings["fa_sensor_default_levels"] = {
     "allowed_states" : [ 3, 4, 5, ],
 }

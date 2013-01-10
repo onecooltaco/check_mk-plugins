@@ -46,8 +46,8 @@ def parse_stat(key):
       attribs.append(v)
   print "\t".join(attribs)
 
-def parse_paths(key):
-  cmd = "/usr/sbin/cvadmin -F %s -e paths" % (key)
+def parse_paths():
+  cmd = "/usr/sbin/cvadmin -e paths"
   procs = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
   paths_list = procs.communicate()
   for groups in paths_list[0].split("\n\n"):
@@ -58,20 +58,20 @@ def parse_paths(key):
         match = re.search("(?x)(\w+)\s+on.device:.(\wdisk\d+)\s+hba:.(\d+)\sctl:.(\d+)\slun:.(\d+)\sstate:.(\w+)",line)
         if match:
           attribs = ['paths']
-          attribs.append(key)
+#          attribs.append(key)
           for x in match.groups(): attribs.append(x)
           attribs.append(con)
           print "\t".join((attribs))
 
-def parse_disks(key):
-  cmd = "/usr/sbin/cvadmin -F %s -e disks" % (key)
+def parse_disks():
+  cmd = "/usr/sbin/cvadmin -e disks"
   procs = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
   disks_list = procs.communicate()
   for line in disks_list[0].split("\n"):
     match = re.search("^(\w+)\s+on device:(\wdisk\d+)\ssectors: (\d+)\s+sector size: (\d+)",line)
     if match:
       attribs = ['disks']
-      attribs.append(key)
+#      attribs.append(key)
       for x in match.groups(): attribs.append(x)
       print "\t".join((attribs))
 
@@ -80,11 +80,14 @@ process = subprocess.Popen(fsm_cmd, shell=True, stdout=subprocess.PIPE)
 fsmlist = process.communicate()
 
 fsm_dict = get_fsm(fsmlist[0])
+
 if fsm_dict:
   print '<<<xsan>>>'
+
 for key in fsm_dict:
   print 'fsm\t' + key + "\t" + "\t".join(fsm_dict[key])
   parse_stat(key)
   parse_show(key)
-  parse_paths(key)
-  parse_disks(key)
+
+parse_paths()
+parse_disks()

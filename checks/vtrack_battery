@@ -30,6 +30,7 @@
 
 factory_settings["vtrack_battery_default_levels"] = {
     "allowed_status" : ["Charging", "FullyCharged"],
+    "warn_status" : ["Recondition"],
 }
 
 def vtrack_battery_celltypename(st):
@@ -51,9 +52,11 @@ def check_vtrack_battery(item, params, info):
     if index == item:
       perfdata = [ ("Temperature",temperature,chargethreshold,dischargethreshold),("RemainCapacity",capacity,"","",0,100),("Voltage",voltage),("CycleCount",cyclecount)]
       if status in params["allowed_status"]:
-        return (0, "OK - %s - %sC %s%% remaining seconds %s %s" % (status,temperature,capacity,vtrack_battery_celltypename(cells),chemistry),perfdata)
+        return (0, "OK - %s - %sC %s%% remaining %s %s" % (status,temperature,capacity,vtrack_battery_celltypename(cells),chemistry),perfdata)
+      elif status in params["warn_status"]:
+        return (1, "WARN - %s - %sC %s%% remaining %s %s" % (status,temperature,capacity,vtrack_battery_celltypename(cells),chemistry),perfdata)
       else:
-        return (2, "CRITICAL - %s%% - %sC %s remaining %s %s" % (status,temperature,capacity,vtrack_battery_celltypename(cells),chemistry),perfdata)
+        return (2, "CRITICAL - %s - %sC %s%% remaining %s %s" % (status,temperature,capacity,vtrack_battery_celltypename(cells),chemistry),perfdata)
   return (3, "UNKNOWN - Battery not found")
 
 check_info["vtrack_battery"] = {

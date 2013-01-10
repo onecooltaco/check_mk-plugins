@@ -36,10 +36,10 @@ def inventory_vtrack_voltage(checkname, info):
   inventory = []
   for index, voltage in info:
     if 'V' in voltage:
-      inventory.append( (index, None) )
+      inventory.append( (index, {}) )
   return inventory
 
-def check_vtrack_voltage(item, _no_params, info):
+def check_vtrack_voltage(item, params, info):
   for index, voltage in info:
     if index == item:
       perfdata = [ ( "Voltage", voltage.replace("V", "")) ]

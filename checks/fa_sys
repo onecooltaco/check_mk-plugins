@@ -66,7 +66,7 @@ def check_fa_sys(item, params, info):
             named_status = fa_sys_statusname(status)
             perfdata = [ ( "uptime", uptime ) ]
             if state in params["allowed_states"] and status in params["allowed_status"]:
-                return (0, "OK - %s and %s - %s" % (named_state, named_status, unit_text), perfdata)
+                return (0, "OK - as expected %s / %s - %s" % (named_state, named_status, unit_text), perfdata)
             elif status in params["warn_status"]:
                 return (1, "WARNING - State %s Status %s - %s" % (named_state, named_status, unit_text), perfdata)
             else:
