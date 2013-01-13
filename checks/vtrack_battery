@@ -30,7 +30,8 @@
 
 factory_settings["vtrack_battery_default_levels"] = {
     "allowed_status" : ["Charging", "FullyCharged"],
-    "warn_status" : ["Recondition"],
+    "capacity_crit" : 0,
+    "holdtime_crit" : 0,
 }
 
 def vtrack_battery_celltypename(st):
@@ -50,14 +51,17 @@ def inventory_vtrack_battery(checkname, info):
 def check_vtrack_battery(item, params, info):
   for index, chemistry, temperature, chargethreshold, dischargethreshold, cyclecount, capacity, voltage, current, status, cells, holdtime in info:
     if index == item:
-      perfdata = [ ("Temperature",temperature,chargethreshold,dischargethreshold),("RemainCapacity",capacity,"","",0,100),("Voltage",voltage),("CycleCount",cyclecount)]
-      if status in params["allowed_status"]:
-        return (0, "OK - %s - %sC %s%% remaining %s %s" % (status,temperature,capacity,vtrack_battery_celltypename(cells),chemistry),perfdata)
-      elif status in params["warn_status"]:
-        return (1, "WARN - %s - %sC %s%% remaining %s %s" % (status,temperature,capacity,vtrack_battery_celltypename(cells),chemistry),perfdata)
+      msg_txt = "%s%% remaining %s holdtime - %s %sC %s %s" % (capacity,holdtime,status,temperature,vtrack_battery_celltypename(cells),chemistry)
+      perfdata = [ ("Temperature",temperature,chargethreshold,dischargethreshold),("RemainCapacity",int(capacity),"","",0,100),("Voltage",voltage),("CycleCount",cyclecount)]
+      if int(capacity) > params["capacity_crit"] and int(holdtime) > params["holdtime_crit"]:
+        if status in params["allowed_status"]:
+          return (0, "OK - %s" % msg_txt,perfdata)
+        else:
+          return (1, "WARN - %s" % msg_txt,perfdata)
       else:
-        return (2, "CRITICAL - %s - %sC %s%% remaining %s %s" % (status,temperature,capacity,vtrack_battery_celltypename(cells),chemistry),perfdata)
-  return (3, "UNKNOWN - Battery not found")
+        return (2, "CRITICAL - %s" % msg_txt,perfdata)
+
+  return (3, "UNKNOWN - Battery %s not found" % item)
 
 check_info["vtrack_battery"] = {
     "inventory_function"       : inventory_vtrack_battery,
