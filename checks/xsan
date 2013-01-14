@@ -26,6 +26,38 @@
 
 # Author: Jeremy Leggat <jleggat@asu.edu>
 
+# Example for output from agent
+# ------------------------------------------------------------
+# <<<xsan>>>
+# fsm	VOL	1	50129	1389	0	REGISTERED	1357924077.0	2	0	CONFIGURED,AUTO-START	START	1357924076.	exit(0)	1357924075.0
+# stats	VOL	1220157291.0	40	16K	4K	17	5	4394520320 65.48 TB	2158561905 32.17 TB 49
+# stripe	VOL	0	MetadataAndJournal	Up,MetaData,Journal,Exclusive	45775744	0	45688461	99
+# stripe	VOL	1	Video-1	Up	1098630080	270720	540371843	49
+# stripe	VOL	2	Video-2	Up	1098630080	270720	538981361	49
+# stripe	VOL	3	Video-3	Up	1098630080	270720	540286197	49
+# stripe	VOL	4	Video-4	Up	1098630080	270720	538922504	49
+# paths		PLY_1	rdisk16	1	0	1	Available	default
+# paths		PLY_2	rdisk22	1	0	2	Available	default
+# paths		PLY_MDJ	rdisk4	1	0	0	Available	default
+# paths		VTRAK0101	rdisk8	2	0	1	Available	default
+# paths		VTRAK0102	rdisk9	1	0	2	Available	default
+# paths		VTRAK0103	rdisk18	2	0	3	Available	default
+# paths		VTRAK0104	rdisk17	1	0	4	Available	default
+# paths		VTRAK0201	rdisk2	1	0	0	Available	default
+# paths		VTRAK0202	rdisk12	2	0	1	Available	default
+# paths		VTRAK0203	rdisk15	1	0	2	Available	default
+# paths		VTRAK0204	rdisk20	2	0	3	Available	default
+# paths		VTRAK0301	rdisk1	1	0	0	Available	default
+# paths		VTRAK0302	rdisk14	2	0	1	Available	default
+# paths		VTRAK0303	rdisk10	1	0	2	Available	default
+# paths		VTRAK0304	rdisk19	2	0	3	Available	default
+# paths		VTRAK0401	rdisk0	1	0	0	Available	default
+# paths		VTRAK0402	rdisk11	2	0	1	Available	default
+# paths		VTRAK0403	rdisk13	1	0	2	Available	default
+# paths		VTRAK0404	rdisk21	2	0	3	Available	default
+# paths		VTRRAK01MDC	rdisk3	1	0	0	Available	default
+# -------------------------------------------------------------
+
 factory_settings["xsan_default_levels"] = {
     "allowed_fsm_states" : ["REGISTERED"],
     "free_percent_crit"  : 20,
@@ -35,7 +67,7 @@ factory_settings["xsan_default_levels"] = {
 def inventory_xsan_fsm(checkname, info):
     inventory = []
     for line in info:
-        if line[0] == "fsm":
+        if line[0] == "fsm" and len(line) == 15:
             vol = line[1]
             inventory.append((vol, {}))
     return inventory
@@ -43,12 +75,12 @@ def inventory_xsan_fsm(checkname, info):
 def check_xsan_fsm(item, params, info):
     for line in info:
         if line[0] == "fsm" and line[1] == item:
-            pid = line[3]
-            port = line[4]
-            state = line[5]
+            port = line[3]
+            pid = line[4]
+            master = line[5]
+            state = line[6]
             launchcount = int(line[8])
             coredumps = int(line[9])
-            master = line[11]
 
             msg_txt = "pid: %s port: %s launch count: %s core dumps: %s" % (pid, port, launchcount, coredumps)
             perfdata = [ ( "launch_count", launchcount ), ( "core_dumps", coredumps ) ]
@@ -71,7 +103,7 @@ check_info['xsan.fsm'] = {
 def inventory_xsan_stats(checkname, info):
     inventory = []
     for line in info:
-        if line[0] == "stats":
+        if line[0] == "stats" and len(line) == 15:
             vol = line[1]
             inventory.append((vol, {}))
 
@@ -80,20 +112,21 @@ def inventory_xsan_stats(checkname, info):
 def check_xsan_stats(item, params, info):
     for line in info:
         if line[0] == "stats" and line[1] == item:
-            blocksize = line[7]
-            msg_buffer = line[8]
-            disks = line[9]
-            stripe_groups = line[10]
-            blocks = line[11]
-            blocks_nice = line[12]
-            blocks_units = line[13]
-            blocks_free = int(line[14])
-            blocks_free_nice = line[15]
-            blocks_free_unit = line[16]
-            blocks_free_percent = int(line[17])
+            connections = line[3]
+            blocksize = line[4]
+            msg_buffer = line[5]
+            disks = line[6]
+            stripe_groups = line[7]
+            blocks = line[8]
+            blocks_nice = line[9]
+            blocks_units = line[10]
+            blocks_free = int(line[11])
+            blocks_free_nice = line[12]
+            blocks_free_unit = line[13]
+            blocks_free_percent = int(line[14])
 
             msg_txt = "%s stripe groups on %s disks %s/%s blocks used (%s%s/%s%s), block size: %s each message buffer: %s" % (stripe_groups, disks, blocks_free, blocks, blocks_free_nice, blocks_free_unit, blocks_nice, blocks_units, blocksize, msg_buffer, )
-            perfdata = [ ("percent_blocks_free", blocks_free_percent, params["free_percent_warn"], params["free_percent_crit"], 0, 100), ("blocks_free", blocks_free) ]
+            perfdata = [ ("connections", connections), ("percent_blocks_free", blocks_free_percent, params["free_percent_warn"], params["free_percent_crit"], 0, 100), ("blocks_free", blocks_free) ]
             if blocks_free_percent < params["free_percent_crit"]:
                 return (2, "CRITICAL - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
             elif blocks_free_percent < params["free_percent_warn"]:
@@ -184,7 +217,7 @@ check_info['xsan.paths'] = {
 def inventory_xsan_disks(checkname, info):
     inventory = []
     for line in info:
-        if line[0] == "disks" and len(line) == 5:
+        if line[0] == "disks" and len(line) == 666:
             inventory.append((line[1],{"device": line[2],"sectors": line[3],"sect_size": line[4]}))
 
     return inventory
