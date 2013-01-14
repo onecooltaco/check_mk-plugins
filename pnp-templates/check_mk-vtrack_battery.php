@@ -1,6 +1,6 @@
 <?php
 #
-$opt[1] = "--imgformat=PNG --title \"Temperature Data For $hostname / $servicedesc\" --base=1024 --slope-mode ";
+$opt[1] = "--imgformat=PNG --title \"$hostname / $servicedesc\" --base=1024 --slope-mode ";
 #
 $def[1] =  "DEF:ds1=$RRDFILE[1]:$DS[1]:AVERAGE " ;
 $def[1] .= "CDEF:var1=ds1 ";

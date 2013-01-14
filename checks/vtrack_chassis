@@ -43,13 +43,24 @@ def vtrack_chassis_rolename(st):
 
 def inventory_vtrack_chassis(checkname, info):
    inventory = []
-   for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, lcrit, hours, cachedirty, cacheused, ldrvdegraded in info:
+   for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, \
+     ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
+     lcrit, hours, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
+     writedatatransferred, numoferrors, numofnonrwerrors, numofreaderrors, numofwriteerrors, \
+     numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests, statsstarttime, \
+     statscollectiontime in info:
      if scsi in ["2", "3"]:
        inventory.append( (index, {}) )
    return inventory
 
 def check_vtrack_chassis(item, params, info):
-  for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, crit, hours, cachedirty, cacheused, ldrvdegraded in info:
+   for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, \
+   ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
+   lcrit, hours, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
+   writedatatransferred, numoferrors, numofnonrwerrors, numofreaderrors, numofwriteerrors, \
+   numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests, statsstarttime, \
+   statscollectiontime in info:
+
     crit = False
     warn = False
     str_list = []
@@ -75,8 +86,35 @@ def check_vtrack_chassis(item, params, info):
         warn = True
         str_list.append("%s/%s unconfigured" % (unconfigured, pdrives))
 
-      out_str = ' '.join(str_list)
+      # Performance counters
+      this_time = time.time()
+      rates = []
+      wrapped = False
       perfdata = [ ( "PowerOnHours", hours),("DirtyCachePercentage",cachedirty,"","",0,100),("CacheUsagePercentage",cacheused,"","",0,100) ]
+      for name, counter in [
+        ( "DataTransferred", datatransferred ),
+        ( "ReadDataTransferred", readdatatransferred ),
+        ( "WriteDataTransferred", writedatatransferred ),
+        ( "NumOfErrors", numoferrors ),
+        ( "NumOfNonRWErrors", numofnonrwerrors ),
+        ( "NumOfReadErrors", numofreaderrors ),
+        ( "NumOfWriteErrors", numofwriteerrors ),
+        ( "NumOfIORequests", numofiorequests ),
+        ( "NumOfNonRWRequests", numofnonrwrequests ),
+        ( "NumOfReadRequests", numofreadrequests ),
+        ( "NumOfWriteRequests", numofwriterequests ),
+        ( "StatsStartTime", statsstarttime ),
+        ( "StatsCollectionTime", statscollectiontime ) ]:
+        try:
+          timedif, rate = get_counter("vtrack.%s.%s" % (name, item), this_time, saveint(counter))
+          rates.append(rate)
+          perfdata.append( (name, rate) )
+        except MKCounterWrapped:
+          wrapped = True
+        # continue, other counters might wrap as well
+
+      out_str = ' '.join(str_list)
+
       if crit:
         return (2, "CRITICAL - %s" % out_str, perfdata)
       elif warn:
@@ -85,7 +123,7 @@ def check_vtrack_chassis(item, params, info):
       else:
         return (0, "OK - %s" % out_str, perfdata)
 
-  return (3, "UNKNOWN - info not found")
+      return (3, "UNKNOWN - info not found")
 
 check_info["vtrack_chassis"] = {
     "inventory_function"       : inventory_vtrack_chassis,
@@ -96,31 +134,44 @@ check_info["vtrack_chassis"] = {
 }
 
 snmp_info["vtrack_chassis"] = \
-	( ".1.3.6.1.4.1.7933.1.20.1.3.1", [
-		"1",	# raidv4CtrlIndex
-		"7",	# raidv4CtrlSerialNumber
-		"10",	# raidv4CtrlSCSIProtocol	Values: unknown(0), other(1), scsi-2(2), scsi-3(3)
-		"12",	# raidv4CtrlBootLoaderRev
-		"13",	# raidv4CtrlFirmwareRev
-		"15",	# raidv4CtrlOpStatus
-		"16",	# raidv4CtrlRole			Values: na(-1), primary(1), secondary(0)
-		"17",	# raidv4CtrlReadinessStatus
-		"18",	# raidv4CtrlNumOfArrayPresent
-		"19",	# raidv4CtrlNumOfPhyDrvPresent
-		"20",	# raidv4CtrlNumOfPhyDrvOnline
-		"21",	# raidv4CtrlNumOfPhyDrvOffline
-		"22",	# raidv4CtrlNumOfPhyDrvWithPFA
-		"23",	# raidv4CtrlNumOfPhyDrvRebuilding
-		"24",	# raidv4CtrlNumOfPhyDrvMissing
-		"25",	# raidv4CtrlNumOfPhyDrvUnconfigured
-		"26",	# raidv4CtrlNumOfLogDrvPresent
-		"27",	# raidv4CtrlNumOfLogDrvOnline
-		"28",	# raidv4CtrlNumOfLogDrvOffline
-		"29",	# raidv4CtrlNumOfLogDrvCritical
-		"37",	# raidv4CtrlPowerOnHours
-		"38",	# raidv4CtrlDirtyCachePercentage	Values: na(-1)
-		"39",	# raidv4CtrlCacheUsagePercentage	Values: na(-1)
-		"64",	# raidv4CtrlNumOfLogDrvDegraded
+	( ".1.3.6.1.4.1.7933.1.20.1", [
+		"3.1.1",	# raidv4CtrlIndex
+		"3.1.7",	# raidv4CtrlSerialNumber
+		"3.1.10",	# raidv4CtrlSCSIProtocol	Values: unknown(0), other(1), scsi-2(2), scsi-3(3)
+		"3.1.12",	# raidv4CtrlBootLoaderRev
+		"3.1.13",	# raidv4CtrlFirmwareRev
+		"3.1.15",	# raidv4CtrlOpStatus
+		"3.1.16",	# raidv4CtrlRole			Values: na(-1), primary(1), secondary(0)
+		"3.1.17",	# raidv4CtrlReadinessStatus
+		"3.1.18",	# raidv4CtrlNumOfArrayPresent
+		"3.1.19",	# raidv4CtrlNumOfPhyDrvPresent
+		"3.1.20",	# raidv4CtrlNumOfPhyDrvOnline
+		"3.1.21",	# raidv4CtrlNumOfPhyDrvOffline
+		"3.1.22",	# raidv4CtrlNumOfPhyDrvWithPFA
+		"3.1.23",	# raidv4CtrlNumOfPhyDrvRebuilding
+		"3.1.24",	# raidv4CtrlNumOfPhyDrvMissing
+		"3.1.25",	# raidv4CtrlNumOfPhyDrvUnconfigured
+		"3.1.26",	# raidv4CtrlNumOfLogDrvPresent
+		"3.1.27",	# raidv4CtrlNumOfLogDrvOnline
+		"3.1.28",	# raidv4CtrlNumOfLogDrvOffline
+		"3.1.29",	# raidv4CtrlNumOfLogDrvCritical
+		"3.1.37",	# raidv4CtrlPowerOnHours
+		"3.1.38",	# raidv4CtrlDirtyCachePercentage	Values: na(-1)
+		"3.1.39",	# raidv4CtrlCacheUsagePercentage	Values: na(-1)
+		"3.1.64",	# raidv4CtrlNumOfLogDrvDegraded
+		"4.1.1",    # raidv4CtrlStatsDataTransferred  Counter64
+		"4.1.2",    # raidv4CtrlStatsReadDataTransferred  Counter64
+		"4.1.3",    # raidv4CtrlStatsWriteDataTransferred  Counter64
+		"4.1.4",    # raidv4CtrlStatsNumOfErrors  Integer32
+		"4.1.5",    # raidv4CtrlStatsNumOfNonRWErrors  Integer32
+		"4.1.6",    # raidv4CtrlStatsNumOfReadErrors  Integer32
+		"4.1.7",    # raidv4CtrlStatsNumOfWriteErrors  Integer32
+		"4.1.8",    # raidv4CtrlStatsNumOfIORequests  Counter64
+		"4.1.9",    # raidv4CtrlStatsNumOfNonRWRequests  Counter64
+		"4.1.10",   # raidv4CtrlStatsNumOfReadRequests  Counter64
+		"4.1.11",   # raidv4CtrlStatsNumOfWriteRequests  Counter64
+		"4.1.12",   # raidv4CtrlStatsStartTime  Counter64
+		"4.1.13",   # raidv4CtrlStatsCollectionTime  Counter64
 	] )
 
 snmp_scan_functions['vtrack_chassis'] = \

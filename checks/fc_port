@@ -64,10 +64,18 @@ def check_fc_port(item, params, info):
     linkfailures, synclosses, primseqprotoerrors, invalidtxwords,\
     invalidcrcs, addressiderrors, linkresetins, linkresetouts, olsins,\
     olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards in info:
-    if fc_hex2string(id) == item:
+    iname = fc_hex2string(id)
+    if iname == item:
       msg_text = "%s / %s / %s" % (fc_statusname(operstatus),fc_statusname(adminstatus),fc_opermode(opermode))
-      perfdata = [
-        ( "LinkFailures", linkfailures ),             # no levels, no range
+
+      # Performance counters
+      this_time = time.time()
+      rates = []
+      wrapped = False
+      perfdata = []
+
+      for name, counter in [
+        ( "LinkFailures", linkfailures ),
         ( "SyncLosses", synclosses ),
         ( "PrimSeqProtoErrors", primseqprotoerrors ),
         ( "InvalidTxWords", invalidtxwords ),
@@ -81,14 +89,19 @@ def check_fc_port(item, params, info):
         ( "C3OutFrames", c3outframes ),
         ( "C3InOctets", c3inoctets ),
         ( "C3OutOctets", c3outoctets ),
-        ( "C3Discards", c3discards ),
-      ]
-      if adminstatus == params["adminstatus"] and operstatus == params["operstatus"]:
-        return (0, "OK - as expected %s" % msg_text, perfdata)
-      elif adminstatus == "1" and operstatus == "1":
-        return (1, "WARN - State Change - %s" % msg_text, perfdata)
-      else:
+        ( "C3Discards", c3discards ),]:
+        try:
+          timedif, rate = get_counter("if.%s.%s" % (name, item), this_time, saveint(counter))
+          rates.append(rate)
+          perfdata.append( (name, rate) )
+        except MKCounterWrapped:
+          wrapped = True
+          # continue, other counters might wrap as well
+
+      if operstatus == "4":
         return (2, "CRITICAL - %s" % msg_text, perfdata)
+      else:
+        return (0, "OK - as expected %s" % msg_text, perfdata)
   return (3, "UNKNOWN - Port info not found")
 
 check_info["fc_port"] = {

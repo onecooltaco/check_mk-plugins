@@ -51,8 +51,12 @@ def inventory_vtrack_battery(checkname, info):
 def check_vtrack_battery(item, params, info):
   for index, chemistry, temperature, chargethreshold, dischargethreshold, cyclecount, capacity, voltage, current, status, cells, holdtime in info:
     if index == item:
+
+      this_time = time.time()
+      cycle_timedif, cycle_rate = get_counter("vtrack.cyclecount.%s" % (item), this_time, int(cyclecount))
+      perfdata = [ ("Temperature",temperature,chargethreshold,dischargethreshold),("RemainCapacity",int(capacity),"","",0,100),("Voltage",voltage),("CycleCount",cycle_rate)]
+
       msg_txt = "%s%% remaining %s holdtime - %s %sC %s %s" % (capacity,holdtime,status,temperature,vtrack_battery_celltypename(cells),chemistry)
-      perfdata = [ ("Temperature",temperature,chargethreshold,dischargethreshold),("RemainCapacity",int(capacity),"","",0,100),("Voltage",voltage),("CycleCount",cyclecount)]
       if int(capacity) > params["capacity_crit"] and int(holdtime) > params["holdtime_crit"]:
         if status in params["allowed_status"]:
           return (0, "OK - %s" % msg_txt,perfdata)

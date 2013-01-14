@@ -82,8 +82,13 @@ def check_xsan_fsm(item, params, info):
             launchcount = int(line[8])
             coredumps = int(line[9])
 
-            msg_txt = "pid: %s port: %s launch count: %s core dumps: %s" % (pid, port, launchcount, coredumps)
-            perfdata = [ ( "launch_count", launchcount ), ( "core_dumps", coredumps ) ]
+            this_time = time.time()
+            launch_timedif, launch_rate = get_counter("xsan.launchcount.%s" % (item), this_time, launchcount)
+            dump_timedif, dump_rate = get_counter("xsan.coredumps.%s" % (item), this_time, coredumps)
+            perfdata = [ ( "launch_count", launch_rate ), ( "core_dumps", dump_rate ) ]
+
+            msg_txt = "pid: %s port: %s launch count: %d core dumps: %d" % (pid, port, launchcount, coredumps)
+
             if state in params["allowed_fsm_states"]:
                 return (0, "OK - %s - %s" % (state, msg_txt), perfdata)
             else:
