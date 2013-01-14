@@ -1,0 +1,15 @@
+title: Check state of Apple XSAN
+agents: darwin
+author: Jeremy Leggat <jleggat@asu.edu>
+license: GPL
+distribution:
+description:
+ Checks the output of 'cvadmin' from the xsan client tools.
+
+examples:
+ TODO
+
+inventory:
+ Each host which provides the section in the check_mk agent gets one XSAN_XXX service per reported device.
+perfdata:
+ TODO
