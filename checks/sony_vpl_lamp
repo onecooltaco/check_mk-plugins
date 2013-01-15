@@ -41,10 +41,10 @@ factory_settings["sony_vpl_lamp_default_levels"] = {
 def inventory_sony_vpl_lamp(checkname, info):
   inventory = []
   for index, model, descr, maxhours, hours in info:
-    inventory.append( (index, None) )
+    inventory.append( (index, {}) )
   return inventory
 
-def check_sony_vpl_lamp(item, _no_params, info):
+def check_sony_vpl_lamp(item, params, info):
   for index, model, descr, maxhours, hours in info:
     if index != item: continue
     this_time = time.time()

@@ -38,10 +38,10 @@ factory_settings["sony_srx_default_levels"] = {
 def inventory_sony_srx_lamp(checkname, info):
   inventory = []
   for index, model, hours in info:
-    inventory.append( (index, None) )
+    inventory.append( (index, {}) )
   return inventory
 
-def check_sony_srx_lamp(item, _no_params, info):
+def check_sony_srx_lamp(item, params, info):
   for index, model, hours in info:
     if index != item: continue
     this_time = time.time()
