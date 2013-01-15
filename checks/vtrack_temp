@@ -44,13 +44,13 @@ def inventory_vtrack_temp(checkname, info):
 
 def check_vtrack_temp(item, params, info):
   for index, temperature, status in info:
-    if index == item:
-      perfdata = [ ( "Temperature", temperature) ]
-      if status in params["allowed_status"]:
-        return (0, "OK - %s at %sC" % (status, temperature), perfdata)
-      else:
-        return (2, "CRITICAL - %s at %sC" % (status, temperature), perfdata)
-  return (3, "UNKNOWN - temp sensor not found")
+    if index != item: continue
+    perfdata = [ ( "Temperature", temperature) ]
+    if status in params["allowed_status"]:
+      return (0, "OK - %s at %sC" % (status, temperature), perfdata)
+    else:
+      return (2, "CRITICAL - %s at %sC" % (status, temperature), perfdata)
+  return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrack_temp"] = {
     "inventory_function"       : inventory_vtrack_temp,

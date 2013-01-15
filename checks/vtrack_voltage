@@ -41,13 +41,13 @@ def inventory_vtrack_voltage(checkname, info):
 
 def check_vtrack_voltage(item, params, info):
   for index, voltage in info:
-    if index == item:
-      perfdata = [ ( "Voltage", voltage.replace("V", "")) ]
-      if voltage:
-        return (0, "OK - %s" % voltage, perfdata)
-      else:
-        return (2, "CRITICAL - %s" % voltage, perfdata)
-  return (3, "UNKNOWN - voltage sensor not found")
+    if index != item: continue
+    perfdata = [ ( "Voltage", voltage.replace("V", "")) ]
+    if voltage:
+      return (0, "OK - %s" % voltage, perfdata)
+    else:
+      return (2, "CRITICAL - %s" % voltage, perfdata)
+  return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrack_voltage"] = {
     "inventory_function"       : inventory_vtrack_voltage,

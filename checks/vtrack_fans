@@ -45,14 +45,14 @@ def inventory_vtrack_fans(checkname, info):
 
 def check_vtrack_fans(item, params, info):
   for index, type, status, speed in info:
-    iname = "%s.%s" % (vtrack_fans_typename(type),index)
-    if iname == item:
-      perfdata = [ ( "speed", speed) ]
-      if status in params["allowed_status"]:
-        return (0, "OK - %s - %s rpm" % (status,speed), perfdata)
-      else:
-        return (2, "CRITICAL - %s - %s rpm" % (status,speed), perfdata)
-  return (3, "UNKNOWN - fans not found")
+    name = "%s.%s" % (vtrack_fans_typename(type),index)
+    if name != item: continue
+    perfdata = [ ( "speed", speed) ]
+    if status in params["allowed_status"]:
+      return (0, "OK - %s - %s rpm" % (status,speed), perfdata)
+    else:
+      return (2, "CRITICAL - %s - %s rpm" % (status,speed), perfdata)
+  return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrack_fans"] = {
     "inventory_function"       : inventory_vtrack_fans,

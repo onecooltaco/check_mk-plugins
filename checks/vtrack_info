@@ -54,16 +54,16 @@ def inventory_vtrack_info(checkname, info):
 
 def check_vtrack_info(item, params, info):
   for index, type, descrip, time, redundant, controllers, connection, enclosures, interface in info:
-    iname = "%s.%s" % (vtrack_info_typename(type),index)
-    if iname == item:
-      msg = "%s %s is %s, %s controllers in %s enclosures" % ( vtrack_info_interfacename(interface), vtrack_info_connectname(connection), vtrack_info_redundancyname(redundant), controllers, enclosures )
-      if redundant in params["allowed_redundancy"]:
-        return (0, "OK - %s" % msg)
-      elif redundant == "2":
-        return (2, "CRITICAL - %s" % msg)
-      else:
-        return (1, "WARN - %s" % msg)
-  return (3, "UNKNOWN - Controller not found")
+    name = "%s.%s" % (vtrack_info_typename(type),index)
+    if name != item: continue
+    msg_txt = "%s %s is %s, %s controllers in %s enclosures" % ( vtrack_info_interfacename(interface), vtrack_info_connectname(connection), vtrack_info_redundancyname(redundant), controllers, enclosures )
+    if redundant in params["allowed_redundancy"]:
+      return (0, "OK - %s" % msg_txt)
+    elif redundant == "2":
+      return (2, "CRITICAL - %s" % msg_txt)
+    else:
+      return (1, "WARN - %s" % msg_txt)
+  return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrack_info"] = {
     "inventory_function"       : inventory_vtrack_info,

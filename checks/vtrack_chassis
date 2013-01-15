@@ -61,72 +61,67 @@ def check_vtrack_chassis(item, params, info):
   numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests, statsstarttime, \
   statscollectiontime in info:
 
+    if index != item: continue
     crit = False
     warn = False
     str_list = []
-    if index == item:
-      str_list.append("%s and %s" % (ops, readiness))
-      if poffline != '0':
-        crit = True
-        str_list.append("%s/%s offline" % (poffline, pdrives))
+    str_list.append("%s and %s" % (ops, readiness))
+    if poffline != '0':
+      crit = True
+      str_list.append("%s/%s offline" % (poffline, pdrives))
+    if pfa != '0':
+      crit = True
+      str_list.append("%s/%s Predictive Failure Analysis (PFA)" % (pfa, pdrives))
+    if rebuilding != '0':
+      warn = True
+      str_list.append("%s/%s rebuilding" % (rebuilding, pdrives))
+    if missing != '0':
+      crit = True
+      str_list.append("%s/%s missing" % (missing, pdrives))
+    if unconfigured != '0':
+      warn = True
+      str_list.append("%s/%s unconfigured" % (unconfigured, pdrives))
 
-      if pfa != '0':
-        crit = True
-        str_list.append("%s/%s Predictive Failure Analysis (PFA)" % (pfa, pdrives))
-
-      if rebuilding != '0':
-        warn = True
-        str_list.append("%s/%s rebuilding" % (rebuilding, pdrives))
-
-      if missing != '0':
-        crit = True
-        str_list.append("%s/%s missing" % (missing, pdrives))
-
-      if unconfigured != '0':
-        warn = True
-        str_list.append("%s/%s unconfigured" % (unconfigured, pdrives))
-
-      # Performance counters
-      this_time = time.time()
-      rates = []
-      wrapped = False
-      perfdata = [ ( "PowerOnHours", hours),("DirtyCachePercentage",cachedirty,"","",0,100),("CacheUsagePercentage",cacheused,"","",0,100) ]
-      for name, counter in [
-        ( "DataTransferred", datatransferred ),
-        ( "ReadDataTransferred", readdatatransferred ),
-        ( "WriteDataTransferred", writedatatransferred ),
-        ( "NumOfErrors", numoferrors ),
-        ( "NumOfNonRWErrors", numofnonrwerrors ),
-        ( "NumOfReadErrors", numofreaderrors ),
-        ( "NumOfWriteErrors", numofwriteerrors ),
-        ( "NumOfIORequests", numofiorequests ),
-        ( "NumOfNonRWRequests", numofnonrwrequests ),
-        ( "NumOfReadRequests", numofreadrequests ),
-        ( "NumOfWriteRequests", numofwriterequests ),
-        ( "StatsStartTime", statsstarttime ),
-        ( "StatsCollectionTime", statscollectiontime ) ]:
-        try:
-          timedif, rate = get_counter("vtrack.%s.%s" % (name, item), this_time, saveint(counter))
-          rates.append(rate)
-          perfdata.append( (name, rate) )
-        except MKCounterWrapped:
-          wrapped = True
-        # continue, other counters might wrap as well
-
+    # Performance counters
+    this_time = time.time()
+    rates = []
+    wrapped = False
+    perfdata = [ ( "PowerOnHours", hours),("DirtyCachePercentage",cachedirty,"","",0,100),("CacheUsagePercentage",cacheused,"","",0,100) ]
+    for name, counter in [
+      ( "DataTransferred", datatransferred ),
+      ( "ReadDataTransferred", readdatatransferred ),
+      ( "WriteDataTransferred", writedatatransferred ),
+      ( "NumOfErrors", numoferrors ),
+      ( "NumOfNonRWErrors", numofnonrwerrors ),
+      ( "NumOfReadErrors", numofreaderrors ),
+      ( "NumOfWriteErrors", numofwriteerrors ),
+      ( "NumOfIORequests", numofiorequests ),
+      ( "NumOfNonRWRequests", numofnonrwrequests ),
+      ( "NumOfReadRequests", numofreadrequests ),
+      ( "NumOfWriteRequests", numofwriterequests ),
+      ( "StatsStartTime", statsstarttime ),
+      ( "StatsCollectionTime", statscollectiontime ) ]:
+      try:
+        timedif, rate = get_counter("vtrack.%s.%s" % (name, item), this_time, saveint(counter))
+        rates.append(rate)
+        perfdata.append( (name, rate) )
+      except MKCounterWrapped:
+        wrapped = True
       # continue, other counters might wrap as well
-      # after all counters are handled
-      if wrapped: raise MKCounterWrapped("Counter wrap")
 
-      out_str = ' '.join(str_list)
-      if crit:
-        return (2, "CRITICAL - %s" % out_str, perfdata)
-      elif warn:
-        return (1, "WARN - %s" % out_str, perfdata)
-#      elif ops == "OK" and readiness == "Active":
-      else:
-        return (0, "OK - %s" % out_str, perfdata)
+    # continue, other counters might wrap as well
+    # after all counters are handled
+    if wrapped: raise MKCounterWrapped("Counter wrap")
 
-  return False
+    out_str = ' '.join(str_list)
+    if crit:
+      return (2, "CRITICAL - %s" % out_str, perfdata)
+    elif warn:
+      return (1, "WARN - %s" % out_str, perfdata)
+    else:
+      return (0, "OK - %s" % out_str, perfdata)
+
+  return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrack_chassis"] = {
     "inventory_function"       : inventory_vtrack_chassis,

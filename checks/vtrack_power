@@ -41,12 +41,12 @@ def inventory_vtrack_power(checkname, info):
 
 def check_vtrack_power(item, params, info):
   for index, status in info:
-    if index == item:
-      if status in params["allowed_status"]:
-        return (0, "OK - %s" % status)
-      else:
-        return (2, "CRITICAL - %s" % status)
-  return (3, "UNKNOWN - power supply not found")
+    if index != item: continue
+    if status in params["allowed_status"]:
+      return (0, "OK - %s" % status)
+    else:
+      return (2, "CRITICAL - %s" % status)
+  return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrack_power"] = {
     "inventory_function"       : inventory_vtrack_power,

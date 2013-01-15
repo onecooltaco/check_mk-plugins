@@ -7,3 +7,11 @@ sony_srx_lampc
 fc_portc
 fa_sensorc
 sony_vpl_lampc
+checks/vtrack_batteryc
+checks/vtrack_chassisc
+checks/vtrack_enclosurec
+checks/vtrack_fansc
+checks/vtrack_infoc
+checks/vtrack_powerc
+checks/vtrack_tempc
+checks/vtrack_voltagec
