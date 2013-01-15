@@ -56,7 +56,7 @@ def inventory_fc_port(checkname, info):
     olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards in info:
     if opermode in [ "1", "2", "3" ]:
       iname = fc_hex2string(id)
-      inventory.append((iname,{"opermode": opermode,"adminstatus": adminstatus,"operstatus": operstatus,"rxtimeout": physrttov}))
+      inventory.append((iname,{}))
   return inventory
 
 def check_fc_port(item, params, info):
@@ -96,13 +96,17 @@ def check_fc_port(item, params, info):
           perfdata.append( (name, rate) )
         except MKCounterWrapped:
           wrapped = True
-          # continue, other counters might wrap as well
+
+      # continue, other counters might wrap as well
+      # after all counters are handled
+      if wrapped: raise MKCounterWrapped("Counter wrap")
 
       if operstatus == "4":
         return (2, "CRITICAL - %s" % msg_text, perfdata)
       else:
         return (0, "OK - as expected %s" % msg_text, perfdata)
-  return (3, "UNKNOWN - Port info not found")
+
+  return False
 
 check_info["fc_port"] = {
     "inventory_function"       : inventory_fc_port,

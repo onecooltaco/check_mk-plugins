@@ -42,24 +42,24 @@ def vtrack_chassis_rolename(st):
     return names.get(st, st)
 
 def inventory_vtrack_chassis(checkname, info):
-   inventory = []
-   for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, \
-     ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
-     lcrit, hours, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
-     writedatatransferred, numoferrors, numofnonrwerrors, numofreaderrors, numofwriteerrors, \
-     numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests, statsstarttime, \
-     statscollectiontime in info:
-     if scsi in ["2", "3"]:
-       inventory.append( (index, {}) )
-   return inventory
+  inventory = []
+  for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, \
+    ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
+    lcrit, hours, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
+    writedatatransferred, numoferrors, numofnonrwerrors, numofreaderrors, numofwriteerrors, \
+    numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests, statsstarttime, \
+    statscollectiontime in info:
+    if scsi in ["2", "3"]:
+      inventory.append( (index, {}) )
+  return inventory
 
 def check_vtrack_chassis(item, params, info):
-   for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, \
-   ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
-   lcrit, hours, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
-   writedatatransferred, numoferrors, numofnonrwerrors, numofreaderrors, numofwriteerrors, \
-   numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests, statsstarttime, \
-   statscollectiontime in info:
+  for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, \
+  ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
+  lcrit, hours, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
+  writedatatransferred, numoferrors, numofnonrwerrors, numofreaderrors, numofwriteerrors, \
+  numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests, statsstarttime, \
+  statscollectiontime in info:
 
     crit = False
     warn = False
@@ -113,8 +113,11 @@ def check_vtrack_chassis(item, params, info):
           wrapped = True
         # continue, other counters might wrap as well
 
-      out_str = ' '.join(str_list)
+      # continue, other counters might wrap as well
+      # after all counters are handled
+      if wrapped: raise MKCounterWrapped("Counter wrap")
 
+      out_str = ' '.join(str_list)
       if crit:
         return (2, "CRITICAL - %s" % out_str, perfdata)
       elif warn:
@@ -123,7 +126,7 @@ def check_vtrack_chassis(item, params, info):
       else:
         return (0, "OK - %s" % out_str, perfdata)
 
-      return (3, "UNKNOWN - info not found")
+  return False
 
 check_info["vtrack_chassis"] = {
     "inventory_function"       : inventory_vtrack_chassis,

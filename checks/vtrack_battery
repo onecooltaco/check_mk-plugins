@@ -53,8 +53,8 @@ def check_vtrack_battery(item, params, info):
     if index == item:
 
       this_time = time.time()
-      cycle_timedif, cycle_rate = get_counter("vtrack.cyclecount.%s" % (item), this_time, int(cyclecount))
-      perfdata = [ ("Temperature",temperature,chargethreshold,dischargethreshold),("RemainCapacity",int(capacity),"","",0,100),("Voltage",voltage),("CycleCount",cycle_rate)]
+      cycle_timedif, cycle_rate = get_counter("vtrack.cyclecount.%s" % item, this_time, int(cyclecount))
+      perfdata = [ ("Temperature",temperature,chargethreshold,dischargethreshold),("RemainCapacity",capacity,"","",0,100),("Voltage",voltage),("CycleCount",cycle_rate)]
 
       msg_txt = "%s%% remaining %s holdtime - %s %sC %s %s" % (capacity,holdtime,status,temperature,vtrack_battery_celltypename(cells),chemistry)
       if int(capacity) > params["capacity_crit"] and int(holdtime) > params["holdtime_crit"]:

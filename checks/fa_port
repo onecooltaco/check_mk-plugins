@@ -71,7 +71,7 @@ def inventory_fa_port(checkname, info):
   for id, index, state, status, transmitter, module, speed, hwstate in info:
     if transmitter in [ "12", "13" ]:
       name = fa_port_itemname(info,id,index,uidlist)
-      inventory.append((name,{"state": state,"status": status,"speed": speed,"hwstate": hwstate}))
+      inventory.append((name,{"speed": speed}))
   return inventory
 
 def check_fa_port(item, params, info):
