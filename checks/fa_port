@@ -78,19 +78,19 @@ def check_fa_port(item, params, info):
   uidlist = []
   for id, index, state, status, transmitter, module, speed, hwstate in info:
     name = fa_port_itemname(info,id,index,uidlist)
-    if name == item:
-      statename = fa_port_statename(state)
-      statusname = fa_port_statusname(status)
-      hwstatename = fa_port_hwstatename(hwstate)
-      msg_text = "%s / %s / %s" % (statename, statusname, hwstatename,)
-      if status == "5" or hwstatename == "2":
-        return (2, "CRITICAL - %s" % (msg_text))
-      elif speed != params["speed"]:
-        return (1, "Warning - Speed Mismatch - port %s" % speed)
-      else:
-        unit_text = "%s, %s" % (fa_port_modulename(module), fa_port_transmittername(transmitter))
-        return (0, "OK - %s - %s" % (msg_text,unit_text))
-    return (3, "UNKNOWN - Port info not found")
+    if name != item: continue
+    statename = fa_port_statename(state)
+    statusname = fa_port_statusname(status)
+    hwstatename = fa_port_hwstatename(hwstate)
+    msg_text = "%s / %s / %s" % (statename, statusname, hwstatename,)
+    if status == "5" or hwstatename == "2":
+      return (2, "CRITICAL - %s" % (msg_text))
+    elif speed != params["speed"]:
+      return (1, "Warning - Speed Mismatch - port %s" % speed)
+    else:
+      unit_text = "%s, %s" % (fa_port_modulename(module), fa_port_transmittername(transmitter))
+      return (0, "OK - %s - %s" % (msg_text,unit_text))
+  return (3, "UNKNOWN - Port info not found")
 
 check_info["fa_port"] = {
     "inventory_function"       : inventory_fa_port,

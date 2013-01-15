@@ -48,29 +48,31 @@ def fa_sys_statusname(st):
 def inventory_fa_sys(checkname, info):
     inventory = []
     uidlist = []
-    for id, ports, state, status, product, sn, uptime, url, sensors, name in info:
+    for id, ports, state, status, product, sn, uptime, url, sensors, unitname in info:
         uid = fa_hex2string(id)
-        iname = fa_unitid_genitem(uid,uidlist)
-        inventory.append((iname,{}))
+        name = fa_unitid_genitem(uid,uidlist)
+        inventory.append((name,{}))
     return inventory
 
 def check_fa_sys(item, params, info):
     uidlist = []
-    for id, ports, state, status, product, sn, uptime, url, sensors,\
-        name, in info:
+    for id, ports, state, status, product, sn, uptime, url, sensors, unitname, in info:
         uid = fa_hex2string(id)
-        iname = fa_unitid_genitem(uid,uidlist)
-        if iname == item:
-            unit_text = "%s %s, %s ports %s sensors, %s SN#%s" % (name, product, ports, sensors, url, sn)
-            named_state = fa_sys_statename(state)
-            named_status = fa_sys_statusname(status)
-            perfdata = [ ( "uptime", uptime ) ]
-            if state in params["allowed_states"] and status in params["allowed_status"]:
-                return (0, "OK - as expected %s / %s - %s" % (named_state, named_status, unit_text), perfdata)
-            elif status in params["warn_status"]:
-                return (1, "WARNING - State %s Status %s - %s" % (named_state, named_status, unit_text), perfdata)
-            else:
-                return (2, "CRITICAL - State %s Status %s - %s" % (named_state, named_status, unit_text), perfdata)
+        name = fa_unitid_genitem(uid,uidlist)
+        if name != item: continue
+
+        perfdata = [ ( "uptime", uptime ) ]
+
+        msg_txt = "%s %s, %s ports %s sensors, %s SN#%s" % (unitname, product, ports, sensors, url, sn)
+        named_state = fa_sys_statename(state)
+        named_status = fa_sys_statusname(status)
+
+        if state in params["allowed_states"] and status in params["allowed_status"]:
+            return (0, "OK - as expected %s / %s - %s" % (named_state, named_status, msg_txt), perfdata)
+        elif status in params["warn_status"]:
+            return (1, "WARNING - State %s Status %s - %s" % (named_state, named_status, msg_txt), perfdata)
+        else:
+            return (2, "CRITICAL - State %s Status %s - %s" % (named_state, named_status, msg_txt), perfdata)
 
     return (3, "UNKNOWN - Unit info not found")
 

@@ -64,17 +64,21 @@ def inventory_fa_sensor(checkname, info):
 
 def check_fa_sensor(item, params, info):
   for index, id, status, message, type, character in info:
-    if fa_pad_with_zeroes(info,index) == item:
-      stat_name = fa_sensor_statusname(status)
-      type_name = fa_sensor_typename(type)
-      character_name = fa_sensor_characteristicname(character)
-      check_text = "%s - %s - %s %s %s" % (id, stat_name, type_name, character_name, message)
-      if status == "5":
-      	return (2,  check_text)
-      elif status == "4":
-        return (1, check_text)
-      elif status == "3" or status == "2":
-        return (0, check_text)
+    name = fa_pad_with_zeroes(info,index)
+    if name != item: continue
+
+    stat_name = fa_sensor_statusname(status)
+    type_name = fa_sensor_typename(type)
+    character_name = fa_sensor_characteristicname(character)
+
+    check_text = "%s - %s - %s %s %s" % (id, stat_name, type_name, character_name, message)
+
+    if status == "5":
+      return (2,  check_text)
+    elif status == "4":
+      return (1, check_text)
+    elif status == "3" or status == "2":
+      return (0, check_text)
   return (3, "UNKNOWN - Sensor info not found")
 
 check_info["fa_sensor"] = {

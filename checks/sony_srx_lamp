@@ -31,8 +31,8 @@
 # "A table that contains, one entry for each module in the Fabric Element, information of the modules."
 # Reads:
 
-factory_settings["sony_srx_lamp_default_levels"] = {
-    "max_hours" : 2000,
+factory_settings["sony_srx_default_levels"] = {
+    "lamphours" : 1000,
 }
 
 def inventory_sony_srx_lamp(checkname, info):
@@ -46,12 +46,12 @@ def check_sony_srx_lamp(item, _no_params, info):
     if index == item:
       this_time = time.time()
       timedif, rate = get_counter("sony_srx_lamp.hours.%s" % item, this_time, int(hours))
-      perfdata = [ ( "lamp_hours", rate ) ]
+      perfdata = [ ( "Lamphours", rate ) ]
       msg_txt = "%s on bulb %s" % (hours, model)
-      if int(hours) > params["max_hours"]:
-        return (2, "CRITICAL - %s" % msg_txt)
+      if int(hours) > params["lamphours"]:
+        return (2, "CRITICAL - %s" % msg_txt, perfdata)
       else:
-        return (0, "OK - %s" % msg_txt)
+        return (0, "OK - %s" % msg_txt, perfdata)
   return False
 
 check_info["sony_srx_lamp"] = {
@@ -59,7 +59,7 @@ check_info["sony_srx_lamp"] = {
     "check_function"           : check_sony_srx_lamp,
     "has_perfdata"             : True,
     "service_description"      : "Lamp %s",
-    "default_levels_variable"  : "sony_srx_lamp_default_levels",
+    "default_levels_variable"  : "sony_srx_default_levels",
 }
 
 snmp_info["sony_srx_lamp"] = ( ".1.3.6.1.4.1.122.8501.3.109.4.1.1", [ \

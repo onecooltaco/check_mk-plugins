@@ -55,8 +55,8 @@ def inventory_fc_port(checkname, info):
     invalidcrcs, addressiderrors, linkresetins, linkresetouts, olsins,\
     olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards in info:
     if opermode in [ "1", "2", "3" ]:
-      iname = fc_hex2string(id)
-      inventory.append((iname,{}))
+      name = fc_hex2string(id)
+      inventory.append((name,{}))
   return inventory
 
 def check_fc_port(item, params, info):
@@ -64,49 +64,51 @@ def check_fc_port(item, params, info):
     linkfailures, synclosses, primseqprotoerrors, invalidtxwords,\
     invalidcrcs, addressiderrors, linkresetins, linkresetouts, olsins,\
     olsouts, c3inframes, c3outframes, c3inoctets, c3outoctets, c3discards in info:
-    iname = fc_hex2string(id)
-    if iname == item:
-      msg_text = "%s / %s / %s" % (fc_statusname(operstatus),fc_statusname(adminstatus),fc_opermode(opermode))
 
-      # Performance counters
-      this_time = time.time()
-      rates = []
-      wrapped = False
-      perfdata = []
+    name = fc_hex2string(id)
+    if name != item: continue
 
-      for name, counter in [
-        ( "LinkFailures", linkfailures ),
-        ( "SyncLosses", synclosses ),
-        ( "PrimSeqProtoErrors", primseqprotoerrors ),
-        ( "InvalidTxWords", invalidtxwords ),
-        ( "InvalidCrcs", invalidcrcs ),
-        ( "AddressIdErrors", addressiderrors ),
-        ( "LinkResetIns", linkresetins ),
-        ( "LinkResetOuts", linkresetouts ),
-        ( "OlsIns", olsins ),
-        ( "OlsOuts", olsouts ),
-        ( "C3InFrames", c3inframes ),
-        ( "C3OutFrames", c3outframes ),
-        ( "C3InOctets", c3inoctets ),
-        ( "C3OutOctets", c3outoctets ),
-        ( "C3Discards", c3discards ),]:
-        try:
-          timedif, rate = get_counter("if.%s.%s" % (name, item), this_time, saveint(counter))
-          rates.append(rate)
-          perfdata.append( (name, rate) )
-        except MKCounterWrapped:
-          wrapped = True
+    msg_text = "%s / %s / %s" % (fc_statusname(operstatus),fc_statusname(adminstatus),fc_opermode(opermode))
 
-      # continue, other counters might wrap as well
-      # after all counters are handled
-      if wrapped: raise MKCounterWrapped("Counter wrap")
+    # Performance counters
+    this_time = time.time()
+    rates = []
+    wrapped = False
+    perfdata = []
 
-      if operstatus == "4":
-        return (2, "CRITICAL - %s" % msg_text, perfdata)
-      else:
-        return (0, "OK - as expected %s" % msg_text, perfdata)
+    for desc, counter in [
+      ( "C3InFrames", c3inframes ),
+      ( "C3OutFrames", c3outframes ),
+      ( "C3InOctets", c3inoctets ),
+      ( "C3OutOctets", c3outoctets ),
+      ( "C3Discards", c3discards ),
+      ( "LinkFailures", linkfailures ),
+      ( "SyncLosses", synclosses ),
+      ( "PrimSeqProtoErrors", primseqprotoerrors ),
+      ( "InvalidTxWords", invalidtxwords ),
+      ( "InvalidCrcs", invalidcrcs ),
+      ( "AddressIdErrors", addressiderrors ),
+      ( "LinkResetIns", linkresetins ),
+      ( "LinkResetOuts", linkresetouts ),
+      ( "OlsIns", olsins ),
+      ( "OlsOuts", olsouts ),]:
+      try:
+        timedif, rate = get_counter("if.%s.%s" % (desc, item), this_time, saveint(counter))
+        rates.append(rate)
+        perfdata.append( (desc, rate) )
+      except MKCounterWrapped:
+        wrapped = True
 
-  return False
+    # continue, other counters might wrap as well
+    # after all counters are handled
+    if wrapped: raise MKCounterWrapped("Counter wrap")
+
+    if operstatus == "4":
+      return (2, "CRITICAL - %s" % msg_text, perfdata)
+    else:
+      return (0, "OK - Operating as expected %s" % msg_text, perfdata)
+
+  return (3, "UNKNOWN - Port info not found")
 
 check_info["fc_port"] = {
     "inventory_function"       : inventory_fc_port,

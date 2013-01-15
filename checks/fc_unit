@@ -45,16 +45,18 @@ def inventory_fc_unit(checkname, info):
 def check_fc_unit(item, params, info):
     for line in info:
         index = "%d" % (info.index(line) + 1)
-        if index == item:
-            desc = line[0]
-            status = fc_statusname(line[1])
-            ports = line[2]
-            if status in params["allowed_states"]:
-                return (0, "OK - %s %s - %s ports" % (desc, status, ports))
-            elif status in params["warn_states"]:
-                return (1, "WARNING - %s %s - %s ports" % (desc, status, ports))
-            else:
-                return (2, "CRITICAL - %s %s - %s ports" % (desc, status, ports))
+        if index != item: continue
+
+        desc = line[0]
+        status = fc_statusname(line[1])
+        ports = line[2]
+
+        if status in params["allowed_states"]:
+            return (0, "OK - %s %s - %s ports" % (desc, status, ports))
+        elif status in params["warn_states"]:
+            return (1, "WARNING - %s %s - %s ports" % (desc, status, ports))
+        else:
+            return (2, "CRITICAL - %s %s - %s ports" % (desc, status, ports))
     return (3, "UNKNOWN - System info not found")
 
 check_info["fc_unit"] = {
