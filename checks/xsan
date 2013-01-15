@@ -74,26 +74,26 @@ def inventory_xsan_fsm(checkname, info):
 
 def check_xsan_fsm(item, params, info):
     for line in info:
-        if line[0] != "fsm": continue
-        if line[1] != item: continue
-        port = line[3]
-        pid = line[4]
-        master = line[5]
-        state = line[6]
-        launchcount = int(line[8])
-        coredumps = int(line[9])
+        if line[0] == "fsm" and line[1] == item:
+            port = line[3]
+            pid = line[4]
+            master = line[5]
+            state = line[6]
+            launchcount = int(line[8])
+            coredumps = int(line[9])
 
-        this_time = time.time()
-        launch_timedif, launch_rate = get_counter("xsan.launchcount.%s" % (item), this_time, launchcount)
-        dump_timedif, dump_rate = get_counter("xsan.coredumps.%s" % (item), this_time, coredumps)
-        perfdata = [ ( "launch_count", launch_rate ), ( "core_dumps", dump_rate ) ]
+            this_time = time.time()
+            launch_timedif, launch_rate = get_counter("xsan.launchcount.%s" % (item), this_time, launchcount)
+            dump_timedif, dump_rate = get_counter("xsan.coredumps.%s" % (item), this_time, coredumps)
+            perfdata = [ ( "launch_count", launch_rate ), ( "core_dumps", dump_rate ) ]
 
-        msg_txt = "pid: %s port: %s launch count: %d core dumps: %d" % (pid, port, launchcount, coredumps)
+            msg_txt = "pid: %s port: %s launch count: %d core dumps: %d" % (pid, port, launchcount, coredumps)
 
-        if state in params["allowed_fsm_states"]:
-            return (0, "OK - %s - %s" % (state, msg_txt), perfdata)
-        else:
-            return (2, "CRITICAL - %s - %s" % (state, msg_txt), perfdata)
+            if state not in params["allowed_fsm_states"]:
+                return (2, "CRITICAL - %s - %s" % (state, msg_txt), perfdata)
+            else:
+                return (0, "OK - %s - %s" % (state, msg_txt), perfdata)
+        continue
     return (3, "UNKNOWN - %s info not found" % item)
 
 check_info['xsan.fsm'] = {
@@ -117,29 +117,29 @@ def inventory_xsan_stats(checkname, info):
 
 def check_xsan_stats(item, params, info):
     for line in info:
-        if line[0] == "stats": continue
-        if line[1] == item: continue
-        connections = line[3]
-        blocksize = line[4]
-        msg_buffer = line[5]
-        disks = line[6]
-        stripe_groups = line[7]
-        blocks = line[8]
-        blocks_nice = line[9]
-        blocks_units = line[10]
-        blocks_free = int(line[11])
-        blocks_free_nice = line[12]
-        blocks_free_unit = line[13]
-        blocks_free_percent = int(line[14])
+        if line[0] == "stats" and line[1] == item:
+            connections = line[3]
+            blocksize = line[4]
+            msg_buffer = line[5]
+            disks = line[6]
+            stripe_groups = line[7]
+            blocks = line[8]
+            blocks_nice = line[9]
+            blocks_units = line[10]
+            blocks_free = int(line[11])
+            blocks_free_nice = line[12]
+            blocks_free_unit = line[13]
+            blocks_free_percent = int(line[14])
 
-        msg_txt = "%s stripe groups on %s disks %s/%s blocks used (%s%s/%s%s), block size: %s each message buffer: %s" % (stripe_groups, disks, blocks_free, blocks, blocks_free_nice, blocks_free_unit, blocks_nice, blocks_units, blocksize, msg_buffer, )
-        perfdata = [ ("connections", connections), ("percent_blocks_free", blocks_free_percent, params["free_percent_warn"], params["free_percent_crit"], 0, 100), ("blocks_free", blocks_free) ]
-        if blocks_free_percent < params["free_percent_crit"]:
-            return (2, "CRITICAL - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
-        elif blocks_free_percent < params["free_percent_warn"]:
-            return (1, "WARNING - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
-        else:
-            return (0, "OK - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
+            msg_txt = "%s stripe groups on %s disks %s/%s blocks used (%s%s/%s%s), block size: %s each message buffer: %s" % (stripe_groups, disks, blocks_free, blocks, blocks_free_nice, blocks_free_unit, blocks_nice, blocks_units, blocksize, msg_buffer, )
+            perfdata = [ ("connections", connections), ("percent_blocks_free", blocks_free_percent, params["free_percent_warn"], params["free_percent_crit"], 0, 100), ("blocks_free", blocks_free) ]
+            if blocks_free_percent < params["free_percent_crit"]:
+                return (2, "CRITICAL - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
+            elif blocks_free_percent < params["free_percent_warn"]:
+                return (1, "WARNING - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
+            else:
+                return (0, "OK - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
+        continue
 
     return (3, "UNKNOWN - %s info not found" % item)
 
@@ -166,17 +166,18 @@ def inventory_xsan_stripe(checkname, info):
 
 def check_xsan_stripe(item, params, info):
     for line in info:
-        if line[0] != "stripe": continue
-        vol = line[1]
-        index = line[2]
-        name = "%s.%s" % (vol, index)
-        if name != item: continue
-        title = line[3]
-        status = line[4]
-        if status == params["status"]:
-            return (0, "OK - %s is %s" % (title,status))
-        else:
-            return (2, "CRITICAL - %s is %s" % (title,status))
+        if line[0] == "stripe":
+            vol = line[1]
+            index = line[2]
+            name = "%s.%s" % (vol, index)
+            if name != item: continue
+            title = line[3]
+            status = line[4]
+            if status == params["status"]:
+                return (0, "OK - %s is %s" % (title,status))
+            else:
+                return (2, "CRITICAL - %s is %s" % (title,status))
+        continue
 
     return (3, "UNKNOWN - %s info not found" % item)
 
@@ -200,13 +201,13 @@ def inventory_xsan_paths(checkname, info):
 
 def check_xsan_paths(item, params, info):
     for line in info:
-        if line[0] == "paths": continue
-        if line[1] == item: continue
-        chk, vol, dev, hba, ctl, lun, state, controller = line
-        if state != params["state"]:
-            return (2, "CRITICAL - state: %s changed from %s - device: %s hba: %s ctl: %s lun: %s" % (state, params["state"], dev, hba, ctl, lun))
-        else:
-            return (0, "OK - state: %s device: %s hba: %s ctl: %s lun: %s" % (state, dev, hba, ctl, lun))
+        if line[0] == "paths" and line[1] == item:
+            chk, vol, dev, hba, ctl, lun, state, controller = line
+            if state != params["state"]:
+                return (2, "CRITICAL - state: %s changed from %s - device: %s hba: %s ctl: %s lun: %s" % (state, params["state"], dev, hba, ctl, lun))
+            else:
+                return (0, "OK - state: %s device: %s hba: %s ctl: %s lun: %s" % (state, dev, hba, ctl, lun))
+        continue
 
     return (3, "UNKNOWN - %s info not found" % item)
 
@@ -230,13 +231,13 @@ def inventory_xsan_disks(checkname, info):
 
 def check_xsan_disks(item, params, info):
     for line in info:
-        if line[0] != "disks": continue
-        if line[1] == item: continue
-        chk, vol, device, sectors, sect_size = line
-        if (sectors, sect_size) != (params["sectors"], params["sect_size"]):
-            return (1, "WARN - %s sectors / %s sector size changed from  %s sectors / %s sector size" % (sectors, sect_size, params["sectors"], params["sect_size"]))
-        else:
-            return (0, "OK - device:%s sectors: %s sector size: %s" % (device, sectors, sect_size))
+        if line[0] == "disks" and line[1] == item:
+            chk, vol, device, sectors, sect_size = line
+            if (sectors, sect_size) != (params["sectors"], params["sect_size"]):
+                return (1, "WARN - %s sectors / %s sector size changed from  %s sectors / %s sector size" % (sectors, sect_size, params["sectors"], params["sect_size"]))
+            else:
+                return (0, "OK - device:%s sectors: %s sector size: %s" % (device, sectors, sect_size))
+            continue
 
     return (3, "UNKNOWN - %s info not found" % item)
 

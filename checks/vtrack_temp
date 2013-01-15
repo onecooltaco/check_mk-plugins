@@ -30,6 +30,8 @@
 
 factory_settings["vtrack_temp_default_levels"] = {
     "allowed_status" : ["normal"],
+    "warn_temp"      : "40",
+    "crit_temp"      : "60",
 }
 
 def inventory_vtrack_temp(checkname, info):
@@ -45,7 +47,7 @@ def inventory_vtrack_temp(checkname, info):
 def check_vtrack_temp(item, params, info):
   for index, temperature, status in info:
     if index != item: continue
-    perfdata = [ ( "Temperature", temperature) ]
+    perfdata = [ ( "Temperature", int(temperature), params["warn_temp"], params["crit_temp"],0,100) ]
     if status in params["allowed_status"]:
       return (0, "OK - %s at %sC" % (status, temperature), perfdata)
     else:

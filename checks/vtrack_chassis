@@ -86,7 +86,7 @@ def check_vtrack_chassis(item, params, info):
     this_time = time.time()
     rates = []
     wrapped = False
-    perfdata = [ ( "PowerOnHours", hours),("DirtyCachePercentage",cachedirty,"","",0,100),("CacheUsagePercentage",cacheused,"","",0,100) ]
+    perfdata = [ ]
     for name, counter in [
       ( "DataTransferred", datatransferred ),
       ( "ReadDataTransferred", readdatatransferred ),
@@ -112,7 +112,7 @@ def check_vtrack_chassis(item, params, info):
     # continue, other counters might wrap as well
     # after all counters are handled
     if wrapped: raise MKCounterWrapped("Counter wrap")
-
+    perfdata.extend([ ("CacheUsagePercentage",cacheused,"","",0,100),("DirtyCachePercentage",cachedirty,"","",0,100),( "PowerOnHours", hours) ])
     out_str = ' '.join(str_list)
     if crit:
       return (2, "CRITICAL - %s" % out_str, perfdata)
