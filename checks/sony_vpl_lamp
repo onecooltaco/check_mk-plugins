@@ -46,16 +46,16 @@ def inventory_sony_vpl_lamp(checkname, info):
 
 def check_sony_vpl_lamp(item, _no_params, info):
   for index, model, descr, maxhours, hours in info:
-    if index == item:
-      this_time = time.time()
-      timedif, rate = get_counter("sony_vpl_lamp.hours.%s" % item, this_time, int(hours))
-      perfdata = [ ( "lamp_hours", rate ) ]
-      msg_txt = "%s on bulb %s" % (hours, model)
-      if int(hours) > 2000:
-        return (2, "CRITICAL - %s" % msg_txt, perfdata)
-      else:
-        return (0, "OK - %s" % msg_txt, perfdata)
-  return False
+    if index != item: continue
+    this_time = time.time()
+    timedif, rate = get_counter("sony_vpl_lamp_hours.%s" % item, this_time, int(hours))
+    perfdata = [ ( "lamp_hours", rate ) ]
+    msg_txt = "%s on bulb %s" % (hours, model)
+    if int(hours) > 2000:
+      return (2, "CRITICAL - %s" % msg_txt, perfdata)
+    else:
+      return (0, "OK - %s" % msg_txt, perfdata)
+  return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["sony_vpl_lamp"] = {
     "inventory_function"       : inventory_sony_vpl_lamp,

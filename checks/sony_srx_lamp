@@ -43,16 +43,16 @@ def inventory_sony_srx_lamp(checkname, info):
 
 def check_sony_srx_lamp(item, _no_params, info):
   for index, model, hours in info:
-    if index == item:
-      this_time = time.time()
-      timedif, rate = get_counter("sony_srx_lamp.hours.%s" % item, this_time, int(hours))
-      perfdata = [ ( "Lamphours", rate ) ]
-      msg_txt = "%s on bulb %s" % (hours, model)
-      if int(hours) > params["lamphours"]:
-        return (2, "CRITICAL - %s" % msg_txt, perfdata)
-      else:
-        return (0, "OK - %s" % msg_txt, perfdata)
-  return False
+    if index != item: continue
+    this_time = time.time()
+    timedif, rate = get_counter("sony_srx_lamp_hours.%s" % item, this_time, int(hours))
+    perfdata = [ ( "Lamphours", rate ) ]
+    msg_txt = "%s on bulb %s" % (hours, model)
+    if int(hours) > int(params["lamphours"]):
+      return (2, "CRITICAL - %s" % msg_txt, perfdata)
+    else:
+      return (0, "OK - %s" % msg_txt, perfdata)
+  return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["sony_srx_lamp"] = {
     "inventory_function"       : inventory_sony_srx_lamp,
@@ -63,9 +63,9 @@ check_info["sony_srx_lamp"] = {
 }
 
 snmp_info["sony_srx_lamp"] = ( ".1.3.6.1.4.1.122.8501.3.109.4.1.1", [ \
-  "1", \
-  "2", \
-  "3", \
+  "1", \ # index
+  "2", \ # bulb model
+  "3", \ # hours
 ] )
 
 snmp_scan_functions['sony_srx_lamp'] = \
