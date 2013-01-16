@@ -2,17 +2,21 @@
 #
 $opt[1] = "--imgformat=PNG --title \"Temperature Data For $hostname / $servicedesc\" --slope-mode ";
 #
-$def[1] =  "DEF:ds1=$RRDFILE[1]:$DS[1]:AVERAGE " ;
-$def[1] .= "CDEF:var1=ds1 ";
+$def[1] =  "DEF:temp=$RRDFILE[1]:$DS[1]:AVERAGE " ;
+$def[1] .= "CDEF:cold=temp,20,LE,temp,20,IF ";
+$def[1] .= "CDEF:cool=temp,20,GT,temp,40,GT,10,temp,20,-,IF,UNKN,IF ";
+$def[1] .= "CDEF:warm=temp,40,GT,temp,60,GT,10,temp,40,-,IF,UNKN,IF ";
+$def[1] .= "CDEF:hot=temp,60,GT,temp,60,-,UNKN,IF ";
 
-# Draw line
-$def[1] .= "LINE1:var1" . "#00555E" . "FF:\"$NAME[1]\t\" ";
 # Draw area under line
-$def[1] .= "AREA:var1" . "#BAFFF8 ";
+$def[1] .= "AREA:cold#0000FFAA:cold:STACK ";
+$def[1] .= "AREA:cool#0000FF44:cool:STACK ";
+$def[1] .= "AREA:warm#FF000044:warm:STACK ";
+$def[1] .= "AREA:hot#FF0000AA:hot:STACK ";
 
-$def[1] .= "GPRINT:var1:LAST:\"%3.4lg %s$UNIT[1] LAST \" ";
-$def[1] .= "GPRINT:var1:MAX:\"%3.4lg %s$UNIT[1] MAX \" ";
-$def[1] .= "GPRINT:var1:AVERAGE:\"%3.4lg %s$UNIT[1] AVERAGE \" ";
+$def[1] .= "GPRINT:temp:LAST:\"%3.4lg %s$UNIT[1] LAST \" ";
+$def[1] .= "GPRINT:temp:MAX:\"%3.4lg %s$UNIT[1] MAX \" ";
+$def[1] .= "GPRINT:temp:AVERAGE:\"%3.4lg %s$UNIT[1] AVERAGE \" ";
 
 
 # Draw warning and crit

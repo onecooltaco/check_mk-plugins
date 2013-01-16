@@ -1,78 +1,54 @@
 <?php
 ######### Battery_Temperature
 $opt[1] = "--imgformat=PNG --title \"$hostname / $servicedesc\" --slope-mode ";
-#
-$def[1] =  "DEF:ds1=$RRDFILE[1]:$DS[1]:AVERAGE " ;
-$def[1] .= "CDEF:var1=ds1 ";
 
-# Draw line
-$def[1] .= "LINE1:var1" . "#00555E" . "FF:\"$NAME[1]\t\" ";
+$def[1] =  "DEF:temp=$RRDFILE[1]:$DS[1]:AVERAGE " ;
+$def[1] .= "CDEF:cold=temp,20,LE,temp,20,IF ";
+$def[1] .= "CDEF:cool=temp,20,GT,temp,40,GT,10,temp,20,-,IF,UNKN,IF ";
+$def[1] .= "CDEF:warm=temp,40,GT,temp,60,GT,10,temp,40,-,IF,UNKN,IF ";
+$def[1] .= "CDEF:hot=temp,60,GT,temp,60,-,UNKN,IF ";
+
 # Draw area under line
-$def[1] .= "AREA:var1" . "#BAFFF8 ";
+$def[1] .= "AREA:cold#0000FFAA:cold:STACK ";
+$def[1] .= "AREA:cool#0000FF44:cool:STACK ";
+$def[1] .= "AREA:warm#FF000044:warm:STACK ";
+$def[1] .= "AREA:hot#FF0000AA:hot:STACK ";
 
-$def[1] .= "GPRINT:var1:LAST:\"%3.4lg %s$UNIT[1] LAST \" ";
-$def[1] .= "GPRINT:var1:MAX:\"%3.4lg %s$UNIT[1] MAX \" ";
-$def[1] .= "GPRINT:var1:AVERAGE:\"%3.4lg %s$UNIT[1] AVERAGE \" ";
-
-
-# Draw warning and crit
-if (isset($WARN[1]) && $WARN[1] != "") {
-$def[1] .= "HRULE:$WARN[1]#FFFF00:\"Warning ($NAME[1])\: " . $WARN[1] . " " . $UNIT[1] . " \\n\" " ;
-}
-
-if (isset($CRIT[1]) && $CRIT[1] != "") {
-$def[1] .= "HRULE:$CRIT[1]#FF0000:\"Critical ($NAME[1])\: " . $CRIT[1] . " " . $UNIT[1] . " \\n\" " ;
-}
+$def[1] .= "GPRINT:temp:LAST:\"%3.4lg %s$UNIT[1] LAST \" ";
+$def[1] .= "GPRINT:temp:MAX:\"%3.4lg %s$UNIT[1] MAX \" ";
+$def[1] .= "GPRINT:temp:AVERAGE:\"%3.4lg %s$UNIT[1] AVERAGE \" ";
 
 ######### RemainCapacity
 $opt[2] = "--imgformat=PNG --title \"$hostname / $servicedesc\" --slope-mode ";
-#
-$def[2] =  "DEF:ds1=$RRDFILE[2]:$DS[2]:AVERAGE " ;
-$def[2] .= "CDEF:var1=ds1 ";
 
-# Draw line
-$def[2] .= "LINE1:var1" . "#00555E" . "FF:\"$NAME[2]\t\" ";
+$def[2] =  "DEF:ds1=$RRDFILE[3]:$DS[1]:AVERAGE " ;
+$def[2] .= "CDEF:capacity=ds1,4,/ ";
+
 # Draw area under line
-$def[2] .= "AREA:var1" . "#BAFFF8 ";
+$def[2] .= "AREA:capacity#33CC3322::STACK ";
+$def[2] .= "AREA:capacity#33CC3344::STACK ";
+$def[2] .= "AREA:capacity#33CC3366::STACK ";
+$def[2] .= "AREA:capacity#33CC3388::STACK ";
 
-$def[2] .= "GPRINT:var1:LAST:\"%3.4lg %s$UNIT[2] LAST \" ";
-$def[2] .= "GPRINT:var1:MAX:\"%3.4lg %s$UNIT[2] MAX \" ";
-$def[2] .= "GPRINT:var1:AVERAGE:\"%3.4lg %s$UNIT[2] AVERAGE \" ";
-
-
-# Draw warning and crit
-if (isset($WARN[2]) && $WARN[2] != "") {
-$def[2] .= "HRULE:$WARN[2]#FFFF00:\"Warning ($NAME[2])\: " . $WARN[2] . " " . $UNIT[2] . " \\n\" " ;
-}
-
-if (isset($CRIT[2]) && $CRIT[2] != "") {
-$def[2] .= "HRULE:$CRIT[2]#FF0000:\"Critical ($NAME[2])\: " . $CRIT[2] . " " . $UNIT[2] . " \\n\" " ;
-}
+$def[2] .= "GPRINT:capacity:LAST:\"%3.4lg %s$UNIT[2] LAST \" ";
+$def[2] .= "GPRINT:capacity:MAX:\"%3.4lg %s$UNIT[2] MAX \" ";
+$def[2] .= "GPRINT:capacity:AVERAGE:\"%3.4lg %s$UNIT[2] AVERAGE \" ";
 
 ######### Battery_Voltage
 $opt[3] = "--imgformat=PNG --title \"$hostname / $servicedesc\" --slope-mode ";
-#
-$def[3] =  "DEF:ds1=$RRDFILE[3]:$DS[3]:AVERAGE " ;
-$def[3] .= "CDEF:var1=ds1 ";
 
-# Draw line
-$def[3] .= "LINE1:var1" . "#00555E" . "FF:\"$NAME[3]\t\" ";
+$def[3] =  "DEF:ds1=$RRDFILE[3]:$DS[1]:AVERAGE " ;
+$def[3] .= "CDEF:volt=ds1,4,/ ";
+
 # Draw area under line
-$def[3] .= "AREA:var1" . "#BAFFF8 ";
+$def[3] .= "AREA:volt#00555E22::STACK ";
+$def[3] .= "AREA:volt#00555E44::STACK ";
+$def[3] .= "AREA:volt#00555E66::STACK ";
+$def[3] .= "AREA:volt#00555E88::STACK ";
 
-$def[3] .= "GPRINT:var1:LAST:\"%3.4lg %s$UNIT[3] LAST \" ";
-$def[3] .= "GPRINT:var1:MAX:\"%3.4lg %s$UNIT[3] MAX \" ";
-$def[3] .= "GPRINT:var1:AVERAGE:\"%3.4lg %s$UNIT[3] AVERAGE \" ";
-
-
-# Draw warning and crit
-if (isset($WARN[3]) && $WARN[3] != "") {
-$def[3] .= "HRULE:$WARN[1]#FFFF00:\"Warning ($NAME[3])\: " . $WARN[3] . " " . $UNIT[3] . " \\n\" " ;
-}
-
-if (isset($CRIT[3]) && $CRIT[3] != "") {
-$def[3] .= "HRULE:$CRIT[1]#FF0000:\"Critical ($NAME[3])\: " . $CRIT[3] . " " . $UNIT[3] . " \\n\" " ;
-}
+$def[3] .= "GPRINT:volt:LAST:\"%3.4lg %s$UNIT[3] LAST \" ";
+$def[3] .= "GPRINT:volt:MAX:\"%3.4lg %s$UNIT[3] MAX \" ";
+$def[3] .= "GPRINT:volt:AVERAGE:\"%3.4lg %s$UNIT[3] AVERAGE \" ";
 
 ######### Battery_CycleCount
 $opt[4] = "--imgformat=PNG --title \"$hostname / $servicedesc\" --slope-mode ";
@@ -88,15 +64,5 @@ $def[4] .= "AREA:var1" . "#BAFFF8 ";
 $def[4] .= "GPRINT:var1:LAST:\"%3.4lg %s$UNIT[4] LAST \" ";
 $def[4] .= "GPRINT:var1:MAX:\"%3.4lg %s$UNIT[4] MAX \" ";
 $def[4] .= "GPRINT:var1:AVERAGE:\"%3.4lg %s$UNIT[4] AVERAGE \" ";
-
-
-# Draw warning and crit
-if (isset($WARN[4]) && $WARN[4] != "") {
-$def[4] .= "HRULE:$WARN[1]#FFFF00:\"Warning ($NAME[4])\: " . $WARN[4] . " " . $UNIT[4] . " \\n\" " ;
-}
-
-if (isset($CRIT[4]) && $CRIT[4] != "") {
-$def[4] .= "HRULE:$CRIT[1]#FF0000:\"Critical ($NAME[4])\: " . $CRIT[4] . " " . $UNIT[4] . " \\n\" " ;
-}
 
 ?>

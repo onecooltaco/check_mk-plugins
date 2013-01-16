@@ -19,7 +19,6 @@
 
 # Graph 1: frames
 
-# Determine if Bit or Byte.
 # Change multiplier and labels
 $ds_name[1] = 'Frames';
 $opt[1] = "--imgformat=PNG --title \"Traffic $hostname / $servicedesc\" --base=1000 --slope-mode ";
@@ -71,7 +70,7 @@ $def[2] .= "GPRINT:octetsout:MAX:\"%3.4lg %s$UNIT[4] MAX\\n\" ";
 
 # Graph 3: errors and discards
 $ds_name[3] = 'Errors and Discards';
-$opt[3] = "--imgformat=PNG --title \"Traffic $hostname / $servicedesc\" --base=1024 --slope-mode ";
+$opt[3] = "--imgformat=PNG --title \"Errors $hostname / $servicedesc\" --base=1024 --slope-mode ";
 #
 $def[3]  = "";
 $def[3] .= "DEF:var1=$RRDFILE[5]:$DS[1]:AVERAGE " ;
