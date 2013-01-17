@@ -45,7 +45,7 @@ def inventory_vtrack_chassis(checkname, info):
   inventory = []
   for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, \
     ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
-    lcrit, hours, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
+    lcrit, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
     writedatatransferred, numoferrors, numofnonrwerrors, numofreaderrors, numofwriteerrors, \
     numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests, statsstarttime, \
     statscollectiontime in info:
@@ -56,7 +56,7 @@ def inventory_vtrack_chassis(checkname, info):
 def check_vtrack_chassis(item, params, info):
   for index, serial, scsi, bootloader, firmware, ops, role, readiness, arrays, pdrives, \
   ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
-  lcrit, hours, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
+  lcrit, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
   writedatatransferred, numoferrors, numofnonrwerrors, numofreaderrors, numofwriteerrors, \
   numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests, statsstarttime, \
   statscollectiontime in info:
@@ -110,7 +110,7 @@ def check_vtrack_chassis(item, params, info):
     # continue, other counters might wrap as well
     # after all counters are handled
     if wrapped: raise MKCounterWrapped("Counter wrap")
-    perfdata.extend([ ("CacheUsagePercentage",cacheused,"","",0,100),("DirtyCachePercentage",cachedirty,"","",0,100),( "PowerOnHours", hours) ])
+    perfdata.extend([ ("CacheUsagePercentage",cacheused,"","",0,100),("DirtyCachePercentage",cachedirty,"","",0,100) ])
     out_str = ' '.join(str_list)
     if crit:
       return (2, "CRITICAL - %s" % out_str, perfdata)
@@ -151,7 +151,6 @@ snmp_info["vtrack_chassis"] = \
 		"3.1.27",	# raidv4CtrlNumOfLogDrvOnline
 		"3.1.28",	# raidv4CtrlNumOfLogDrvOffline
 		"3.1.29",	# raidv4CtrlNumOfLogDrvCritical
-		"3.1.37",	# raidv4CtrlPowerOnHours
 		"3.1.38",	# raidv4CtrlDirtyCachePercentage	Values: na(-1)
 		"3.1.39",	# raidv4CtrlCacheUsagePercentage	Values: na(-1)
 		"3.1.64",	# raidv4CtrlNumOfLogDrvDegraded

@@ -138,17 +138,4 @@ $def[4] .= "GPRINT:cachedirty:LAST:\"%3.4lg %s$UNIT[13] LAST \" ";
 $def[4] .= "GPRINT:cachedirty:AVERAGE:\"%3.4lg %s$UNIT[13] AVERAGE \" ";
 $def[4] .= "GPRINT:cachedirty:MAX:\"%3.4lg %s$UNIT[13] MAX\\n\" ";
 
-# Graph 6: up time
-
-# Change multiplier and labels
-$ds_name[5] = 'Power on Hours';
-$opt[5] = "--imgformat=PNG --title \"Uptime $hostname / $servicedesc\" --base=1000 --slope-mode ";
-#
-$def[5]  = "";
-$def[5] .= "DEF:up=$RRDFILE[14]:$DS[1]:AVERAGE " ;
-$def[5] .= "CDEF:uptime=up ";
-
-# Draw fill area under line
-$def[5] .= "AREA:uptime" . "#33CC33:\"$NAME[14]\t\" ";
-
 ?>
