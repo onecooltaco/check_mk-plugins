@@ -1,0 +1,169 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+# +------------------------------------------------------------------+
+# |             ____ _               _        __  __ _  __           |
+# |            / ___| |__   ___  ___| | __   |  \/  | |/ /           |
+# |           | |   | '_ \ / _ \/ __| |/ /   | |\/| | ' /            |
+# |           | |___| | | |  __/ (__|   <    | |  | | . \            |
+# |            \____|_| |_|\___|\___|_|\_\___|_|  |_|_|\_\           |
+# |                                                                  |
+# | Copyright Mathias Kettner 2012             mk@mathias-kettner.de |
+# +------------------------------------------------------------------+
+#
+# This file is part of Check_MK.
+# The official homepage is at http://mathias-kettner.de/check_mk.
+#
+# check_mk is free software;  you can redistribute it and/or modify it
+# under the  terms of the  GNU General Public License  as published by
+# the Free Software Foundation in version 2.  check_mk is  distributed
+# in the hope that it will be useful, but WITHOUT ANY WARRANTY;  with-
+# out even the implied warranty of  MERCHANTABILITY  or  FITNESS FOR A
+# PARTICULAR PURPOSE. See the  GNU General Public License for more de-
+# ails.  You should have  received  a copy of the  GNU  General Public
+# License along with GNU Make; see the file  COPYING.  If  not,  write
+# to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
+# Boston, MA 02110-1301 USA.
+
+# Author: Jeremy Leggat <jleggat@asu.edu>
+# --------------------------------------------------------------------------------
+# 1. Promise VTrack storage status
+
+factory_settings["vtrack_storage_default_levels"] = {
+    "allowed_status" : ["OK"],
+}
+
+# Pads port numbers with zeroes, so that items
+# nicely sort alphabetically
+# taken from if.include
+def vtrack_pad_with_zeroes(info, vtIndex):
+  max_index = max([int(line[0]) for line in info])
+  digits = len(str(max_index))
+  return ("%0"+str(digits)+"d") % int(vtIndex)
+
+def vtrack_storage_interfacename(st):
+  names = { '-1': "na", '0': "unknown", '2': "sata", '3': "sas" }
+  return names.get(st, st)
+
+def vtrack_storage_powersavname(st):
+  names = { '-1': "na", '0': "disabled", '1': "idle", '2': "stop" }
+  return names.get(st, st)
+
+def vtrack_storage_smartname(st):
+  names = { '-1': "na", '0': "disabled", '1': "enabled", '2': "inprogress" }
+  return names.get(st, st)
+
+def inventory_vtrack_storage(checkname, info):
+  inventory = []
+  for index, driveinterface, modelnumber, serialnumber, operationalstatus, condition, \
+    configuration, datatransferred, readdatatransferred, writedatatransferred, numoferrors, \
+    numofnonrwerrors, numofreaderrors, numofwriteerrors, numofiorequests, numofnonrwrequests, \
+    numofreadrequests, numofwriterequests, starttime, collectiontime in info:
+    name = vtrack_pad_with_zeroes(info,index)
+    inventory.append( (name, {}) )
+  return inventory
+
+def check_vtrack_storage(item, params, info):
+  for index, driveinterface, modelnumber, serialnumber, operationalstatus, condition, \
+    configuration, datatransferred, readdatatransferred, writedatatransferred, numoferrors, \
+    numofnonrwerrors, numofreaderrors, numofwriteerrors, numofiorequests, numofnonrwrequests, \
+    numofreadrequests, numofwriterequests, starttime, collectiontime in info:
+    name = vtrack_pad_with_zeroes(info,index)
+    if name != item: continue
+
+    # Performance counters
+    this_time = time.time()
+    rates = []
+    wrapped = False
+    perfdata = [ ]
+    for name, counter in [
+      ( "DataTransferred", datatransferred ),
+      ( "ReadDataTransferred", readdatatransferred ),
+      ( "WriteDataTransferred", writedatatransferred ),
+      ( "NumOfErrors", numoferrors ),
+      ( "NumOfNonRWErrors", numofnonrwerrors ),
+      ( "NumOfReadErrors", numofreaderrors ),
+      ( "NumOfWriteErrors", numofwriteerrors ),
+      ( "NumOfIORequests", numofiorequests ),
+      ( "NumOfNonRWRequests", numofnonrwrequests ),
+      ( "NumOfReadRequests", numofreadrequests ),
+      ( "NumOfWriteRequests", numofwriterequests ) ]:
+      try:
+        timedif, rate = get_counter("vtrack.%s.%s" % (name, item), this_time, saveint(counter))
+        rates.append(rate)
+        perfdata.append( (name, rate) )
+      except MKCounterWrapped:
+        wrapped = True
+      # continue, other counters might wrap as well
+#
+     # continue, other counters might wrap as well
+     # after all counters are handled
+    if wrapped: raise MKCounterWrapped("Counter wrap")
+#     perfdata.extend([ ("CacheUsagePercentage",cacheused,"","",0,100),("DirtyCachePercentage",cachedirty,"","",0,100),( "PowerOnHours", hours) ])
+
+    crit = False
+    warn = False
+    str_list = []
+    if operationalstatus not in params["allowed_status"]:
+      crit = True
+      str_list.append("OperationalStatus %s" % operationalstatus)
+    if condition not in params["allowed_status"]:
+      crit = True
+      str_list.append("Condition %s" % condition)
+
+    str_list.extend([configuration, serialnumber, modelnumber, driveinterface])
+    out_str = ' '.join(str_list)
+    if crit:
+      return (2, "CRITICAL - %s" % out_str, perfdata)
+    elif warn:
+      return (1, "WARN - %s" % out_str, perfdata)
+    else:
+      return (0, "OK - %s" % out_str, perfdata)
+
+  return (3, "UNKNOWN - %s info not found" % item)
+
+check_info["vtrack_storage"] = {
+    "inventory_function"       : inventory_vtrack_storage,
+    "check_function"           : check_vtrack_storage,
+    "has_perfdata"             : True,
+    "service_description"      : "Drive %s",
+    "default_levels_variable"  : "vtrack_storage_default_levels",
+}
+
+snmp_info["vtrack_storage"] = \
+	( ".1.3.6.1.4.1.7933.1.20.2", [
+		"1.1.1",	# raidv4PhydrvIndex
+		"1.1.2",	# raidv4PhydrvDriveInterface
+		"1.1.4",	# raidv4PhydrvModelNumber
+		"1.1.5",	# raidv4PhydrvSerialNumber
+#		"1.1.6",	# raidv4PhydrvFirmwareVersion
+#		"1.1.7",	# raidv4PhydrvProtocolVersion
+		"1.1.8",	# raidv4PhydrvOperationalStatus
+		"1.1.9",	# raidv4PhydrvCondition
+		"1.1.11",	# raidv4PhydrvConfiguration
+#		"1.1.12",	# raidv4PhydrvArrayID
+#		"1.1.13",	# raidv4PhydrvSequenceNumber
+#		"1.1.14",	# raidv4PhydrvSlotNumber
+#		"1.1.16",	# raidv4PhydrvBlockSize
+#		"1.1.17",	# raidv4PhydrvPhysicalCapacity
+#		"1.1.18",	# raidv4PhydrvConfigurableCapacity
+#		"1.1.19",	# raidv4PhydrvUsedCapacity
+#		"1.1.20",	# raidv4PhydrvDriveInterfaceType	na(-1), unknown(0), sata(1), sas(4)
+#		"1.1.21",	# raidv4PhyDrvPowerSavingLevel	na(-1), disabled(0), idle(1), standby(2), stop(3)
+#		"1.1.22",	# raidv4PhyDrvSMARTStatus	na(-1), disabled(0), enabled(1), inprogress(2)
+		"7.1.1",	# raidv4PhydrvStatsDataTransferred
+		"7.1.2",	# raidv4PhydrvStatsReadDataTransferred
+		"7.1.3",	# raidv4PhydrvStatsWriteDataTransferred
+		"7.1.4",	# raidv4PhydrvStatsNumOfErrors
+		"7.1.5",	# raidv4PhydrvStatsNumOfNonRWErrors
+		"7.1.6",	# raidv4PhydrvStatsNumOfReadErrors
+		"7.1.7",	# raidv4PhydrvStatsNumOfWriteErrors
+		"7.1.8",	# raidv4PhydrvStatsNumOfIORequests
+		"7.1.9",	# raidv4PhydrvStatsNumOfNonRWRequests
+		"7.1.10",	# raidv4PhydrvStatsNumOfReadRequests
+		"7.1.11",	# raidv4PhydrvStatsNumOfWriteRequests
+		"7.1.12",	# raidv4PhydrvStatsStartTime
+		"7.1.13",	# raidv4PhydrvStatsCollectionTime
+	] )
+
+snmp_scan_functions['vtrack_storage'] = \
+  lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")

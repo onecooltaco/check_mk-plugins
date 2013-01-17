@@ -98,9 +98,7 @@ def check_vtrack_chassis(item, params, info):
       ( "NumOfIORequests", numofiorequests ),
       ( "NumOfNonRWRequests", numofnonrwrequests ),
       ( "NumOfReadRequests", numofreadrequests ),
-      ( "NumOfWriteRequests", numofwriterequests ),
-      ( "StatsStartTime", statsstarttime ),
-      ( "StatsCollectionTime", statscollectiontime ) ]:
+      ( "NumOfWriteRequests", numofwriterequests ) ]:
       try:
         timedif, rate = get_counter("vtrack.%s.%s" % (name, item), this_time, saveint(counter))
         rates.append(rate)

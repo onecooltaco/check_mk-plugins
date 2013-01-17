@@ -113,42 +113,4 @@ $def[3] .= "GPRINT:werrors:LAST:\"%3.4lg %s$UNIT[7] LAST \" ";
 $def[3] .= "GPRINT:werrors:MAX:\"%3.4lg %s$UNIT[7] MAX \" ";
 $def[3] .= "GPRINT:werrors:AVERAGE:\"%3.4lg %s$UNIT[7] AVERAGE\\n\" ";
 
-# Graph 4: Cache
-
-$ds_name[4] = 'Cache';
-$opt[4] = "--imgformat=PNG --title \"Cache $hostname / $servicedesc\" --base=1000 --slope-mode ";
-#
-$def[4]  = "";
-$def[4] .= "DEF:cused=$RRDFILE[12]:$DS[1]:AVERAGE " ;
-$def[4] .= "DEF:cdirty=$RRDFILE[13]:$DS[1]:AVERAGE " ;
-$def[4] .= "CDEF:cacheused=cused ";
-$def[4] .= "CDEF:cachedirty=cdirty ";
-
-# Draw fill area under line
-$def[4] .= "LINE1:cacheused" . "#000080:\"$NAME[12]\t\" ";
-
-# write out averages
-$def[4] .= "GPRINT:cacheused:LAST:\"%3.4lg %s$UNIT[12] LAST \" ";
-$def[4] .= "GPRINT:cacheused:AVERAGE:\"%3.4lg %s$UNIT[12] AVERAGE \" ";
-$def[4] .= "GPRINT:cacheused:MAX:\"%3.4lg %s$UNIT[12] MAX\\n\" ";
-
-$def[4] .= "LINE1:cachedirty" . "#FF1493:\"$NAME[13]\t\" ";
-
-$def[4] .= "GPRINT:cachedirty:LAST:\"%3.4lg %s$UNIT[13] LAST \" ";
-$def[4] .= "GPRINT:cachedirty:AVERAGE:\"%3.4lg %s$UNIT[13] AVERAGE \" ";
-$def[4] .= "GPRINT:cachedirty:MAX:\"%3.4lg %s$UNIT[13] MAX\\n\" ";
-
-# Graph 6: up time
-
-# Change multiplier and labels
-$ds_name[5] = 'Power on Hours';
-$opt[5] = "--imgformat=PNG --title \"Uptime $hostname / $servicedesc\" --base=1000 --slope-mode ";
-#
-$def[5]  = "";
-$def[5] .= "DEF:up=$RRDFILE[14]:$DS[1]:AVERAGE " ;
-$def[5] .= "CDEF:uptime=up ";
-
-# Draw fill area under line
-$def[5] .= "AREA:uptime" . "#33CC33:\"$NAME[14]\t\" ";
-
 ?>

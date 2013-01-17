@@ -25,10 +25,10 @@ $def[2] =  "DEF:ds1=$RRDFILE[3]:$DS[1]:AVERAGE " ;
 $def[2] .= "CDEF:capacity=ds1,4,/ ";
 
 # Draw area under line
-$def[2] .= "AREA:capacity#33CC3322::STACK ";
-$def[2] .= "AREA:capacity#33CC3344::STACK ";
-$def[2] .= "AREA:capacity#33CC3366::STACK ";
-$def[2] .= "AREA:capacity#33CC3388::STACK ";
+$def[2] .= "AREA:capacity#00FF0022::STACK ";
+$def[2] .= "AREA:capacity#00FF0044::STACK ";
+$def[2] .= "AREA:capacity#00FF0066::STACK ";
+$def[2] .= "AREA:capacity#00FF0088::STACK ";
 
 $def[2] .= "GPRINT:capacity:LAST:\"%3.4lg %s$UNIT[2] LAST \" ";
 $def[2] .= "GPRINT:capacity:MAX:\"%3.4lg %s$UNIT[2] MAX \" ";
@@ -41,10 +41,10 @@ $def[3] =  "DEF:ds1=$RRDFILE[3]:$DS[1]:AVERAGE " ;
 $def[3] .= "CDEF:volt=ds1,4,/ ";
 
 # Draw area under line
-$def[3] .= "AREA:volt#00555E22::STACK ";
-$def[3] .= "AREA:volt#00555E44::STACK ";
-$def[3] .= "AREA:volt#00555E66::STACK ";
-$def[3] .= "AREA:volt#00555E88::STACK ";
+$def[3] .= "AREA:volt#00FFFF22::STACK ";
+$def[3] .= "AREA:volt#00FFFF44::STACK ";
+$def[3] .= "AREA:volt#00FFFF66::STACK ";
+$def[3] .= "AREA:volt#00FFFF88::STACK ";
 
 $def[3] .= "GPRINT:volt:LAST:\"%3.4lg %s$UNIT[3] LAST \" ";
 $def[3] .= "GPRINT:volt:MAX:\"%3.4lg %s$UNIT[3] MAX \" ";
