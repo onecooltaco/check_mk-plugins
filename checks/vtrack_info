@@ -74,16 +74,16 @@ check_info["vtrack_info"] = {
 }
 
 snmp_info["vtrack_info"] = \
-	( ".1.3.6.1.4.1.7933.1.20.1.1.1", [
-		"1",	# raidv4InstanceIndex
-		"2",	# raidv4InstanceType				Values: hba(0), subsys(1)
-		"3",	# raidv4InstanceDescription
-		"5",	# raidv4InstanceTime
-		"6",	# raidv4InstanceRedundancyStatus	Values: not-redundant(0), redundant(1), critical(2), not-supported(255)
-		"7",	# raidv4InstanceNumOfControllersPresent
-		"8",	# raidv4InstanceInterConnectionType	Values: not-supported(0), sas(1)
-		"9",	# raidv4InstanceNumOfEnclosuresPresent
-		"10",	# raidv4InstanceHostInterfaceType	Values: unknown(0), pci(1), iscsi(2), fc(3), scsi(4), sas(5)
+	( ".1.3.6.1.4.1.7933.1", [
+		"20.1.1.1.1",	# raidv4InstanceIndex
+		"20.1.1.1.2",	# raidv4InstanceType				Values: hba(0), subsys(1)
+		"20.1.1.1.3",	# raidv4InstanceDescription
+		"20.1.1.1.5",	# raidv4InstanceTime
+		"20.1.1.1.6",	# raidv4InstanceRedundancyStatus	Values: not-redundant(0), redundant(1), critical(2), not-supported(255)
+		"20.1.1.1.7",	# raidv4InstanceNumOfControllersPresent
+		"20.1.1.1.8",	# raidv4InstanceInterConnectionType	Values: not-supported(0), sas(1)
+		"20.1.1.1.9",	# raidv4InstanceNumOfEnclosuresPresent
+		"20.1.1.1.10",	# raidv4InstanceHostInterfaceType	Values: unknown(0), pci(1), iscsi(2), fc(3), scsi(4), sas(5)
 	] )
 
 snmp_scan_functions['vtrack_info'] = \

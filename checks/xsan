@@ -36,26 +36,26 @@
 # stripe    VOL 2   Video-2 Up  1098630080  270720  538981361   49
 # stripe    VOL 3   Video-3 Up  1098630080  270720  540286197   49
 # stripe    VOL 4   Video-4 Up  1098630080  270720  538922504   49
-# paths     PLY_1   rdisk16 1   0   1   Available   default
-# paths     PLY_2   rdisk22 1   0   2   Available   default
-# paths     PLY_MDJ rdisk4  1   0   0   Available   default
-# paths     VTRAK0101   rdisk8  2   0   1   Available   default
-# paths     VTRAK0102   rdisk9  1   0   2   Available   default
-# paths     VTRAK0103   rdisk18 2   0   3   Available   default
-# paths     VTRAK0104   rdisk17 1   0   4   Available   default
-# paths     VTRAK0201   rdisk2  1   0   0   Available   default
-# paths     VTRAK0202   rdisk12 2   0   1   Available   default
-# paths     VTRAK0203   rdisk15 1   0   2   Available   default
-# paths     VTRAK0204   rdisk20 2   0   3   Available   default
-# paths     VTRAK0301   rdisk1  1   0   0   Available   default
-# paths     VTRAK0302   rdisk14 2   0   1   Available   default
-# paths     VTRAK0303   rdisk10 1   0   2   Available   default
-# paths     VTRAK0304   rdisk19 2   0   3   Available   default
-# paths     VTRAK0401   rdisk0  1   0   0   Available   default
-# paths     VTRAK0402   rdisk11 2   0   1   Available   default
-# paths     VTRAK0403   rdisk13 1   0   2   Available   default
-# paths     VTRAK0404   rdisk21 2   0   3   Available   default
-# paths     VTRRAK01MDC rdisk3  1   0   0   Available   default
+# paths     P_1      rdisk16 1   0   1   Available   default
+# paths     P_2      rdisk22 1   0   2   Available   default
+# paths     P_MDJ    rdisk4  1   0   0   Available   default
+# paths     VT0101   rdisk8  2   0   1   Available   default
+# paths     VT0102   rdisk9  1   0   2   Available   default
+# paths     VT0103   rdisk18 2   0   3   Available   default
+# paths     VT0104   rdisk17 1   0   4   Available   default
+# paths     VT0201   rdisk2  1   0   0   Available   default
+# paths     VT0202   rdisk12 2   0   1   Available   default
+# paths     VT0203   rdisk15 1   0   2   Available   default
+# paths     VT0204   rdisk20 2   0   3   Available   default
+# paths     VT0301   rdisk1  1   0   0   Available   default
+# paths     VT0302   rdisk14 2   0   1   Available   default
+# paths     VT0303   rdisk10 1   0   2   Available   default
+# paths     VT0304   rdisk19 2   0   3   Available   default
+# paths     VT0401   rdisk0  1   0   0   Available   default
+# paths     VT0402   rdisk11 2   0   1   Available   default
+# paths     VT0403   rdisk13 1   0   2   Available   default
+# paths     VT0404   rdisk21 2   0   3   Available   default
+# paths     VTK01MDC rdisk3  1   0   0   Available   default
 # -------------------------------------------------------------
 
 factory_settings["xsan_default_levels"] = {

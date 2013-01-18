@@ -48,10 +48,11 @@ def check_sony_vpl_lamp(item, params, info):
   for index, model, descr, maxhours, hours in info:
     if index != item: continue
     this_time = time.time()
-#    timedif, rate = get_counter("sony_vpl_lamp_hours.%s" % item, this_time, int(hours))
-    perfdata = [ ( "lamp_hours", int(hours), "", int(maxhours) ) ]
-    msg_txt = "%s on bulb %s" % (hours, model)
-    if int(hours) > int(maxhours):
+    lamp_time = saveint(hours)
+#    timedif, rate = get_counter("sony_vpl_lamp_hours.%s" % item, this_time, lamp_time)
+    perfdata = [ ( "lamp_hours", lamp_time, "", saveint(maxhours) ) ]
+    msg_txt = "%d on bulb %s" % (lamp_time, model)
+    if lamp_time > saveint(maxhours):
       return (2, "CRITICAL - %s" % msg_txt, perfdata)
     else:
       return (0, "OK - %s" % msg_txt, perfdata)

@@ -37,7 +37,6 @@ factory_settings["fa_port_default_levels"] = {
 
 def fa_port_itemname(info,id,index,idlist):
 	uid = fa_hex2string(id)
-#	fullindex = fa_pad_with_zeroes(info,index)
 	iname = fa_unitid_genitem(uid,idlist)
 	return "%d_%s" % (iname, index)
 def fa_port_statename(st):

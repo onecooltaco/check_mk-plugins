@@ -56,36 +56,44 @@ def fa_sensor_characteristicname(st):
 
 def inventory_fa_sensor(checkname, info):
   inventory = []
-  for index, id, status, message, type, character in info:
-    name = fa_pad_with_zeroes(info,index)
-    if status != "1" and type != "1" and character != "1":
-      inventory.append((name,{}))
+  sensors = len(info)
+  if sensors > 0:
+    inventory.append((None,{"sensors": sensors}))
   return inventory
 
 def check_fa_sensor(item, params, info):
+  crit = False
+  warn = False
+  str_list = []
+  sensors = len(info)
+  if sensors != params["sensors"]:
+    warn = True
+    str_list.append("Mismatch - %d of %d sensors found" % (sensors, params["sensors"]))
+
   for index, id, status, message, type, character in info:
-    name = fa_pad_with_zeroes(info,index)
-    if name != item: continue
-
-    stat_name = fa_sensor_statusname(status)
-    type_name = fa_sensor_typename(type)
-    character_name = fa_sensor_characteristicname(character)
-
-    check_text = "%s - %s - %s %s %s" % (id, stat_name, type_name, character_name, message)
-
     if status == "5":
-      return (2,  check_text)
+      crit = True
+      str_list.insert(0, "%s - %s - %s %s %s" % (id, fa_sensor_statusname(status), fa_sensor_typename(type), fa_sensor_characteristicname(character), message))
     elif status == "4":
-      return (1, check_text)
+      warn = True
+      str_list.append("%s - %s - %s %s %s" % (id, fa_sensor_statusname(status), fa_sensor_typename(type), fa_sensor_characteristicname(character), message))
     elif status == "3" or status == "2":
-      return (0, check_text)
+      continue
+
+  if crit == True:
+    return (2, "CRITICAL - %s" % ' '.join(str_list))
+  elif warn == True:
+    return (1, "WARN - %s" % ' '.join(str_list))
+  else:
+    return (0, "OK - %d of %d sensors return normal" % (sensors, params["sensors"]))
+
   return (3, "UNKNOWN - Sensor info not found")
 
 check_info["fa_sensor"] = {
     "inventory_function"       : inventory_fa_sensor,
     "check_function"           : check_fa_sensor,
     "has_perfdata"             : False,
-    "service_description"      : "FA Sensor %s",
+    "service_description"      : "FA Sensors",
     "default_levels_variable"  : "fa_sensor_default_levels",
     "includes"                 : [ "fa.include" ],
 }

@@ -47,7 +47,7 @@ def check_vtrack_fans(item, params, info):
   for index, type, status, speed in info:
     name = "%s.%s" % (vtrack_fans_typename(type),index)
     if name != item: continue
-    perfdata = [ ( "speed", speed) ]
+    perfdata = [ ( "speed", saveint(speed)) ]
     if status in params["allowed_status"]:
       return (0, "OK - %s - %s rpm" % (status,speed), perfdata)
     else:

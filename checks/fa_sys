@@ -66,11 +66,11 @@ def check_fa_sys(item, params, info):
         named_status = fa_sys_statusname(status)
 
         if state in params["allowed_states"] and status in params["allowed_status"]:
-            return (0, "OK - as expected %s / %s - %s" % (named_state, named_status, msg_txt), perfdata)
+            return (0, "OK - as expected %s / %s - %s" % (named_state, named_status, msg_txt))
         elif status in params["warn_status"]:
-            return (1, "WARNING - State %s Status %s - %s" % (named_state, named_status, msg_txt), perfdata)
+            return (1, "WARNING - State %s Status %s - %s" % (named_state, named_status, msg_txt))
         else:
-            return (2, "CRITICAL - State %s Status %s - %s" % (named_state, named_status, msg_txt), perfdata)
+            return (2, "CRITICAL - State %s Status %s - %s" % (named_state, named_status, msg_txt))
 
     return (3, "UNKNOWN - Unit info not found")
 
@@ -86,10 +86,6 @@ check_info["fa_sys"] = {
 snmp_info["fa_sys"] = \
     ( ".1.3.6.1.3.94.1.6.1", [
         "1",    # connUnitId
-#       "3",    # connUnitType  Values: unknown(1), other(2), hub(3), switch(4), gateway(5),
-                #               converter(6), hba(7), proxy-agent(8), storage-device(9),
-                #               host(10), storage-subsystem(11), module(12), swdriver(13),
-                #               storage-access-device(14), wdm(15), ups(16), nas(17)
         "4",    # connUnitNumports
         "5",    # connUnitState Values: unknown(1), online(2), offline(3)
         "6",    # connUnitStatus    Values: unknown(1), unused(2), ok(3), warning(4), failed(5)

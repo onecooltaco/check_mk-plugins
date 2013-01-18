@@ -42,7 +42,7 @@ def inventory_vtrack_voltage(checkname, info):
 def check_vtrack_voltage(item, params, info):
   for index, voltage in info:
     if index != item: continue
-    perfdata = [ ( "Voltage", voltage.replace("V", "")) ]
+    perfdata = [ ( "Voltage", saveint(voltage.replace("V", ""))) ]
     if voltage:
       return (0, "OK - %s" % voltage, perfdata)
     else:

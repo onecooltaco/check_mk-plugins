@@ -16,3 +16,4 @@ checks/vtrack_powerc
 checks/vtrack_tempc
 checks/vtrack_voltagec
 vtrack_storagec
+fa.includec

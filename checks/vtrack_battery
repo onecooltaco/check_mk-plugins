@@ -31,7 +31,7 @@
 factory_settings["vtrack_battery_default_levels"] = {
     "allowed_status" : ["Charging", "FullyCharged"],
     "capacity_crit" : 0,
-    "holdtime_crit" : 0,
+    "holdtime_warn" : 72,
 }
 
 def vtrack_battery_celltypename(st):
@@ -52,12 +52,12 @@ def check_vtrack_battery(item, params, info):
   for index, chemistry, temperature, chargethreshold, dischargethreshold, cyclecount, capacity, voltage, current, status, cells, holdtime in info:
     if index != item: continue
     this_time = time.time()
-    cycle_timedif, cycle_rate = get_counter("vtrack.cyclecount.%s" % item, this_time, int(cyclecount))
-    perfdata = [ ("Temperature",temperature,chargethreshold,dischargethreshold),("RemainCapacity",capacity,"","",0,100),("Voltage",voltage),("CycleCount",cycle_rate)]
+    cycle_timedif, cycle_rate = get_counter("vtrack.cyclecount.%s" % item, this_time, saveint(cyclecount))
+    perfdata = [ ("Temperature",saveint(temperature),saveint(chargethreshold),saveint(dischargethreshold)),("RemainCapacity",saveint(capacity),"","",0,100),("Voltage",saveint(voltage)),("CycleCount",cycle_rate)]
 
     msg_txt = "%s%% remaining %s holdtime - %s %sC %s %s" % (capacity,holdtime,status,temperature,vtrack_battery_celltypename(cells),chemistry)
-    if int(capacity) > params["capacity_crit"] and int(holdtime) > params["holdtime_crit"]:
-      if status in params["allowed_status"]:
+    if saveint(capacity) > saveint(params["capacity_crit"]):
+      if status in params["allowed_status"] and saveint(holdtime) > saveint(params["holdtime_warn"]):
         return (0, "OK - %s" % msg_txt,perfdata)
       else:
         return (1, "WARN - %s" % msg_txt,perfdata)
