@@ -26,42 +26,47 @@
 
 # Author: Jeremy Leggat <jleggat@asu.edu>
 # --------------------------------------------------------------------------------
-# 1. Promise VTrack Enclosure status
+# 1. Promise vtrak Temp Sensor status
 
-factory_settings["vtrack_enclosure_default_levels"] = {
-    "allowed_status" : ["OK"],
+factory_settings["vtrak_temp_default_levels"] = {
+    "allowed_status" : ["normal"],
+    "warn_temp"      : "40",
+    "crit_temp"      : "60",
 }
 
-def inventory_vtrack_enclosure(checkname, info):
+def inventory_vtrak_temp(checkname, info):
   inventory = []
-  for index, descrip, status, message in info:
-    inventory.append((index, {}))
+  for index, temperature, status in info:
+    try:
+      float(temperature)
+    except ValueError:
+      continue
+    inventory.append( (index, {}) )
   return inventory
 
-def check_vtrack_enclosure(item, params, info):
-  for index, descrip, status, message in info:
+def check_vtrak_temp(item, params, info):
+  for index, temperature, status in info:
     if index != item: continue
+    perfdata = [ ( "Temperature", saveint(temperature), saveint(params["warn_temp"]), saveint(params["crit_temp"]),0,100) ]
     if status in params["allowed_status"]:
-      return (0, "%s - %s, %s" % (status, message, descrip))
+      return (0, "OK - %s at %sC" % (status, temperature), perfdata)
     else:
-      return (2, "CRITICAL - %s - %s, %s" % (status, message, descrip))
+      return (2, "CRITICAL - %s at %sC" % (status, temperature), perfdata)
   return (3, "UNKNOWN - %s info not found" % item)
 
-check_info["vtrack_enclosure"] = {
-    "inventory_function"       : inventory_vtrack_enclosure,
-    "check_function"           : check_vtrack_enclosure,
-    "has_perfdata"             : False,
-    "service_description"      : "Enclosure %s",
-    "default_levels_variable"  : "vtrack_enclosure_default_levels",
+check_info["vtrak_temp"] = {
+    "inventory_function"       : inventory_vtrak_temp,
+    "check_function"           : check_vtrak_temp,
+    "has_perfdata"             : True,
+    "service_description"      : "TempSensor %s",
+    "default_levels_variable"  : "vtrak_temp_default_levels",
 }
 
-snmp_info["vtrack_enclosure"] = \
-	( ".1.3.6.1.4.1.7933.1.20.1", [
-		"10.1.1",	# raidv4EnclosureIndex
-		"10.1.2",	# raidv4EnclosureType
-		"10.1.3",	# raidv4EnclosureStatus
-		"10.1.4",	# raidv4EnclosureStatusDescription
+snmp_info["vtrak_temp"] = \
+	( ".1.3.6.1.4.1.7933.1.20.1.13.1", [
+		"1",	# raidv4TempSensorIndex
+		"2",	# raidv4TempSensorTemperature
+		"3", 	# raidv4TempSensorStatus
 	] )
-
-snmp_scan_functions['vtrack_enclosure'] = \
+snmp_scan_functions['vtrak_temp'] = \
     lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")

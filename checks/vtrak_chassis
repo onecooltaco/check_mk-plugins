@@ -26,23 +26,23 @@
 
 # Author: Jeremy Leggat <jleggat@asu.edu>
 # --------------------------------------------------------------------------------
-# 1. Promise VTrack chassis status
+# 1. Promise vtrak chassis status
 
-factory_settings["vtrack_chassis_default_levels"] = {
+factory_settings["vtrak_chassis_default_levels"] = {
     "allowed_status" : ["OK"],
     "allowed_ready" : ["Active"],
     "transfer_rate" : "314572800", # 300MB
 }
 
-def vtrack_chassis_scsiname(st):
+def vtrak_chassis_scsiname(st):
     names = { '0': "unknown", '1': "other", '2': "scsi-2", '3': "scsi-3" }
     return names.get(st, st)
 
-def vtrack_chassis_rolename(st):
+def vtrak_chassis_rolename(st):
     names = { '-1': "na", '1': "primary", '2': "secondary" }
     return names.get(st, st)
 
-def inventory_vtrack_chassis(checkname, info):
+def inventory_vtrak_chassis(checkname, info):
   inventory = []
   for index, serial, scsi, ops, role, readiness, arrays, pdrives, \
     ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
@@ -53,7 +53,7 @@ def inventory_vtrack_chassis(checkname, info):
       inventory.append( (index, {}) )
   return inventory
 
-def check_vtrack_chassis(item, params, info):
+def check_vtrak_chassis(item, params, info):
   for index, serial, scsi, ops, role, readiness, arrays, pdrives, \
   ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
   lcrit, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
@@ -82,7 +82,7 @@ def check_vtrack_chassis(item, params, info):
       ( "NumOfReadRequests", numofreadrequests ),
       ( "NumOfWriteRequests", numofwriterequests ) ]:
       try:
-        timedif, rate = get_counter("vtrack.%s.%s" % (name, item), this_time, saveint(counter))
+        timedif, rate = get_counter("vtrak.%s.%s" % (name, item), this_time, saveint(counter))
         rates.append(rate)
         perfdata.append( (name, rate) )
       except MKCounterWrapped:
@@ -123,15 +123,15 @@ def check_vtrack_chassis(item, params, info):
 
   return (3, "UNKNOWN - %s info not found" % item)
 
-check_info["vtrack_chassis"] = {
-    "inventory_function"       : inventory_vtrack_chassis,
-    "check_function"           : check_vtrack_chassis,
+check_info["vtrak_chassis"] = {
+    "inventory_function"       : inventory_vtrak_chassis,
+    "check_function"           : check_vtrak_chassis,
     "has_perfdata"             : True,
     "service_description"      : "Array %s",
-    "default_levels_variable"  : "vtrack_chassis_default_levels",
+    "default_levels_variable"  : "vtrak_chassis_default_levels",
 }
 
-snmp_info["vtrack_chassis"] = \
+snmp_info["vtrak_chassis"] = \
 	( ".1.3.6.1.4.1.7933.1.20.1", [
 		"3.1.1",	# raidv4CtrlIndex
 		"3.1.7",	# raidv4CtrlSerialNumber
@@ -167,5 +167,5 @@ snmp_info["vtrack_chassis"] = \
 		"4.1.11",   # raidv4CtrlStatsNumOfWriteRequests  Counter64
 	] )
 
-snmp_scan_functions['vtrack_chassis'] = \
+snmp_scan_functions['vtrak_chassis'] = \
     lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")

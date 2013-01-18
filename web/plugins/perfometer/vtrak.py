@@ -1,4 +1,4 @@
-def perfometer_check_mk_vtrack_temps(row, check_command, perf_data):
+def perfometer_check_mk_vtrak_temps(row, check_command, perf_data):
     if row['service_state'] == 0:
         color = '#00FF00'
     else:
@@ -13,9 +13,9 @@ def perfometer_check_mk_vtrack_temps(row, check_command, perf_data):
     h += '</tr></table>'
     return "%sC" % curval, h
 
-perfometers["check_mk-vtrack_temp"] = perfometer_check_mk_vtrack_temps
+perfometers["check_mk-vtrak_temp"] = perfometer_check_mk_vtrak_temps
 
-def perfometer_check_mk_vtrack_battery(row, check_command, perf_data):
+def perfometer_check_mk_vtrak_battery(row, check_command, perf_data):
     bat = float(perf_data[1][1])
     if row['service_state'] == 0:
         color = '#00FF00'
@@ -24,18 +24,18 @@ def perfometer_check_mk_vtrack_battery(row, check_command, perf_data):
 
     return "%.0f%%" % bat, perfometer_linear(bat, color)
 
-perfometers["check_mk-vtrack_battery"] = perfometer_check_mk_vtrack_battery
+perfometers["check_mk-vtrak_battery"] = perfometer_check_mk_vtrak_battery
 
-def perfometer_check_mk_vtrack_volt(row, check_command, perf_data):
+def perfometer_check_mk_vtrak_volt(row, check_command, perf_data):
     color = { 0: "#68f", 1: "#ff2", 2: "#f22", 3: "#fa2" }[row["service_state"]]
     volts = float(perf_data[0][1])
     return "%.1fV" % volts, perfometer_logarithmic(volts, 4, 2, color)
 
-perfometers["check_mk-vtrack_voltage"] = perfometer_check_mk_vtrack_volt
+perfometers["check_mk-vtrak_voltage"] = perfometer_check_mk_vtrak_volt
 
-def perfometer_check_mk_vtrack_fans(row, check_command, perf_data):
+def perfometer_check_mk_vtrak_fans(row, check_command, perf_data):
     color = { 0: "#68f", 1: "#ff2", 2: "#f22", 3: "#fa2" }[row["service_state"]]
     rpm = float(perf_data[0][1])
     return "%.1fRPM" % rpm, perfometer_logarithmic(rpm, 40, 20, color)
 
-perfometers["check_mk-vtrack_fans"]  = perfometer_check_mk_vtrack_fans
+perfometers["check_mk-vtrak_fans"]  = perfometer_check_mk_vtrak_fans

@@ -26,47 +26,49 @@
 
 # Author: Jeremy Leggat <jleggat@asu.edu>
 # --------------------------------------------------------------------------------
-# 1. Promise VTrack Temp Sensor status
+# 1. Promise vtrak Fan status
 
-factory_settings["vtrack_temp_default_levels"] = {
-    "allowed_status" : ["normal"],
-    "warn_temp"      : "40",
-    "crit_temp"      : "60",
+factory_settings["vtrak_fans_default_levels"] = {
+    "allowed_status" : ["Functional"],
 }
 
-def inventory_vtrack_temp(checkname, info):
+def vtrak_fans_typename(st):
+    names = { '0': "fan", '1': "blower" }
+    return names.get(st, st)
+
+def inventory_vtrak_fans(checkname, info):
   inventory = []
-  for index, temperature, status in info:
-    try:
-      float(temperature)
-    except ValueError:
-      continue
-    inventory.append( (index, {}) )
+  for index, type, status, speed in info:
+    iname = "%s.%s" % (vtrak_fans_typename(type),index)
+    inventory.append( (iname, {}) )
   return inventory
 
-def check_vtrack_temp(item, params, info):
-  for index, temperature, status in info:
-    if index != item: continue
-    perfdata = [ ( "Temperature", saveint(temperature), saveint(params["warn_temp"]), saveint(params["crit_temp"]),0,100) ]
+def check_vtrak_fans(item, params, info):
+  for index, type, status, speed in info:
+    name = "%s.%s" % (vtrak_fans_typename(type),index)
+    if name != item: continue
+    perfdata = [ ( "speed", saveint(speed)) ]
     if status in params["allowed_status"]:
-      return (0, "OK - %s at %sC" % (status, temperature), perfdata)
+      return (0, "OK - %s - %s rpm" % (status,speed), perfdata)
     else:
-      return (2, "CRITICAL - %s at %sC" % (status, temperature), perfdata)
+      return (2, "CRITICAL - %s - %s rpm" % (status,speed), perfdata)
   return (3, "UNKNOWN - %s info not found" % item)
 
-check_info["vtrack_temp"] = {
-    "inventory_function"       : inventory_vtrack_temp,
-    "check_function"           : check_vtrack_temp,
+check_info["vtrak_fans"] = {
+    "inventory_function"       : inventory_vtrak_fans,
+    "check_function"           : check_vtrak_fans,
     "has_perfdata"             : True,
-    "service_description"      : "TempSensor %s",
-    "default_levels_variable"  : "vtrack_temp_default_levels",
+    "service_description"      : "%s",
+    "default_levels_variable"  : "vtrak_fans_default_levels",
 }
 
-snmp_info["vtrack_temp"] = \
-	( ".1.3.6.1.4.1.7933.1.20.1.13.1", [
-		"1",	# raidv4TempSensorIndex
-		"2",	# raidv4TempSensorTemperature
-		"3", 	# raidv4TempSensorStatus
+snmp_info["vtrak_fans"] = \
+	( ".1.3.6.1.4.1.7933.1.20.1.11.1", [
+		"1",	# raidv4CoolingDeviceIndex
+		"2",	# raidv4CoolingDeviceType	Values: fan(0), blower(1)
+		"3",	# raidv4CoolingDeviceStatus
+		"4",	# raidv4CoolingDeviceSpeed
 	] )
-snmp_scan_functions['vtrack_temp'] = \
+
+snmp_scan_functions['vtrak_fans'] = \
     lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")

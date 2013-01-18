@@ -26,19 +26,19 @@
 
 # Author: Jeremy Leggat <jleggat@asu.edu>
 # --------------------------------------------------------------------------------
-# 1. Promise VTrack Battery status
+# 1. Promise vtrak Battery status
 
-factory_settings["vtrack_battery_default_levels"] = {
+factory_settings["vtrak_battery_default_levels"] = {
     "allowed_status" : ["Charging", "FullyCharged"],
     "capacity_crit" : 0,
     "holdtime_warn" : 72,
 }
 
-def vtrack_battery_celltypename(st):
+def vtrak_battery_celltypename(st):
     names = { '1': "one-cell", '2': "two-cell", '4': "four-cell", '5': "unknown" }
     return names.get(st, st)
 
-def inventory_vtrack_battery(checkname, info):
+def inventory_vtrak_battery(checkname, info):
   inventory = []
   for index, chemistry, temperature, chargethreshold, dischargethreshold, cyclecount, capacity, voltage, current, status, cells, holdtime in info:
     try:
@@ -48,14 +48,14 @@ def inventory_vtrack_battery(checkname, info):
     inventory.append( (index, {}) )
   return inventory
 
-def check_vtrack_battery(item, params, info):
+def check_vtrak_battery(item, params, info):
   for index, chemistry, temperature, chargethreshold, dischargethreshold, cyclecount, capacity, voltage, current, status, cells, holdtime in info:
     if index != item: continue
     this_time = time.time()
-    cycle_timedif, cycle_rate = get_counter("vtrack.cyclecount.%s" % item, this_time, saveint(cyclecount))
+    cycle_timedif, cycle_rate = get_counter("vtrak.cyclecount.%s" % item, this_time, saveint(cyclecount))
     perfdata = [ ("Temperature",saveint(temperature),saveint(chargethreshold),saveint(dischargethreshold)),("RemainCapacity",saveint(capacity),"","",0,100),("Voltage",saveint(voltage)),("CycleCount",cycle_rate)]
 
-    msg_txt = "%s%% remaining %s holdtime - %s %sC %s %s" % (capacity,holdtime,status,temperature,vtrack_battery_celltypename(cells),chemistry)
+    msg_txt = "%s%% remaining %s holdtime - %s %sC %s %s" % (capacity,holdtime,status,temperature,vtrak_battery_celltypename(cells),chemistry)
     if saveint(capacity) > saveint(params["capacity_crit"]):
       if status in params["allowed_status"] and saveint(holdtime) > saveint(params["holdtime_warn"]):
         return (0, "OK - %s" % msg_txt,perfdata)
@@ -66,15 +66,15 @@ def check_vtrack_battery(item, params, info):
 
   return (3, "UNKNOWN - %s info not found" % item)
 
-check_info["vtrack_battery"] = {
-    "inventory_function"       : inventory_vtrack_battery,
-    "check_function"           : check_vtrack_battery,
+check_info["vtrak_battery"] = {
+    "inventory_function"       : inventory_vtrak_battery,
+    "check_function"           : check_vtrak_battery,
     "has_perfdata"             : True,
     "service_description"      : "Battery %s",
-    "default_levels_variable"  : "vtrack_battery_default_levels",
+    "default_levels_variable"  : "vtrak_battery_default_levels",
 }
 
-snmp_info["vtrack_battery"] = \
+snmp_info["vtrak_battery"] = \
   ( ".1.3.6.1.4.1.7933.1.20.1.15.1", [
     "1",  # raidv4BatteryIndex    Range: 0..255
     "6",  # raidv4BatteryDeviceChemistry    DisplayString
@@ -89,5 +89,5 @@ snmp_info["vtrack_battery"] = \
     "15", # raidv4BatteryCellType    Values: one-cell(1), two-cell(2), four-cell(4), unknown(255)
     "16", # raidv4BatteryHoldTime    Integer32
   ] )
-snmp_scan_functions['vtrack_battery'] = \
+snmp_scan_functions['vtrak_battery'] = \
     lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.7933.1.10")
