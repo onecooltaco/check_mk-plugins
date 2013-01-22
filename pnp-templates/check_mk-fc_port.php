@@ -1,7 +1,5 @@
 <?php
 # Performance data from check:
-# C3InFrames=44.520512;;;;
-# C3OutFrames=1845.158429;;;;
 # C3InOctets=27161.985972;;;;
 # C3OutOctets=3819274.882924;;;;
 
@@ -16,35 +14,6 @@
 # LinkResetOuts=0;;;;
 # OlsIns=0;;;;
 # OlsOuts=0;;;;
-
-# Graph 1: frames
-
-# Change multiplier and labels
-$ds_name[1] = 'Frames';
-$opt[1] = "--imgformat=PNG --title \"Traffic $hostname / $servicedesc\" --base=1000 --slope-mode ";
-#
-$def[1]  = "";
-$def[1] .= "DEF:in_f=$RRDFILE[1]:$DS[1]:AVERAGE " ;
-$def[1] .= "DEF:out_f=$RRDFILE[2]:$DS[1]:AVERAGE " ;
-$def[1] .= "CDEF:framesin=in_f ";
-$def[1] .= "CDEF:framesout=0,out_f,- ";
-
-# Draw fill area under line
-$def[1] .= "AREA:framesin" . "#33CC33:\"$NAME[1]\t\" ";
-
-# write out averages
-$def[1] .= "GPRINT:framesin:LAST:\"%3.4lg %s$UNIT[1] LAST \" ";
-$def[1] .= "GPRINT:framesin:AVERAGE:\"%3.4lg %s$UNIT[1] AVERAGE \" ";
-$def[1] .= "GPRINT:framesin:MAX:\"%3.4lg %s$UNIT[1] MAX\\n\" ";
-
-
-$def[1] .= "AREA:framesout" . "#0000CC:\"$NAME[2]\t\" ";
-
-$def[1] .= "GPRINT:framesout:LAST:\"%3.4lg %s$UNIT[2] LAST \" ";
-$def[1] .= "GPRINT:framesout:AVERAGE:\"%3.4lg %s$UNIT[2] AVERAGE \" ";
-$def[1] .= "GPRINT:framesout:MAX:\"%3.4lg %s$UNIT[2] MAX\\n\" ";
-
-$def[1] .= "HRULE:0#000000 ";
 
 # Graph 2: used bandwidth
 $ds_name[2] = 'Used Bandwidth';
@@ -70,7 +39,7 @@ $def[2] .= "GPRINT:octetsout:LAST:\"%3.4lg %s$UNIT[4] LAST \" ";
 $def[2] .= "GPRINT:octetsout:AVERAGE:\"%3.4lg %s$UNIT[4] AVERAGE \" ";
 $def[2] .= "GPRINT:octetsout:MAX:\"%3.4lg %s$UNIT[4] MAX\\n\" ";
 
-$def[1] .= "HRULE:0#000000 ";
+$def[2] .= "HRULE:0#000000 ";
 
 # Graph 3: errors and discards
 $ds_name[3] = 'Errors and Discards';

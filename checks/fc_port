@@ -58,8 +58,8 @@ def inventory_fc_port(checkname, info):
 
 def check_fc_port(item, params, info):
   portinfo = (line[::-1] for line in info if line[0] == params["hex_id"])
-  c3discards, c3outoctets, c3inoctets, c3outframes, c3inframes, olsouts, olsins, linkresetouts, \
-    linkresetins, addressiderrors, invalidcrcs, invalidtxwords, primseqprotoerrors, synclosses, \
+  c3discards, c3outoctets, c3inoctets, olsouts, olsins, linkresetouts, linkresetins, \
+    addressiderrors, invalidcrcs, invalidtxwords, primseqprotoerrors, synclosses, \
     linkfailures, operstatus, adminstatus, opermode = map(int, portinfo.next()[:-1])
 
   # Performance counters
@@ -68,8 +68,6 @@ def check_fc_port(item, params, info):
   wrapped = False
   perfdata = []
   for desc, counter in [
-    ( "C3InFrames", c3inframes ),
-    ( "C3OutFrames", c3outframes ),
     ( "C3InOctets", c3inoctets ),
     ( "C3OutOctets", c3outoctets ),
     ( "C3Discards", c3discards ),
@@ -94,7 +92,8 @@ def check_fc_port(item, params, info):
   # after all counters are handled
   if wrapped: raise MKCounterWrapped("Counter wrap")
 
-  msg_text = "AdminStatus: %s, OperStatus: %s, OperMode: %s" % (fc_port_operstatus[operstatus],fc_port_adminstatus[adminstatus],fc_port_opermode[opermode])
+  msg_text = "AdminStatus: %s, OperStatus: %s, OperMode: %s" % \
+    (fc_port_operstatus[operstatus],fc_port_adminstatus[adminstatus],fc_port_opermode[opermode])
   if operstatus == 4:
     return (2, "CRITICAL - %s" % msg_text, perfdata)
   else:
@@ -126,8 +125,6 @@ snmp_info["fc_port"] = \
 		"3.1.1.10",	# fcFxPortLinkResetOuts			Gauge32
 		"3.1.1.11",	# fcFxPortOlsIns				Gauge32
 		"3.1.1.12",	# fcFxPortOlsOuts				Gauge32
-		"4.3.1.1",	# fcFxPortC3InFrames			Gauge32
-		"4.3.1.2",	# fcFxPortC3OutFrames			Gauge32
 		"4.3.1.3",	# fcFxPortC3InOctets			Gauge32
 		"4.3.1.4",	# fcFxPortC3OutOctets			Gauge32
 		"4.3.1.5",	# fcFxPortC3Discards			Gauge32
