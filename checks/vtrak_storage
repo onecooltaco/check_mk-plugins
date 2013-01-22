@@ -53,70 +53,68 @@ def vtrak_storage_smartname(st):
   return names.get(st, st)
 
 def inventory_vtrak_storage(checkname, info):
+  return [( vtrak_pad_with_zeroes(info,line[0]), {} ) for line in info]
   inventory = []
-  for index, driveinterface, modelnumber, serialnumber, operationalstatus, condition, \
-    configuration, datatransferred, readdatatransferred, writedatatransferred, numoferrors, \
-    numofnonrwerrors, numofreaderrors, numofwriteerrors, numofiorequests, numofnonrwrequests, \
-    numofreadrequests, numofwriterequests, starttime, collectiontime in info:
-    name = vtrak_pad_with_zeroes(info,index)
-    inventory.append( (name, {}) )
-  return inventory
 
 def check_vtrak_storage(item, params, info):
-  for index, driveinterface, modelnumber, serialnumber, operationalstatus, condition, \
-    configuration, datatransferred, readdatatransferred, writedatatransferred, numoferrors, \
-    numofnonrwerrors, numofreaderrors, numofwriteerrors, numofiorequests, numofnonrwrequests, \
-    numofreadrequests, numofwriterequests, starttime, collectiontime in info:
-    name = vtrak_pad_with_zeroes(info,index)
-    if name != item: continue
+  vtinfo = (line for line in info if vtrak_pad_with_zeroes(info,line[0]) == item)
+  chk_info = vtinfo.next()
 
-    # Performance counters
-    this_time = time.time()
-    rates = []
-    wrapped = False
-    perfdata = [ ]
-    for name, counter in [
-      ( "DataTransferred", datatransferred ),
-      ( "ReadDataTransferred", readdatatransferred ),
-      ( "WriteDataTransferred", writedatatransferred ),
-      ( "NumOfErrors", numoferrors ),
-      ( "NumOfNonRWErrors", numofnonrwerrors ),
-      ( "NumOfReadErrors", numofreaderrors ),
-      ( "NumOfWriteErrors", numofwriteerrors ),
-      ( "NumOfIORequests", numofiorequests ),
-      ( "NumOfNonRWRequests", numofnonrwrequests ),
-      ( "NumOfReadRequests", numofreadrequests ),
-      ( "NumOfWriteRequests", numofwriterequests ) ]:
-      try:
-        timedif, rate = get_counter("vtrak.%s.%s" % (name, item), this_time, saveint(counter))
-        rates.append(rate)
-        perfdata.append( (name, rate) )
-      except MKCounterWrapped:
-        wrapped = True
-      # continue, other counters might wrap as well
-#
-     # continue, other counters might wrap as well
-     # after all counters are handled
-    if wrapped: raise MKCounterWrapped("Counter wrap")
+  datatransferred, readdatatransferred, writedatatransferred, numoferrors, numofnonrwerrors, \
+    numofreaderrors, numofwriteerrors, numofiorequests, numofnonrwrequests, numofreadrequests, \
+    numofwriterequests = map(int, chk_info[-11:])
 
-    crit = False
-    warn = False
-    str_list = []
-    if operationalstatus not in params["allowed_status"]:
-      crit = True
-      str_list.append("OperationalStatus %s" % operationalstatus)
-    if condition not in params["allowed_status"]:
-      crit = True
-      str_list.append("Condition %s" % condition)
+  # Performance counters
+  this_time = time.time()
+  rates = []
+  wrapped = False
+  perfdata = [ ]
+  for name, counter in [
+    ( "DataTransferred", datatransferred ),
+    ( "ReadDataTransferred", readdatatransferred ),
+    ( "WriteDataTransferred", writedatatransferred ),
+    ( "NumOfErrors", numoferrors ),
+    ( "NumOfNonRWErrors", numofnonrwerrors ),
+    ( "NumOfReadErrors", numofreaderrors ),
+    ( "NumOfWriteErrors", numofwriteerrors ),
+    ( "NumOfIORequests", numofiorequests ),
+    ( "NumOfNonRWRequests", numofnonrwrequests ),
+    ( "NumOfReadRequests", numofreadrequests ),
+    ( "NumOfWriteRequests", numofwriterequests ) ]:
+    try:
+      timedif, rate = get_counter("vtrak.%s.%s" % (name, item), this_time, saveint(counter))
+      rates.append(rate)
+      perfdata.append( (name, rate) )
+    except MKCounterWrapped:
+      wrapped = True
+    # continue, other counters might wrap as well
 
-    str_list.extend([configuration, serialnumber, modelnumber, driveinterface])
-    out_str = ' '.join(str_list)
-    if crit:
-      return (2, "CRITICAL - %s" % out_str, perfdata)
-    elif warn:
-      return (1, "WARN - %s" % out_str, perfdata)
-    else:
-      return (0, "OK - %s" % out_str, perfdata)
+  # continue, other counters might wrap as well
+  # after all counters are handled
+  if wrapped: raise MKCounterWrapped("Counter wrap")
+
+  crit = False
+  warn = False
+  str_list = []
+  operationalstatus = chk_info[4]
+  condition = chk_info[5]
+
+  if operationalstatus not in params["allowed_status"]:
+    crit = True
+    str_list.append("OperationalStatus %s" % operationalstatus)
+  if condition not in params["allowed_status"]:
+    crit = True
+    str_list.append("Condition %s" % condition)
+
+  str_list.extend( [ chk_info[6], chk_info[3], chk_info[2], chk_info[1] ] )
+  out_str = ' '.join(str_list)
+
+  if crit:
+    return (2, "CRITICAL - %s" % out_str, perfdata)
+  elif warn:
+    return (1, "WARN - %s" % out_str, perfdata)
+  else:
+    return (0, "OK - %s" % out_str, perfdata)
 
   return (3, "UNKNOWN - %s info not found" % item)
 
@@ -148,8 +146,6 @@ snmp_info["vtrak_storage"] = \
 		"7.1.9",	# raidv4PhydrvStatsNumOfNonRWRequests
 		"7.1.10",	# raidv4PhydrvStatsNumOfReadRequests
 		"7.1.11",	# raidv4PhydrvStatsNumOfWriteRequests
-		"7.1.12",	# raidv4PhydrvStatsStartTime
-		"7.1.13",	# raidv4PhydrvStatsCollectionTime
 	] )
 
 snmp_scan_functions['vtrak_storage'] = \

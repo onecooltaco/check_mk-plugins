@@ -32,26 +32,21 @@ factory_settings["vtrak_fans_default_levels"] = {
     "allowed_status" : ["Functional"],
 }
 
-def vtrak_fans_typename(st):
-    names = { '0': "fan", '1': "blower" }
-    return names.get(st, st)
+vtrak_fans_type = { '0': "fan", '1': "blower" }
 
 def inventory_vtrak_fans(checkname, info):
-  inventory = []
-  for index, type, status, speed in info:
-    iname = "%s.%s" % (vtrak_fans_typename(type),index)
-    inventory.append( (iname, {}) )
-  return inventory
+  return [("%s.%s" % (vtrak_fans_type[line[1]],line[0]), {}) for line in info]
 
 def check_vtrak_fans(item, params, info):
-  for index, type, status, speed in info:
-    name = "%s.%s" % (vtrak_fans_typename(type),index)
-    if name != item: continue
-    perfdata = [ ( "speed", saveint(speed)) ]
-    if status in params["allowed_status"]:
-      return (0, "OK - %s - %s rpm" % (status,speed), perfdata)
-    else:
-      return (2, "CRITICAL - %s - %s rpm" % (status,speed), perfdata)
+  vtinfo = (line for line in info if "%s.%s" % (vtrak_fans_type[line[1]],line[0]) == item)
+  chk_info = vtinfo.next()
+
+  perfdata = [ ( "speed", saveint(chk_info[3])) ]
+  msg_text = "%s - %s rpm" % (chk_info[2],chk_info[3])
+  if chk_info[2] in params["allowed_status"]:
+    return (0, "OK - %s" % msg_text, perfdata)
+  else:
+    return (2, "CRITICAL - %s" % msg_text, perfdata)
   return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrak_fans"] = {

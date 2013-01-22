@@ -65,35 +65,31 @@ factory_settings["xsan_default_levels"] = {
 }
 
 def inventory_xsan_fsm(checkname, info):
-    inventory = []
-    for line in info:
-        if line[0] == "fsm" and len(line) == 15:
-            vol = line[1]
-            inventory.append((vol, {}))
-    return inventory
+    return [(line[1], {}) for line in info if line[0] == "fsm" and len(line) == 15]
 
 def check_xsan_fsm(item, params, info):
-    for line in info:
-        if line[0] == "fsm" and line[1] == item:
-            port = line[3]
-            pid = line[4]
-            master = line[5]
-            state = line[6]
-            launchcount = int(line[8])
-            coredumps = int(line[9])
+    fsminfo = (line for line in info if line[0] == "fsm" and line[1] == item)
+    chk_info = fsminfo.next()
 
-            this_time = time.time()
-            launch_timedif, launch_rate = get_counter("xsan.launchcount.%s" % (item), this_time, launchcount)
-            dump_timedif, dump_rate = get_counter("xsan.coredumps.%s" % (item), this_time, coredumps)
-            perfdata = [ ( "launch_count", launch_rate ), ( "core_dumps", dump_rate ) ]
+    port = chk_info[3]
+    pid = chk_info[4]
+    master = chk_info[5]
+    state = chk_info[6]
+    launchcount = int(chk_info[8])
+    coredumps = int(chk_info[9])
 
-            msg_txt = "pid: %s port: %s launch count: %d core dumps: %d" % (pid, port, launchcount, coredumps)
+    this_time = time.time()
+    launch_timedif, launch_rate = get_counter("xsan.launchcount.%s" % (item), this_time, launchcount)
+    dump_timedif, dump_rate = get_counter("xsan.coredumps.%s" % (item), this_time, coredumps)
+    perfdata = [ ( "launch_count", launch_rate ), ( "core_dumps", dump_rate ) ]
 
-            if state not in params["allowed_fsm_states"]:
-                return (2, "CRITICAL - %s - %s" % (state, msg_txt), perfdata)
-            else:
-                return (0, "OK - %s - %s" % (state, msg_txt), perfdata)
-        continue
+    msg_txt = "pid: %s port: %s launch count: %d core dumps: %d" % (pid, port, launchcount, coredumps)
+
+    if state not in params["allowed_fsm_states"]:
+        return (2, "CRITICAL - %s - %s" % (state, msg_txt), perfdata)
+    else:
+        return (0, "OK - %s - %s" % (state, msg_txt), perfdata)
+
     return (3, "UNKNOWN - %s info not found" % item)
 
 check_info['xsan.fsm'] = {
@@ -107,39 +103,39 @@ check_info['xsan.fsm'] = {
 ## XSAN Status
 
 def inventory_xsan_stats(checkname, info):
-    inventory = []
-    for line in info:
-        if line[0] == "stats" and len(line) == 15:
-            vol = line[1]
-            inventory.append((vol, {}))
-
-    return inventory
+    return [(line[1], {}) for line in info if line[0] == "stats" and len(line) == 15]
 
 def check_xsan_stats(item, params, info):
-    for line in info:
-        if line[0] == "stats" and line[1] == item:
-            connections = line[3]
-            blocksize = line[4]
-            msg_buffer = line[5]
-            disks = line[6]
-            stripe_groups = line[7]
-            blocks = line[8]
-            blocks_nice = line[9]
-            blocks_units = line[10]
-            blocks_free = int(line[11])
-            blocks_free_nice = line[12]
-            blocks_free_unit = line[13]
-            blocks_free_percent = int(line[14])
+    statinfo = (line for line in info if line[0] == "stats" and line[1] == item)
+    chk_info = statinfo.next()
 
-            msg_txt = "%s stripe groups on %s disks %s/%s blocks used (%s%s/%s%s), block size: %s each message buffer: %s" % (stripe_groups, disks, blocks_free, blocks, blocks_free_nice, blocks_free_unit, blocks_nice, blocks_units, blocksize, msg_buffer, )
-            perfdata = [ ("connections", connections), ("percent_blocks_free", blocks_free_percent, params["free_percent_warn"], params["free_percent_crit"], 0, 100), ("blocks_free", blocks_free) ]
-            if blocks_free_percent < params["free_percent_crit"]:
-                return (2, "CRITICAL - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
-            elif blocks_free_percent < params["free_percent_warn"]:
-                return (1, "WARNING - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
-            else:
-                return (0, "OK - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
-        continue
+    connections = chk_info[3]
+    blocksize = chk_info[4]
+    msg_buffer = chk_info[5]
+    disks = chk_info[6]
+    stripe_groups = chk_info[7]
+    blocks = chk_info[8]
+    blocks_nice = chk_info[9]
+    blocks_units = chk_info[10]
+    blocks_free = int(chk_info[11])
+    blocks_free_nice = chk_info[12]
+    blocks_free_unit = chk_info[13]
+    blocks_free_percent = int(chk_info[14])
+
+    msg_txt = \
+    "%s stripe groups on %s disks %s/%s blocks used (%s%s/%s%s), block size: %s each message buffer: %s" \
+      % ( stripe_groups, disks, blocks_free, blocks, blocks_free_nice, blocks_free_unit,
+      blocks_nice, blocks_units, blocksize, msg_buffer, )
+    perfdata = [ ("connections", connections), ("percent_blocks_free",
+      blocks_free_percent, params["free_percent_warn"], params["free_percent_crit"], 0, 100),
+      ("blocks_free", blocks_free) ]
+
+    if blocks_free_percent < params["free_percent_crit"]:
+        return (2, "CRITICAL - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
+    elif blocks_free_percent < params["free_percent_warn"]:
+        return (1, "WARNING - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
+    else:
+        return (0, "OK - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
 
     return (3, "UNKNOWN - %s info not found" % item)
 
@@ -154,30 +150,21 @@ check_info['xsan.stats'] = {
 ## XSAN Stripe Groups
 
 def inventory_xsan_stripe(checkname, info):
-    inventory = []
-    for line in info:
-        if line[0] == "stripe":
-            vol = line[1]
-            index = line[2]
-            name = "%s.%s" % (vol, index)
-            inventory.append((name, {"status": line[4]}))
-
-    return inventory
+    return [("%s.%s" % (line[1], line[2]), {"status": line[4]}) for line in info if line[0] == "stripe"]
 
 def check_xsan_stripe(item, params, info):
-    for line in info:
-        if line[0] == "stripe":
-            vol = line[1]
-            index = line[2]
-            name = "%s.%s" % (vol, index)
-            if name != item: continue
-            title = line[3]
-            status = line[4]
-            if status == params["status"]:
-                return (0, "OK - %s is %s" % (title,status))
-            else:
-                return (2, "CRITICAL - %s is %s" % (title,status))
-        continue
+    fsminfo = (line for line in info if line[0] == "stripe" and "%s.%s" % (line[1], line[2]) == item)
+    chk_info = fsminfo.next()
+
+    vol = chk_info[1]
+    index = chk_info[2]
+    title = chk_info[3]
+    status = chk_info[4]
+
+    if status == params["status"]:
+        return (0, "OK - %s is %s" % (title,status))
+    else:
+        return (2, "CRITICAL - %s is %s" % (title,status))
 
     return (3, "UNKNOWN - %s info not found" % item)
 
@@ -192,22 +179,17 @@ check_info['xsan.stripe'] = {
 ## XSAN Paths
 
 def inventory_xsan_paths(checkname, info):
-    inventory = []
-    for line in info:
-        if line[0] == "paths" and len(line) == 8:
-            inventory.append((line[1], {"state": line[6]}))
-
-    return inventory
+    return [(line[1], {"state": line[6]}) for line in info if line[0] == "paths" and len(line) == 8]
 
 def check_xsan_paths(item, params, info):
-    for line in info:
-        if line[0] == "paths" and line[1] == item:
-            chk, vol, dev, hba, ctl, lun, state, controller = line
-            if state != params["state"]:
-                return (2, "CRITICAL - state: %s changed from %s - device: %s hba: %s ctl: %s lun: %s" % (state, params["state"], dev, hba, ctl, lun))
-            else:
-                return (0, "OK - state: %s device: %s hba: %s ctl: %s lun: %s" % (state, dev, hba, ctl, lun))
-        continue
+    fsminfo = (line for line in info if line[0] == "paths" and line[1] == item)
+    chk, vol, dev, hba, ctl, lun, state, controller = fsminfo.next()
+
+    if state != params["state"]:
+        return (2, "CRITICAL - state: %s changed from %s - device: %s hba: %s ctl: %s lun: %s" \
+          % (state, params["state"], dev, hba, ctl, lun))
+    else:
+        return (0, "OK - state: %s device: %s hba: %s ctl: %s lun: %s" % (state, dev, hba, ctl, lun))
 
     return (3, "UNKNOWN - %s info not found" % item)
 
@@ -234,7 +216,8 @@ def check_xsan_disks(item, params, info):
         if line[0] == "disks" and line[1] == item:
             chk, vol, device, sectors, sect_size = line
             if (sectors, sect_size) != (params["sectors"], params["sect_size"]):
-                return (1, "WARN - %s sectors / %s sector size changed from  %s sectors / %s sector size" % (sectors, sect_size, params["sectors"], params["sect_size"]))
+                return (1, "WARN - %s sectors / %s sector size changed from  %s sectors / %s sector size" \
+                  % (sectors, sect_size, params["sectors"], params["sect_size"]))
             else:
                 return (0, "OK - device:%s sectors: %s sector size: %s" % (device, sectors, sect_size))
             continue

@@ -33,6 +33,7 @@ factory_settings["vtrak_voltage_default_levels"] = {
 }
 
 def inventory_vtrak_voltage(checkname, info):
+  return [(line[0], {}) for line in info if 'V' in line[1]]
   inventory = []
   for index, voltage in info:
     if 'V' in voltage:
@@ -40,13 +41,14 @@ def inventory_vtrak_voltage(checkname, info):
   return inventory
 
 def check_vtrak_voltage(item, params, info):
-  for index, voltage in info:
-    if index != item: continue
-    perfdata = [ ( "Voltage", saveint(voltage.replace("V", ""))) ]
-    if voltage:
-      return (0, "OK - %s" % voltage, perfdata)
-    else:
-      return (2, "CRITICAL - %s" % voltage, perfdata)
+  vtinfo = (line for line in info if line[0] == item)
+  chk_info = vtinfo.next()
+  voltage = chk_info[1]
+  perfdata = [ ( "Voltage", saveint(voltage.replace("V", "")) ) ]
+  if voltage:
+    return (0, "OK - %s" % voltage, perfdata)
+  else:
+    return (2, "CRITICAL - %s" % voltage, perfdata)
   return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrak_voltage"] = {

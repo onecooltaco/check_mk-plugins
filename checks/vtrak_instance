@@ -32,37 +32,34 @@ factory_settings["vtrak_instance_default_levels"] = {
     "allowed_redundancy" : ["1"],
 }
 
-def vtrak_typename(st):
-    names = { '0': "hba", '1': "subsys" }
-    return names.get(st, st)
-def vtrak_redundancyname(st):
-    names = { '0': "not-redundant", '1': "redundant", '2': "critical", '3': "not-supported" }
-    return names.get(st, st)
-def vtrak_connectname(st):
-    names = { '0': "not-supported", '1': "sas" }
-    return names.get(st, st)
-def vtrak_interfacename(st):
-    names = { '0': "unknown", '1': "pci", '2': "iscsi", '3': "fibre channel", '4': "scsi", '5': "sas" }
-    return names.get(st, st)
+
+vtrak_type = { '0': "hba", '1': "subsys" }
+vtrak_redundancy = { '0': "not-redundant", '1': "redundant", '2': "critical", '3': "not-supported" }
+vtrak_connect = { '0': "not-supported", '1': "sas" }
+vtrak_interface = { '0': "unknown", '1': "pci", '2': "iscsi", '3': "fibre channel", '4': "scsi", '5': "sas" }
 
 def inventory_vtrak_instance(checkname, info):
-  inventory = []
-  for index, type, descrip, redundant, controllers, connection, enclosures, interface in info:
-    inventory.append( (index, {}) )
-  return inventory
+  return [(line[0], {}) for line in info]
 
 def check_vtrak_instance(item, params, info):
-  for index, type, descrip, redundant, controllers, connection, enclosures, interface in info:
-    if index != item: continue
-    msg_txt = "%s is %s, %s controllers in %s enclosures, %s %s" % ( vtrak_typename(type),
-      vtrak_redundancyname(redundant), controllers, enclosures,
-      vtrak_interfacename(interface), vtrak_connectname(connection) )
-    if redundant in params["allowed_redundancy"]:
-      return (0, "OK - %s" % msg_txt)
-    elif redundant == "2":
-      return (2, "CRITICAL - %s" % msg_txt)
-    else:
-      return (1, "WARN - %s" % msg_txt)
+  vtinfo = (line for line in info if line[0] == item)
+  chk_info = vtinfo.next()
+  type = chk_info[1]
+  descrip = chk_info[2]
+  redundant = chk_info[3]
+  controllers = chk_info[4]
+  connection = chk_info[5]
+  enclosures = chk_info[6]
+  interface = chk_info[7]
+  msg_txt = "%s %s is %s, %s controllers in %s enclosures, %s %s" % ( descrip, vtrak_type[type],
+    vtrak_redundancy[redundant], controllers, enclosures,
+    vtrak_interface[interface], vtrak_connect[connection] )
+  if redundant in params["allowed_redundancy"]:
+    return (0, "OK - %s" % msg_txt)
+  elif redundant == "2":
+    return (2, "CRITICAL - %s" % msg_txt)
+  else:
+    return (1, "WARN - %s" % msg_txt)
   return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrak_instance"] = {

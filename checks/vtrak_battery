@@ -34,35 +34,28 @@ factory_settings["vtrak_battery_default_levels"] = {
     "holdtime_warn" : 72,
 }
 
-def vtrak_battery_celltypename(st):
-    names = { '1': "one-cell", '2': "two-cell", '4': "four-cell", '5': "unknown" }
-    return names.get(st, st)
+vtrak_battery_celltype = { '1': "one-cell", '2': "two-cell", '4': "four-cell", '5': "unknown" }
 
 def inventory_vtrak_battery(checkname, info):
-  inventory = []
-  for index, chemistry, temperature, chargethreshold, dischargethreshold, cyclecount, capacity, voltage, current, status, cells, holdtime in info:
-    try:
-      float(temperature)
-    except ValueError:
-      continue
-    inventory.append( (index, {}) )
-  return inventory
+  return [(line[0], {}) for line in info ]
 
 def check_vtrak_battery(item, params, info):
-  for index, chemistry, temperature, chargethreshold, dischargethreshold, cyclecount, capacity, voltage, current, status, cells, holdtime in info:
-    if index != item: continue
-    this_time = time.time()
-    cycle_timedif, cycle_rate = get_counter("vtrak.cyclecount.%s" % item, this_time, saveint(cyclecount))
-    perfdata = [ ("Temperature",saveint(temperature),saveint(chargethreshold),saveint(dischargethreshold)),("RemainCapacity",saveint(capacity),"","",0,100),("Voltage",saveint(voltage)),("CycleCount",cycle_rate)]
+  binfo = (line for line in info if line[0] == item)
+  chemistry, temperature, chargethreshold, dischargethreshold, cyclecount, \
+    capacity, voltage, current, status, cells, holdtime = binfo.next()[1:]
+  this_time = time.time()
+  cycle_timedif, cycle_rate = get_counter("vtrak.cyclecount.%s" % item, this_time, saveint(cyclecount))
+  perfdata = [ ("Temperature",saveint(temperature),saveint(chargethreshold),saveint(dischargethreshold)),("RemainCapacity",saveint(capacity),"","",0,100),("Voltage",saveint(voltage)),("CycleCount",cycle_rate)]
 
-    msg_txt = "%s%% remaining %s holdtime - %s %sC %s %s" % (capacity,holdtime,status,temperature,vtrak_battery_celltypename(cells),chemistry)
-    if saveint(capacity) > saveint(params["capacity_crit"]):
-      if status in params["allowed_status"] and saveint(holdtime) > saveint(params["holdtime_warn"]):
-        return (0, "OK - %s" % msg_txt,perfdata)
-      else:
-        return (1, "WARN - %s" % msg_txt,perfdata)
+  msg_txt = "%s%% remaining %s holdtime - %s %sC %s %s" % \
+    (capacity,holdtime,status,temperature,vtrak_battery_celltype[cells],chemistry)
+  if saveint(capacity) > saveint(params["capacity_crit"]):
+    if status in params["allowed_status"] and saveint(holdtime) > saveint(params["holdtime_warn"]):
+      return (0, "OK - %s" % msg_txt,perfdata)
     else:
-      return (2, "CRITICAL - %s" % msg_txt,perfdata)
+      return (1, "WARN - %s" % msg_txt,perfdata)
+  else:
+    return (2, "CRITICAL - %s" % msg_txt,perfdata)
 
   return (3, "UNKNOWN - %s info not found" % item)
 

@@ -33,19 +33,17 @@ factory_settings["vtrak_power_default_levels"] = {
 }
 
 def inventory_vtrak_power(checkname, info):
-  inventory = []
-  for index, status in info:
-    if isinstance(status, str):
-      inventory.append( (index, {}) )
-  return inventory
+  return [(line[0], {}) for line in info]
 
 def check_vtrak_power(item, params, info):
-  for index, status in info:
-    if index != item: continue
-    if status in params["allowed_status"]:
-      return (0, "OK - %s" % status)
-    else:
-      return (2, "CRITICAL - %s" % status)
+  vtinfo = (line for line in info if line[0] == item)
+  chk_info = vtinfo.next()
+
+  msg_text = "%s" % chk_info[1]
+  if chk_info[1] in params["allowed_status"]:
+    return (0, "OK - %s" % msg_text)
+  else:
+    return (2, "CRITICAL - %s" % msg_text)
   return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrak_power"] = {

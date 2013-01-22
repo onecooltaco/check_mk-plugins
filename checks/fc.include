@@ -27,10 +27,3 @@
 # Author: Jeremy Leggat <jleggat@asu.edu>
 # --------------------------------------------------------------------------------
 # Functions and definitions used by fc checks
-
-def fc_hex2string(hexcode):
-	return '.'.join(str(x) for x in (ord(byte) for byte in hexcode))
-
-def fc_statusname(st):
-    names = { '1': "online", '2': "offline", '3': "testing", '4': "failed" }
-    return names.get(st, st)

@@ -36,14 +36,11 @@ factory_settings["fa_sys_default_levels"] = {
     "warn_status"    : [ "4", ],
 }
 
+fa_sys_statename = { '1': "unknown", '2': "online", '3': "offline" }
+fa_sys_statusname = { '1': "unknown", '2': "unused", '3': "ok", '4': "warning", '5': "failed" }
+
 def fa_sys_itemname(id):
     return '.'.join(str(x) for x in (ord(byte) for byte in id))
-def fa_sys_statename(st):
-    names = { '1': "unknown", '2': "online", '3': "offline" }
-    return names.get(st, st)
-def fa_sys_statusname(st):
-    names = { '1': "unknown", '2': "unused", '3': "ok", '4': "warning", '5': "failed" }
-    return names.get(st, st)
 
 def inventory_fa_sys(checkname, info):
     inventory = []
@@ -62,8 +59,8 @@ def check_fa_sys(item, params, info):
         if name != item: continue
 
         msg_txt = "%s %s, %s ports %s sensors, %s SN#%s" % (unitname, product, ports, sensors, url, sn)
-        named_state = fa_sys_statename(state)
-        named_status = fa_sys_statusname(status)
+        named_state = fa_sys_statename[state]
+        named_status = fa_sys_statusname[status]
 
         if state in params["allowed_states"] and status in params["allowed_status"]:
             return (0, "OK - as expected %s / %s - %s" % (named_state, named_status, msg_txt))

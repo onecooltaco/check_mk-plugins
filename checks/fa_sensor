@@ -34,32 +34,15 @@ factory_settings["fa_sensor_default_levels"] = {
     "allowed_states" : [ 3, 4, 5, ],
 }
 
-def fa_sensor_statusname(st):
-    names = { '1': "unknown", '2': "other",
-            '3': "ok", '4': "warning",
-            '5': "failed" }
-    return names.get(st, st)
-def fa_sensor_typename(st):
-    names = { '1': "unknown", '2': "other",
-            '3': "battery", '4': "fan",
-            '5': "power-supply", '6': "transmitter",
-            '7': "enclosure", '8': "board",
-            '9': "receiver" }
-    return names.get(st, st)
-def fa_sensor_characteristicname(st):
-    names = { '1': "unknown", '2': "other",
-            '3': "temperature", '4': "pressure",
-            '5': "emf", '6': "currentValue",
-            '7': "airflow", '8': "frequency",
-            '9': "power", '10': "door" }
-    return names.get(st, st)
+fa_sensor_statusname = { '1': "unknown", '2': "other", '3': "ok", '4': "warning", '5': "failed" }
+fa_sensor_typename = { '1': "unknown", '2': "other", '3': "battery", '4': "fan", '5': "power-supply",
+    '6': "transmitter", '7': "enclosure", '8': "board", '9': "receiver" }
+fa_sensor_characteristicname = { '1': "unknown", '2': "other", '3': "temperature", '4': "pressure",
+    '5': "emf", '6': "currentValue", '7': "airflow", '8': "frequency", '9': "power", '10': "door" }
 
 def inventory_fa_sensor(checkname, info):
-  inventory = []
   sensors = len(info)
-  if sensors > 0:
-    inventory.append((None,{"sensors": sensors}))
-  return inventory
+  if sensors > 0: return [(None,{"sensors": sensors})]
 
 def check_fa_sensor(item, params, info):
   crit = False
@@ -73,10 +56,10 @@ def check_fa_sensor(item, params, info):
   for index, id, status, message, type, character in info:
     if status == "5":
       crit = True
-      str_list.insert(0, "%s - %s - %s %s %s" % (id, fa_sensor_statusname(status), fa_sensor_typename(type), fa_sensor_characteristicname(character), message))
+      str_list.insert(0, "%s - %s - %s %s %s" % (id, fa_sensor_statusname[status], fa_sensor_typename[type], fa_sensor_characteristicname[character], message))
     elif status == "4":
       warn = True
-      str_list.append("%s - %s - %s %s %s" % (id, fa_sensor_statusname(status), fa_sensor_typename(type), fa_sensor_characteristicname(character), message))
+      str_list.append("%s - %s - %s %s %s" % (id, fa_sensor_statusname[status], fa_sensor_typename[type], fa_sensor_characteristicname[character], message))
     elif status == "3" or status == "2":
       continue
 

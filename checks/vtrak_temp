@@ -35,23 +35,19 @@ factory_settings["vtrak_temp_default_levels"] = {
 }
 
 def inventory_vtrak_temp(checkname, info):
-  inventory = []
-  for index, temperature, status in info:
-    try:
-      float(temperature)
-    except ValueError:
-      continue
-    inventory.append( (index, {}) )
-  return inventory
+  return [(line[0], {}) for line in info]
 
 def check_vtrak_temp(item, params, info):
-  for index, temperature, status in info:
-    if index != item: continue
-    perfdata = [ ( "Temperature", saveint(temperature), saveint(params["warn_temp"]), saveint(params["crit_temp"]),0,100) ]
-    if status in params["allowed_status"]:
-      return (0, "OK - %s at %sC" % (status, temperature), perfdata)
-    else:
-      return (2, "CRITICAL - %s at %sC" % (status, temperature), perfdata)
+  vtinfo = (line for line in info if line[0] == item)
+  chk_info = vtinfo.next()
+
+  temperature = chk_info[1]
+  status = chk_info[2]
+  perfdata = [ ( "Temperature", saveint(temperature), saveint(params["warn_temp"]), saveint(params["crit_temp"]),0,100) ]
+  if status in params["allowed_status"]:
+    return (0, "OK - %s at %sC" % (status, temperature), perfdata)
+  else:
+    return (2, "CRITICAL - %s at %sC" % (status, temperature), perfdata)
   return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrak_temp"] = {

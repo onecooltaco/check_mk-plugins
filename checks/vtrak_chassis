@@ -34,92 +34,82 @@ factory_settings["vtrak_chassis_default_levels"] = {
     "transfer_rate" : "314572800", # 300MB
 }
 
-def vtrak_chassis_scsiname(st):
-    names = { '0': "unknown", '1': "other", '2': "scsi-2", '3': "scsi-3" }
-    return names.get(st, st)
-
-def vtrak_chassis_rolename(st):
-    names = { '-1': "na", '1': "primary", '2': "secondary" }
-    return names.get(st, st)
+vtrak_chassis_role = { '-1': "na", '1': "primary", '2': "secondary" }
 
 def inventory_vtrak_chassis(checkname, info):
-  inventory = []
-  for index, serial, scsi, ops, role, readiness, arrays, pdrives, \
-    ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
-    lcrit, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
-    writedatatransferred, numoferrors, numofnonrwerrors, numofreaderrors, numofwriteerrors, \
-    numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests in info:
-    if scsi in ["2", "3"]:
-      inventory.append( (index, {}) )
-  return inventory
+  return [(line[0], {}) for line in info]
 
 def check_vtrak_chassis(item, params, info):
-  for index, serial, scsi, ops, role, readiness, arrays, pdrives, \
-  ponline, poffline, pfa, rebuilding, missing, unconfigured, ldrives, lonline, loffline, \
-  lcrit, cachedirty, cacheused, ldrvdegraded, datatransferred, readdatatransferred, \
-  writedatatransferred, numoferrors, numofnonrwerrors, numofreaderrors, numofwriteerrors, \
-  numofiorequests, numofnonrwrequests, numofreadrequests, numofwriterequests in info:
+  vtinfo = (line for line in info if line[0] == item)
+  chk_info = vtinfo.next()
 
-    if index != item: continue
-    crit = False
-    warn = False
-
-    # Performance counters
-    this_time = time.time()
-    rates = []
-    wrapped = False
-    perfdata = [ ]
-    for name, counter in [
-      ( "DataTransferred", datatransferred ),
-      ( "ReadDataTransferred", readdatatransferred ),
-      ( "WriteDataTransferred", writedatatransferred ),
-      ( "NumOfErrors", numoferrors ),
-      ( "NumOfNonRWErrors", numofnonrwerrors ),
-      ( "NumOfReadErrors", numofreaderrors ),
-      ( "NumOfWriteErrors", numofwriteerrors ),
-      ( "NumOfIORequests", numofiorequests ),
-      ( "NumOfNonRWRequests", numofnonrwrequests ),
-      ( "NumOfReadRequests", numofreadrequests ),
-      ( "NumOfWriteRequests", numofwriterequests ) ]:
-      try:
-        timedif, rate = get_counter("vtrak.%s.%s" % (name, item), this_time, saveint(counter))
-        rates.append(rate)
-        perfdata.append( (name, rate) )
-      except MKCounterWrapped:
-        wrapped = True
+  # Performance counters
+  datatransferred, readdatatransferred, writedatatransferred, numoferrors, numofnonrwerrors, \
+    numofreaderrors, numofwriteerrors, numofiorequests, numofnonrwrequests, numofreadrequests, \
+    numofwriterequests = map(int, chk_info[-11:])
+  this_time = time.time()
+  rates = []
+  wrapped = False
+  perfdata = [ ]
+  for name, counter in [
+    ( "DataTransferred", datatransferred ),
+    ( "ReadDataTransferred", readdatatransferred ),
+    ( "WriteDataTransferred", writedatatransferred ),
+    ( "NumOfErrors", numoferrors ),
+    ( "NumOfNonRWErrors", numofnonrwerrors ),
+    ( "NumOfReadErrors", numofreaderrors ),
+    ( "NumOfWriteErrors", numofwriteerrors ),
+    ( "NumOfIORequests", numofiorequests ),
+    ( "NumOfNonRWRequests", numofnonrwrequests ),
+    ( "NumOfReadRequests", numofreadrequests ),
+    ( "NumOfWriteRequests", numofwriterequests ) ]:
+    try:
+      timedif, rate = get_counter("vtrak.%s.%s" % (name, item), this_time, counter)
+      rates.append(rate)
+      perfdata.append( (name, rate) )
+    except MKCounterWrapped:
+      wrapped = True
       # continue, other counters might wrap as well
 
-    # continue, other counters might wrap as well
-    # after all counters are handled
-    if wrapped: raise MKCounterWrapped("Counter wrap")
+  # continue, other counters might wrap as well
+  # after all counters are handled
+  if wrapped: raise MKCounterWrapped("Counter wrap")
 
-    perfdata.extend([ ("CacheUsagePercentage",saveint(cacheused),"","",0,100),("DirtyCachePercentage",saveint(cachedirty),"","",0,100) ])
+  perfdata.append( ("CacheUsagePercentage",saveint(chk_info[18]),"","",0,100) )
+  perfdata.append( ("DirtyCachePercentage",saveint(chk_info[19]),"","",0,100) )
 
-    str_list = []
-    str_list.append("%s and %s" % (ops, readiness))
-    if poffline != '0':
-      crit = True
-      str_list.append("%s/%s offline" % (poffline, pdrives))
-    if pfa != '0':
-      crit = True
-      str_list.append("%s/%s Predictive Failure Analysis (PFA)" % (pfa, pdrives))
-    if rebuilding != '0':
-      warn = True
-      str_list.append("%s/%s rebuilding" % (rebuilding, pdrives))
-    if missing != '0':
-      crit = True
-      str_list.append("%s/%s missing" % (missing, pdrives))
-    if unconfigured != '0':
-      warn = True
-      str_list.append("%s/%s unconfigured" % (unconfigured, pdrives))
 
-    out_str = ' '.join(str_list)
-    if crit:
-      return (2, "CRITICAL - %s" % out_str, perfdata)
-    elif warn:
-      return (1, "WARN - %s" % out_str, perfdata)
-    else:
-      return (0, "OK - %s" % out_str, perfdata)
+  ops = chk_info[2]
+  readiness = chk_info[4]
+  pdrives = chk_info[6]
+
+  crit = False
+  warn = False
+
+  str_list = ["%s and %s" % (ops, readiness)]
+  if chk_info[8] != '0':
+     crit = True
+     str_list.append("%s/%s offline" % (chk_info[8], pdrives))
+  if chk_info[9] != '0':
+    crit = True
+    str_list.append("%s/%s Predictive Failure Analysis (PFA)" % (chk_info[9], pdrives))
+  if chk_info[10] != '0':
+    warn = True
+    str_list.append("%s/%s rebuilding" % (chk_info[10], pdrives))
+  if chk_info[11] != '0':
+    crit = True
+    str_list.append("%s/%s missing" % (chk_info[11], pdrives))
+  if chk_info[12] != '0':
+    warn = True
+    str_list.append("%s/%s unconfigured" % (chk_info[12], pdrives))
+
+  out_str = ' '.join(str_list)
+  if crit:
+    return (2, "CRITICAL - %s" % out_str, perfdata)
+  elif warn:
+    return (1, "WARN - %s" % out_str, perfdata)
+  else:
+    return (0, "OK - %s" % out_str, perfdata)
 
   return (3, "UNKNOWN - %s info not found" % item)
 
@@ -135,9 +125,8 @@ snmp_info["vtrak_chassis"] = \
 	( ".1.3.6.1.4.1.7933.1.20.1", [
 		"3.1.1",	# raidv4CtrlIndex
 		"3.1.7",	# raidv4CtrlSerialNumber
-		"3.1.10",	# raidv4CtrlSCSIProtocol	Values: unknown(0), other(1), scsi-2(2), scsi-3(3)
 		"3.1.15",	# raidv4CtrlOpStatus
-		"3.1.16",	# raidv4CtrlRole			Values: na(-1), primary(1), secondary(0)
+		"3.1.16",	# raidv4CtrlRole			na(-1), primary(1), secondary(0)
 		"3.1.17",	# raidv4CtrlReadinessStatus
 		"3.1.18",	# raidv4CtrlNumOfArrayPresent
 		"3.1.19",	# raidv4CtrlNumOfPhyDrvPresent
@@ -151,9 +140,9 @@ snmp_info["vtrak_chassis"] = \
 		"3.1.27",	# raidv4CtrlNumOfLogDrvOnline
 		"3.1.28",	# raidv4CtrlNumOfLogDrvOffline
 		"3.1.29",	# raidv4CtrlNumOfLogDrvCritical
+		"3.1.64",	# raidv4CtrlNumOfLogDrvDegraded
 		"3.1.38",	# raidv4CtrlDirtyCachePercentage	Values: na(-1)
 		"3.1.39",	# raidv4CtrlCacheUsagePercentage	Values: na(-1)
-		"3.1.64",	# raidv4CtrlNumOfLogDrvDegraded
 		"4.1.1",    # raidv4CtrlStatsDataTransferred  Counter64
 		"4.1.2",    # raidv4CtrlStatsReadDataTransferred  Counter64
 		"4.1.3",    # raidv4CtrlStatsWriteDataTransferred  Counter64

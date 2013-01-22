@@ -33,18 +33,18 @@ factory_settings["vtrak_enclosure_default_levels"] = {
 }
 
 def inventory_vtrak_enclosure(checkname, info):
-  inventory = []
-  for index, descrip, status, message in info:
-    inventory.append((index, {}))
-  return inventory
+  return [(line[0], {}) for line in info]
 
 def check_vtrak_enclosure(item, params, info):
-  for index, descrip, status, message in info:
-    if index != item: continue
-    if status in params["allowed_status"]:
-      return (0, "%s - %s, %s" % (status, message, descrip))
-    else:
-      return (2, "CRITICAL - %s - %s, %s" % (status, message, descrip))
+  vtinfo = (line for line in info if line[0] == item)
+  chk_info = vtinfo.next()
+
+  status = chk_info[2]
+  msg_text = "%s - %s, %s" % (status, chk_info[3], chk_info[1])
+  if status in params["allowed_status"]:
+    return (0, msg_text)
+  else:
+    return (2, "CRITICAL - %s" % msg_text)
   return (3, "UNKNOWN - %s info not found" % item)
 
 check_info["vtrak_enclosure"] = {
