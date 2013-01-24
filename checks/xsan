@@ -98,6 +98,7 @@ check_info['xsan.fsm'] = {
     "has_perfdata"            : True,
     "service_description"     : "XSAN Vol %s",
     "default_levels_variable" : "xsan_default_levels",
+    "group"                   : "filesystem",
 }
 
 ## XSAN Status
@@ -110,7 +111,7 @@ def check_xsan_stats(item, params, info):
     chk_info = statinfo.next()
 
     connections = chk_info[3]
-    blocksize = chk_info[4]
+    blocksize = chk_info[4].replace("K", "")
     msg_buffer = chk_info[5]
     disks = chk_info[6]
     stripe_groups = chk_info[7]
@@ -122,20 +123,24 @@ def check_xsan_stats(item, params, info):
     blocks_free_unit = chk_info[13]
     blocks_free_percent = int(chk_info[14])
 
-    msg_txt = \
-    "%s stripe groups on %s disks %s/%s blocks used (%s%s/%s%s), block size: %s each message buffer: %s" \
-      % ( stripe_groups, disks, blocks_free, blocks, blocks_free_nice, blocks_free_unit,
-      blocks_nice, blocks_units, blocksize, msg_buffer, )
-    perfdata = [ ("connections", connections), ("percent_blocks_free",
-      blocks_free_percent, params["free_percent_warn"], params["free_percent_crit"], 0, 100),
-      ("blocks_free", blocks_free) ]
+    size_mb = int(chk_info[8]) * int(blocksize) / (1024.0 * 1024.0)
+    avail_mb = int(chk_info[11]) * int(blocksize) / (1024.0 * 1024.0)
+    return df_check_filesystem(g_hostname, item, size_mb, avail_mb, params)
 
-    if blocks_free_percent < params["free_percent_crit"]:
-        return (2, "CRITICAL - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
-    elif blocks_free_percent < params["free_percent_warn"]:
-        return (1, "WARNING - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
-    else:
-        return (0, "OK - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
+#     msg_txt = \
+#     "%s stripe groups on %s disks %s/%s blocks used (%s%s/%s%s), block size: %s each message buffer: %s" \
+#       % ( stripe_groups, disks, blocks_free, blocks, blocks_free_nice, blocks_free_unit,
+#       blocks_nice, blocks_units, blocksize, msg_buffer, )
+#     perfdata = [ ("connections", connections), ("percent_blocks_free",
+#       blocks_free_percent, params["free_percent_warn"], params["free_percent_crit"], 0, 100),
+#       ("blocks_free", blocks_free) ]
+#
+#     if blocks_free_percent < params["free_percent_crit"]:
+#         return (2, "CRITICAL - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
+#     elif blocks_free_percent < params["free_percent_warn"]:
+#         return (1, "WARNING - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
+#     else:
+#         return (0, "OK - %d%% free - %s" % (blocks_free_percent, msg_txt), perfdata)
 
     return (3, "UNKNOWN - %s info not found" % item)
 
@@ -145,6 +150,8 @@ check_info['xsan.stats'] = {
     "has_perfdata"            : True,
     "service_description"     : "XSAN Stats %s",
     "default_levels_variable" : "xsan_default_levels",
+    "group"                   : "filesystem",
+    "includes"                : [ "df.include" ],
 }
 
 ## XSAN Stripe Groups
@@ -174,6 +181,7 @@ check_info['xsan.stripe'] = {
     "has_perfdata"            : False,
     "service_description"     : "XSAN Stripe Group %s",
     "default_levels_variable" : "xsan_default_levels",
+    "group"                   : "filesystem",
 }
 
 ## XSAN Paths
@@ -199,6 +207,7 @@ check_info['xsan.paths'] = {
     "has_perfdata"            : False,
     "service_description"     : "XSAN Path %s",
     "default_levels_variable" : "xsan_default_levels",
+    "group"                   : "filesystem",
 }
 
 ## XSAN Disks
@@ -230,4 +239,5 @@ check_info['xsan.disks'] = {
     "has_perfdata"            : False,
     "service_description"     : "XSAN Disk %s",
     "default_levels_variable" : "xsan_default_levels",
+    "group"                   : "filesystem",
 }

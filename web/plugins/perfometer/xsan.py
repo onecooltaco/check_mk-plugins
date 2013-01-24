@@ -1,0 +1,1 @@
+perfometers["check_mk-xsan.stats"] = perfometer_check_mk_df

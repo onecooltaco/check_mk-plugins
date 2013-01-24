@@ -17,10 +17,10 @@ perfometers["check_mk-vtrak_temp"] = perfometer_check_mk_vtrak_temps
 
 def perfometer_check_mk_vtrak_battery(row, check_command, perf_data):
     bat = float(perf_data[1][1])
-    if row['service_state'] == 0:
-        color = '#00FF00'
-    else:
+    if row['service_state'] == 2:
         color = '#FF0000'
+    else:
+        color = '#00FF00'
 
     return "%.0f%%" % bat, perfometer_linear(bat, color)
 

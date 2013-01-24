@@ -45,15 +45,21 @@ def check_vtrak_battery(item, params, info):
     capacity, voltage, current, status, cells, holdtime = binfo.next()[1:]
   this_time = time.time()
   cycle_timedif, cycle_rate = get_counter("vtrak.cyclecount.%s" % item, this_time, saveint(cyclecount))
-  perfdata = [ ("Temperature",saveint(temperature),saveint(chargethreshold),saveint(dischargethreshold)),("RemainCapacity",saveint(capacity),"","",0,100),("Voltage",saveint(voltage)),("CycleCount",cycle_rate)]
+  perfdata = [
+    ("Temperature",saveint(temperature),saveint(chargethreshold),saveint(dischargethreshold)),
+    ("RemainCapacity",saveint(capacity),"",params["capacity_crit"],0,100),
+    ("Voltage",saveint(voltage)),
+    ("CycleCount",cycle_rate),
+    ("HoldTime",saveint(holdtime),params["holdtime_warn"],0,0,200)
+  ]
 
-  msg_txt = "%s%% remaining %s holdtime - %s %sC %s %s" % \
+  msg_txt = "%s%% remaining, %s hour holdtime - %s %sC %s %s" % \
     (capacity,holdtime,status,temperature,vtrak_battery_celltype[cells],chemistry)
   if saveint(capacity) > saveint(params["capacity_crit"]):
-    if status in params["allowed_status"] and saveint(holdtime) > saveint(params["holdtime_warn"]):
+    if status in params["allowed_status"] and saveint(holdtime) >= saveint(params["holdtime_warn"]):
       return (0, "OK - %s" % msg_txt,perfdata)
     else:
-      return (1, "WARN - %s" % msg_txt,perfdata)
+      return (1, "WARN - Hold time below %d hour threshold - %s" % (params["holdtime_warn"],msg_txt),perfdata)
   else:
     return (2, "CRITICAL - %s" % msg_txt,perfdata)
 

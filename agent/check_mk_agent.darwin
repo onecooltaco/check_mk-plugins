@@ -127,18 +127,18 @@ print name, speed, duplex, auto, status}'
 
 # Network device statistics (Packets, Collisions, etc)
 # only the "Link/Num" interface has all counters.
+# filter out no network and virtual adapters.
 echo '<<<netctr>>>';
-date +'%s'; netstat -inb | egrep -v '(^Name|lo|plip)' | grep Link | awk '{
-print $1,$7,$5,$6,"0","0","0","0","0",$10,$8,$9,"0","0",$11,"0","0"; }'
+date +'%s'; netstat -inb | egrep -v '(^Name|lo|plip|gif|stf|vnic|vbox|fw)' | \
+grep Link | awk '{print $1,$7,$5,$6,"0","0","0","0","0",$10,$8,$9,"0","0",$11,"0","0"; }'
 
 # TCP Conn stats
 echo '<<<tcp_conn_stats>>>'
 netstat -ntfinet | awk ' /^tcp/ { c[$6]++; } END { for (x in c) { print x, c[x]; } }'
 
-# Performance Counters Disks
-echo '<<<diskstat>>>'
-date +%s
-
+# Performance Counters for Disks
+# echo '<<<diskstat>>>'
+# date +%s
 
 # IPMI-Info (Fans, CPU, Temperature, etc)
 if which ipmitool >/dev/null

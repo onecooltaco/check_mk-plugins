@@ -46,17 +46,17 @@ $ds_name[3] = 'Errors and Discards';
 $opt[3] = "--imgformat=PNG --title \"Errors $hostname / $servicedesc\" --base=1024 --slope-mode ";
 #
 $def[3]  = "";
-$def[3] .= "DEF:var1=$RRDFILE[3]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var2=$RRDFILE[4]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var3=$RRDFILE[5]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var4=$RRDFILE[6]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var5=$RRDFILE[7]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var6=$RRDFILE[8]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var7=$RRDFILE[9]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var8=$RRDFILE[10]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var9=$RRDFILE[11]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var10=$RRDFILE[12]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var11=$RRDFILE[13]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var1=$RRDFILE[5]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var2=$RRDFILE[6]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var3=$RRDFILE[7]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var4=$RRDFILE[8]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var5=$RRDFILE[9]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var6=$RRDFILE[10]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var7=$RRDFILE[11]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var8=$RRDFILE[12]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var9=$RRDFILE[13]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var10=$RRDFILE[14]:$DS[1]:AVERAGE " ;
+$def[3] .= "DEF:var11=$RRDFILE[15]:$DS[1]:AVERAGE " ;
 
 $def[3] .= "CDEF:c3discards=var1 ";
 $def[3] .= "CDEF:linkfailures=var2 ";
@@ -71,36 +71,36 @@ $def[3] .= "CDEF:olsins=var10 ";
 $def[3] .= "CDEF:olsouts=var11 ";
 
 # Draw fill area under line
-$def[3] .= "LINE1:c3discards" . "#33CC33:\"$NAME[3] \" ";
+$def[3] .= "LINE1:c3discards" . "#33CC33:\"$NAME[5] \" ";
 
 ##
-$def[3] .= "LINE1:linkfailures" . "#0000FF:\"$NAME[4] \" ";
+$def[3] .= "LINE1:linkfailures" . "#0000FF:\"$NAME[6] \" ";
 
 ##
-$def[3] .= "LINE1:synclosses" . "#330066:\"$NAME[5] \" ";
+$def[3] .= "LINE1:synclosses" . "#330066:\"$NAME[7] \" ";
 
 ##
-$def[3] .= "LINE1:primseqprotoerrors" . "#4D0099:\"$NAME[6] \" ";
+$def[3] .= "LINE1:primseqprotoerrors" . "#4D0099:\"$NAME[8] \" ";
 
 ##
-$def[3] .= "LINE1:invalidtxwords" . "#99004D:\"$NAME[7] \" ";
+$def[3] .= "LINE1:invalidtxwords" . "#99004D:\"$NAME[9] \" ";
 
 ##
-$def[3] .= "LINE1:invalidcrcs" . "#990099:\"$NAME[8] \" ";
+$def[3] .= "LINE1:invalidcrcs" . "#990099:\"$NAME[10] \" ";
 
 ##
-$def[3] .= "LINE1:addressiderrors" . "#FF0066:\"$NAME[9] \" ";
+$def[3] .= "LINE1:addressiderrors" . "#FF0066:\"$NAME[11] \" ";
 
 ##
-$def[3] .= "LINE1:linkresetins" . "#D600D6:\"$NAME[10] \" ";
+$def[3] .= "LINE1:linkresetins" . "#D600D6:\"$NAME[12] \" ";
 
 ##
-$def[3] .= "LINE1:linkresetouts" . "#FF1A00:\"$NAME[11] \" ";
+$def[3] .= "LINE1:linkresetouts" . "#FF1A00:\"$NAME[13] \" ";
 
 ##
-$def[3] .= "LINE1:olsins" . "#009900:\"$NAME[12] \" ";
+$def[3] .= "LINE1:olsins" . "#009900:\"$NAME[14] \" ";
 
 ##
-$def[3] .= "LINE1:olsouts" . "#FF9900:\"$NAME[13] \" ";
+$def[3] .= "LINE1:olsouts" . "#FF9900:\"$NAME[15] \" ";
 
 ?>
