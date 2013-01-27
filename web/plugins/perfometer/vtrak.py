@@ -1,3 +1,5 @@
+perfometers["check_mk-vtrak_chassis"] = perfometer_check_mk_diskstat
+
 def perfometer_check_mk_vtrak_temps(row, check_command, perf_data):
     if row['service_state'] == 0:
         color = '#00FF00'

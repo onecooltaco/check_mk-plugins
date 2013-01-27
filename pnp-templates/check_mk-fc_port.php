@@ -1,106 +1,151 @@
 <?php
-# Performance data from check:
-# C3InOctets=27161.985972;;;;
-# C3OutOctets=3819274.882924;;;;
-
-# C3Discards=0;;;;
-# LinkFailures=0;;;;
-# SyncLosses=0;;;;
-# PrimSeqProtoErrors=0;;;;
-# InvalidTxWords=0;;;;
-# InvalidCrcs=0;;;;
-# AddressIdErrors=0;;;;
-# LinkResetIns=0;;;;
-# LinkResetOuts=0;;;;
-# OlsIns=0;;;;
-# OlsOuts=0;;;;
-
-# Graph 2: used bandwidth
-$ds_name[2] = 'Used Bandwidth';
-$opt[2] = "--imgformat=PNG --title \"Traffic $hostname / $servicedesc\" --base=1024 --slope-mode ";
+# +------------------------------------------------------------------+
+# |             ____ _               _        __  __ _  __           |
+# |            / ___| |__   ___  ___| | __   |  \/  | |/ /           |
+# |           | |   | '_ \ / _ \/ __| |/ /   | |\/| | ' /            |
+# |           | |___| | | |  __/ (__|   <    | |  | | . \            |
+# |            \____|_| |_|\___|\___|_|\_\___|_|  |_|_|\_\           |
+# |                                                                  |
+# | Copyright Mathias Kettner 2012             mk@mathias-kettner.de |
+# +------------------------------------------------------------------+
 #
-$def[2]  = "";
-$def[2] .= "DEF:in_oct=$RRDFILE[1]:$DS[1]:AVERAGE " ;
-$def[2] .= "DEF:out_oct=$RRDFILE[2]:$DS[1]:AVERAGE " ;
-$def[2] .= "CDEF:octetsin=in_oct ";
-$def[2] .= "CDEF:octetsout=0,out_oct,- ";
-
-# Draw fill area under line
-$def[2] .= "AREA:octetsin" . "#33CC33:\"$NAME[1]\t\" ";
-
-# write out averages
-$def[2] .= "GPRINT:octetsin:LAST:\"%3.4lg %s$UNIT[1] LAST \" ";
-$def[2] .= "GPRINT:octetsin:AVERAGE:\"%3.4lg %s$UNIT[1] AVERAGE \" ";
-$def[2] .= "GPRINT:octetsin:MAX:\"%3.4lg %s$UNIT[1] MAX\\n\" ";
-
-$def[2] .= "AREA:octetsout" . "#0000CCFF:\"$NAME[2]\t\" ";
-
-$def[2] .= "GPRINT:octetsout:LAST:\"%3.4lg %s$UNIT[2] LAST \" ";
-$def[2] .= "GPRINT:octetsout:AVERAGE:\"%3.4lg %s$UNIT[2] AVERAGE \" ";
-$def[2] .= "GPRINT:octetsout:MAX:\"%3.4lg %s$UNIT[2] MAX\\n\" ";
-
-$def[2] .= "HRULE:0#000000 ";
-
-# Graph 3: errors and discards
-$ds_name[3] = 'Errors and Discards';
-$opt[3] = "--imgformat=PNG --title \"Errors $hostname / $servicedesc\" --base=1024 --slope-mode ";
+# This file is part of Check_MK.
+# The official homepage is at http://mathias-kettner.de/check_mk.
 #
-$def[3]  = "";
-$def[3] .= "DEF:var1=$RRDFILE[5]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var2=$RRDFILE[6]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var3=$RRDFILE[7]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var4=$RRDFILE[8]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var5=$RRDFILE[9]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var6=$RRDFILE[10]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var7=$RRDFILE[11]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var8=$RRDFILE[12]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var9=$RRDFILE[13]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var10=$RRDFILE[14]:$DS[1]:AVERAGE " ;
-$def[3] .= "DEF:var11=$RRDFILE[15]:$DS[1]:AVERAGE " ;
+# check_mk is free software;  you can redistribute it and/or modify it
+# under the  terms of the  GNU General Public License  as published by
+# the Free Software Foundation in version 2.  check_mk is  distributed
+# in the hope that it will be useful, but WITHOUT ANY WARRANTY;  with-
+# out even the implied warranty of  MERCHANTABILITY  or  FITNESS FOR A
+# PARTICULAR PURPOSE. See the  GNU General Public License for more de-
+# ails.  You should have  received  a copy of the  GNU  General Public
+# License along with GNU Make; see the file  COPYING.  If  not,  write
+# to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
+# Boston, MA 02110-1301 USA.
 
-$def[3] .= "CDEF:c3discards=var1 ";
-$def[3] .= "CDEF:linkfailures=var2 ";
-$def[3] .= "CDEF:synclosses=var3 ";
-$def[3] .= "CDEF:primseqprotoerrors=var4 ";
-$def[3] .= "CDEF:invalidtxwords=var5 ";
-$def[3] .= "CDEF:invalidcrcs=var6 ";
-$def[3] .= "CDEF:addressiderrors=var7 ";
-$def[3] .= "CDEF:linkresetins=var8 ";
-$def[3] .= "CDEF:linkresetouts=var9 ";
-$def[3] .= "CDEF:olsins=var10 ";
-$def[3] .= "CDEF:olsouts=var11 ";
 
-# Draw fill area under line
-$def[3] .= "LINE1:c3discards" . "#33CC33:\"$NAME[5] \" ";
+# The number of data source various due to different
+# settings (such as averaging). We rather work with names
+# than with numbers.
+$RRD = array();
+foreach ($NAME as $i => $n) {
+    $RRD[$n] = "$RRDFILE[$i]:$DS[$i]:MAX";
+    $WARN[$n] = $WARN[$i];
+    $CRIT[$n] = $CRIT[$i];
+    $MIN[$n] = $MIN[$i];
+    $MAX[$n] = $MAX[$i];
+}
 
-##
-$def[3] .= "LINE1:linkfailures" . "#0000FF:\"$NAME[6] \" ";
 
-##
-$def[3] .= "LINE1:synclosses" . "#330066:\"$NAME[7] \" ";
+# 1. GRAPH: THROUGHPUT IN MB/s
 
-##
-$def[3] .= "LINE1:primseqprotoerrors" . "#4D0099:\"$NAME[8] \" ";
+$ds_name[1] = 'Traffic';
+$opt[1] = "--vertical-label \"MByte/sec\" -X0 -b 1024 --title \"Traffic for $hostname / $servicedesc\" ";
 
-##
-$def[3] .= "LINE1:invalidtxwords" . "#99004D:\"$NAME[9] \" ";
+$def[1] = ""
+  . "HRULE:0#c0c0c0 "
+  . "DEF:in=$RRD[In] "
+  . "DEF:out=$RRD[Out] "
+  . "CDEF:inmb=in,1048576,/ "
+  . "CDEF:outmb=out,1048576,/ "
+  . "AREA:inmb#60a020:\"in \" "
+  . "GPRINT:inmb:LAST:\"%5.1lf MB/s last\" "
+  . "GPRINT:inmb:AVERAGE:\"%5.1lf MB/s avg\" "
+  . "GPRINT:inmb:MAX:\"%5.1lf MB/s max\\n\" "
+  . "CDEF:out_draw=outmb,-1,* "
+  . "AREA:out_draw#2060a0:\"out \" "
+  . "GPRINT:outmb:LAST:\"%5.1lf MB/s last\" "
+  . "GPRINT:outmb:AVERAGE:\"%5.1lf MB/s avg\" "
+  . "GPRINT:outmb:MAX:\"%5.1lf MB/s max\\n\" "
+  ;
 
-##
-$def[3] .= "LINE1:invalidcrcs" . "#990099:\"$NAME[10] \" ";
+if (isset($RRD['in_avg'])) {
+$def[1] .= ""
+  . "DEF:inavg=$RRD[in_avg] "
+  . "DEF:outavg=$RRD[out_avg] "
+  . "CDEF:inavgmb=inavg,1048576,/ "
+  . "CDEF:outavgmb=outavg,1048576,/ "
+  . "CDEF:outavgmbdraw=outavg,-1048576,/ "
+  . "LINE:inavgmb#a0d040:\"in (avg) \" "
+  . "GPRINT:inavgmb:LAST:\"%5.1lf MB/s last\" "
+  . "GPRINT:inavgmb:AVERAGE:\"%5.1lf MB/s avg\" "
+  . "GPRINT:inavgmb:MAX:\"%5.1lf MB/s max\\n\" "
+  . "LINE:outavgmbdraw#40a0d0:\"out (avg)\" "
+  . "GPRINT:outavgmb:LAST:\"%5.1lf MB/s last\" "
+  . "GPRINT:outavgmb:AVERAGE:\"%5.1lf MB/s avg\" "
+  . "GPRINT:outavgmb:MAX:\"%5.1lf MB/s max\\n\" "
+  ;
+}
 
-##
-$def[3] .= "LINE1:addressiderrors" . "#FF0066:\"$NAME[11] \" ";
+if ($WARN['In']) {
+   $def[1] .= "HRULE:$WARN[In]#ffff00:\"Warning (In)\" ";
+   $def[1] .= "HRULE:-$WARN[Out]#ffff00:\"Warning (out)\" ";
+}
+if ($CRIT['In']) {
+   $def[1] .= "HRULE:$CRIT[In]#ff0000:\"Critical (In)\" ";
+   $def[1] .= "HRULE:-$CRIT[Out]#ff0000:\"Critical (Out)\" ";
+}
+if ($MAX['In']) {
+   $speedmb = $MAX['In'] / 1048576.0;
+   $speedtxt = sprintf("%.1f MB/s", $speedmb);
+   $def[1] .= "HRULE:$speedmb#ff80c0:\"Portspeed\: $speedtxt\" ";
+   $def[1] .= "HRULE:-$speedmb#ff80c0 ";
+   # $opt[1] .= " -u $speedmb -l -$speedmb";
+}
 
-##
-$def[3] .= "LINE1:linkresetins" . "#D600D6:\"$NAME[12] \" ";
+# 2. GRAPH: FRAMES
+$ds_name[2] = 'Frames';
+$opt[2] = "--vertical-label \"Frames/sec\" -b 1024 --title \"Frames per second\" ";
+$def[2] = ""
+  . "HRULE:0#c0c0c0 "
+  . "DEF:in=$RRD[inframes] "
+  . "DEF:out=$RRD[outframes] "
+  . "AREA:in#a0d040:\"in \" "
+  . "GPRINT:in:LAST:\"%5.1lf/s last\" "
+  . "GPRINT:in:AVERAGE:\"%5.1lf/s avg\" "
+  . "GPRINT:in:MAX:\"%5.1lf/s max\\n\" "
+  . "CDEF:out_draw=out,-1,* "
+  . "AREA:out_draw#40a0d0:\"out \" "
+  . "GPRINT:out:LAST:\"%5.1lf/s last\" "
+  . "GPRINT:out:AVERAGE:\"%5.1lf/s avg\" "
+  . "GPRINT:out:MAX:\"%5.1lf/s max\\n\" "
+  ;
 
-##
-$def[3] .= "LINE1:linkresetouts" . "#FF1A00:\"$NAME[13] \" ";
+# 3. GRAPH: ERRORS
 
-##
-$def[3] .= "LINE1:olsins" . "#009900:\"$NAME[14] \" ";
-
-##
-$def[3] .= "LINE1:olsouts" . "#FF9900:\"$NAME[15] \" ";
-
+$ds_name[3] = 'Error counter';
+$opt[3] = "--vertical-label \"Error counter\" --title \"Problems\" ";
+$def[3] = ""
+  . "DEF:c3discards=$RRD[C3Discards] "
+  . "DEF:linkfailures=$RRD[LinkFailures] "
+  . "DEF:synclosses=$RRD[SyncLosses] "
+  . "DEF:primseqprotoerrors=$RRD[PrimSeqProtoErrors] "
+  . "DEF:invalidtxwords=$RRD[InvalidTxWords] "
+  . "DEF:invalidcrcs=$RRD[InvalidCrcs] "
+  . "DEF:addressiderrors=$RRD[AddressIdErrors] "
+  . "DEF:linkresetins=$RRD[LinkResetIns] "
+  . "DEF:linkresetouts=$RRD[LinkResetOuts] "
+  . "DEF:olsins=$RRD[OlsIns] "
+  . "DEF:olsouts=$RRD[OlsOuts] "
+  . "LINE1:c3discards#c00000:\"C3 Discards \" "
+  . "GPRINT:c3discards:LAST:\"last\: %4.0lf/s \" "
+  . "LINE1:linkfailures#ff8000:\"Link Failures \" "
+  . "GPRINT:linkfailures:LAST:\"last\: %4.0lf/s\\n\" "
+  . "LINE1:synclosses#ff0080:\"Sync Losses \" "
+  . "GPRINT:synclosses:LAST:\"last\: %4.0lf/s \" "
+  . "LINE1:primseqprotoerrors#ffa0a0:\"Prime Sequence Protocol Errors \" "
+  . "GPRINT:primseqprotoerrors:LAST:\"last\: %4.0lf/s\\n\" "
+  . "LINE1:invalidtxwords#33CC33:\"Invalid Text Words \" "
+  . "GPRINT:invalidtxwords:LAST:\"last\: %4.0lf/s \" "
+  . "LINE1:invalidcrcs#0000FF:\"Invalid CRCs \" "
+  . "GPRINT:invalidcrcs:LAST:\"last\: %4.0lf/s\\n\" "
+  . "LINE1:addressiderrors#330066:\"Address Id Errors \" "
+  . "GPRINT:addressiderrors:LAST:\"last\: %4.0lf/s \" "
+  . "LINE1:linkresetins#4D0099:\"Link Reset Ins \" "
+  . "GPRINT:linkresetins:LAST:\"last\: %4.0lf/s\\n\" "
+  . "LINE1:linkresetouts#99004D:\"Ols Ins \" "
+  . "GPRINT:linkresetouts:LAST:\"last\: %4.0lf/s \" "
+  . "LINE1:olsins#990099:\"Ols Outs\" "
+  . "GPRINT:olsins:LAST:\"last\: %4.0lf/s\\n\" "
+  ;
 ?>

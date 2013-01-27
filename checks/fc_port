@@ -120,8 +120,10 @@ def check_fc_port(item, params, info):
     timedif, inframes_rate = get_counter("fc_port.c3inframes.%s" % item, this_time, c3inframes)
     timedif, outframes_rate = get_counter("fc_port.c3outframes.%s" % item, this_time, c3outframes)
     totalframes_rate = inframes_rate + outframes_rate
+
     for what, value in [ ("inframes", inframes_rate), ("outframes", outframes_rate) ]:
       perfdata.append((what, value))
+
     for desc, counter, ref in [
       ( "C3Discards", c3discards, outframes_rate ),
       ( "LinkFailures", linkfailures, totalframes_rate ),
