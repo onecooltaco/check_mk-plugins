@@ -32,7 +32,8 @@
 # Reads:
 
 factory_settings["sony_srx_default_levels"] = {
-    "lamphours" : 1000,
+    "lifespan" : 1000,
+    "average"   : 15,
 }
 
 def inventory_sony_srx_lamp(checkname, info):
@@ -44,13 +45,19 @@ def check_sony_srx_lamp(item, params, info):
 
   this_time = time.time()
   lamp_time = saveint(chk_info[2])
+  lifespan = int(params["lifespan"])
   timedif, rate = get_counter("sony_srx_lamp_hours.%s" % item, this_time, lamp_time)
-  perfdata = [ ( "Lamphours", lamp_time, "", saveint(params["lamphours"]) ), ( "Rate", rate ) ]
+  if params["average"] > 0:
+    ## Average out lamp usage with 15 min default.
+    ## This is seems to be how often the counter updates on system.
+    timedif, rate = get_average("sony_srx_lamp_hours.%s_avg" % item, this_time, rate, params["average"])
+
+  perfdata = [ ( "Lamphours", lamp_time, "", lifespan ), ( "Rate", rate ) ]
 
   model = chk_info[1]
-  msg_txt = "%d on bulb %s" % (lamp_time, model)
+  msg_txt = "%d hours (%d hour Estimated Life Span) on %s bulb" % (lamp_time, lifespan, model)
 
-  if lamp_time > int(params["lamphours"]):
+  if lamp_time > lifespan:
     return (2, "CRITICAL - %s" % msg_txt, perfdata)
   else:
     return (0, "OK - %s" % msg_txt, perfdata)

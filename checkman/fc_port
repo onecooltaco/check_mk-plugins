@@ -1,0 +1,104 @@
+title: Monitor FibreChannel ports using FIBRE-CHANNEL-FE-MIB::fcFxPortPhysTable
+agents: snmp
+author: Jeremy Leggat <jleggat@asu.edu>
+license: GPL
+distribution: check_mk
+description:
+ This checks monitors a FibreChannel port of switch using FIBRE-CHANNEL-FE-MIB.
+ The check goes critical under the following conditions:
+
+ {[1]} The physical state, operational state or adminstrative state of the port is not
+ as expected.
+
+ {[2]} The current throughput exceeds certain absolute or
+ percentual levels.
+
+ {[3]} An error counter exceeds its  configured levels (C3 Discards, Link Failures,
+   Sync Losses, Prime Sequence Protocol Errors, Invalid Text Words, Invalid CRCs,
+   Address Id Errors, Link Reset Ins, Ols Ins, Ols Outs)
+
+item:
+ The item is the switch-number.port-number, with port-number as two-digit or
+ three-digit string (on switches with 100 or more ports).
+
+examples:
+ # Generally turn on averaging with 15 Minutes on all ports:
+ brocade_fcport_default_levels["average"] = 15
+
+ # Alternative: set all default parameters at once:
+ fc_port_default_levels = {
+    "operstatus"			: [ 2 ], # accept only online.
+    "adminstatus"			: [ 2 ], # accept only online.
+    "assumed_speed"			: 4,  # assume port is 4Gb/s
+    "C3Discards"			: (5.0, 10.0), # allowed percentage of CRC errors
+    "LinkFailures"			: (5.0, 20.0), # allowed percentage of Enc-OUT Frames
+    "SyncLosses"			: (10.0, 20.0), # allowed percentage of No Tx Credits
+    "PrimSeqProtoErrors"	: (10.0, 20.0), # allowed percentage of CRC errors
+    "InvalidTxWords"		: (10.0, 20.0), # allowed percentage of CRC errors
+    "InvalidCrcs"			: (5.0, 10.0), # allowed percentage of Enc-OUT Frames
+    "AddressIdErrors"		: (5.0, 10.0), # allowed percentage of No Tx Credits
+    "LinkResetIns"			: (3.0, 20.0), # allowed percentage of CRC errors
+    "LinkResetOuts"			: (3.0, 20.0), # allowed percentage of CRC errors
+    "OlsIns"				: (3.0, 20.0), # allowed percentage of Enc-OUT Frames
+    "OlsOuts"				: (3.0, 20.0), # allowed percentage of No Tx Credits
+ }
+
+perfdata:
+  For each port there are sent {In}, {Out}, {inframes}, {outframes} and the following
+  error counters: {C3Discards}, {LinkFailures}, {SyncLosses}, {PrimSeqProtoErrors},
+  {InvalidTxWords}, {InvalidCrcs}, {AddressIdErrors}, {LinkResetIns}, {LinkResetOuts},
+  {OlsIns} and {OlsOuts}.  All rates are in Bytes/s or Frames/s.
+
+inventory:
+  The inventory creates checks for all operational ports.
+
+[parameters]
+parameters (dict): This check works with dictionary based parameters. The
+ following keys are allowed:
+
+  {"assumed_speed"}: I could not find a non vendor specific method for detection of the
+  link speed. You can set the assumed link speed (in GBit/s) here. (example: {4.0})
+
+  {"C3Discards"}: A pair of percentages of the maximum allowed CRC Discards. The default is set to {(3.0, 20.0)}, which will warn
+  at 3% and be critical at 20% of errors.
+
+  {"LinkFailures"}: A pair of percentages for the Link Failures rate. The
+  default is {(3.0, 20.0)}.
+
+  {"SyncLosses"}: A pair of percentages for Sync Losses. The default
+  is {(3.0, 20.0)}.
+
+  {"PrimSeqProtoErrors"}: A pair of percentages for Prime Sequence Protocal Errors. The default is
+  {(3.0, 20.0)}.
+
+  {"InvalidTxWords"}: A pair of percentages for Invalid Tx Words errors. The default is
+  {(3.0, 20.0)}.
+
+  {"InvalidCrcs"}: A pair of percentages for Invalid CRCs. The default is
+  {(3.0, 20.0)}.
+
+  {"AddressIdErrors"}: A pair of percentages for Address Id Errors. The default is
+  {(3.0, 20.0)}.
+
+  {"LinkResetIns"}: A pair of percentages for Link Reset Ins. The default is
+  {(3.0, 20.0)}.
+
+  {"LinkResetOuts"}: A pair of percentages for Link Reset Outs. The default is
+  {(3.0, 20.0)}.
+
+  {"OlsIns"}: A pair of percentages for Ols Ins. The default is
+  {(3.0, 20.0)}.
+
+  {"OlsOuts"}: A pair of percentages for Ols Outs. The default is
+  {(3.0, 20.0)}.
+
+  {"operstatus"}: The expected operational (integer) of the port or {None} if that should
+  not be checked. It is also allowed to specify a list of allowed states, e.g. {[1, 2, 3]}.
+
+  {"adminstatus"}: The expected administrative state of the port or {None} if that should
+  not be checked. It is also allowed to specify a list here.
+
+[configuration]
+fc_port_inventory_opermode(list): The list of operational mode inventorized
+ ports must have to be inventorized. The default is {[ "2", "3",]}. Possible are:
+ {1}: unknown, {2}: fPort, {3}: flPort.

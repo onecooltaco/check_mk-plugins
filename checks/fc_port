@@ -64,9 +64,12 @@ fc_port_adminstatus = [ '', "online", "offline", "testing" ]
 fc_port_operstatus = [ '', "online", "offline", "testing", "linkFailure" ]
 fc_port_speed     = [ '', '1Gbit', '2Gbit', 'auto-Neg', '4Gbit', '8Gbit', '10Gbit', ]
 
+# settings for inventory: which ports should be inventorized
+fc_port_inventory_opermode  = [ "2", "3", ]
+
 def inventory_fc_port(checkname, info):
   return [('.'.join(str(x) for x in (ord(byte) for byte in line[0])),{}) for line in info
-    if line[1] in [ "1", "2", "3" ]]
+    if line[1] in fc_port_inventory_opermode]
 
 def check_fc_port(item, params, info):
   portinfo = (line[::-1] for line in info if item in '.'.join(str(x) for x in (ord(byte) for byte in line[0])) )
@@ -174,7 +177,7 @@ def check_fc_port(item, params, info):
 # continue after all counters are handled
 
   errorflag = ""
-  if operstatus in params["operstatus"]:
+  if params.get("operstatus") == None or operstatus in params["operstatus"]:
     pass
   else:
     errorflag = "(!!)"
@@ -182,7 +185,7 @@ def check_fc_port(item, params, info):
   output.append("Oper:%s(%d)%s" % (fc_port_operstatus[operstatus], operstatus, errorflag))
 
   errorflag = ""
-  if adminstatus in params["adminstatus"]:
+  if params.get("adminstatus") == None or adminstatus in params["adminstatus"]:
     pass
   else:
     errorflag = "(!!)"
