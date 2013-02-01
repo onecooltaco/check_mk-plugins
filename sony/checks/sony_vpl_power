@@ -25,53 +25,52 @@
 # Boston, MA 02110-1301 USA.
 
 # Author: Jeremy Leggat <jleggat@asu.edu>
+# --------------------------------------------------------------------------------
 
-factory_settings["sony_srx_default_levels"] = {
-    "lifespan" : 1000,
-    "average"	: 0,
+factory_settings["sony_vpl_power_default_levels"] = {
+    "run_hours"	: [7, 22],
 }
 
-def inventory_sony_srx_lamp(checkname, info):
-  return [(line[0], {}) for line in info]
+vpl_power_statename = [ "Off", "Unknown", "Unknown", "On", "Cooldown" ]
 
-def check_sony_srx_lamp(item, params, info):
-  srxinfo = (line for line in info if line[0] == item)
-  chk_info = srxinfo.next()
+def inventory_sony_vpl_power(checkname, info):
+  if len(info) > 0: return [(None, {})]
 
-  this_time = time.time()
-  lamp_time = saveint(chk_info[2])
-  lifespan = int(params["lifespan"])
-  timedif, rate = get_counter("sony_srx_lamp_hours.%s" % item, this_time, lamp_time)
-  if params["average"] > 0:
-    ## Average out lamp usage with 15 min default.
-    ## This is seems to be how often the counter updates on system.
-    timedif, rate = get_average("sony_srx_lamp_hours.%s_avg" % item, this_time, rate, params["average"])
+def check_sony_vpl_power(item, params, info):
+  chk_info = info[0]
 
-  perfdata = [ ( "Lamphours", lamp_time, "", lifespan ), ( "Rate", rate ) ]
+  this_hour = time.strftime("%H")
 
-  model = chk_info[1]
-  msg_txt = "%d hours (%d hour Estimated Life Span) on %s bulb" % (lamp_time, lifespan, model)
+  power = int(chk_info[0])
 
-  if lamp_time > lifespan:
-    return (2, "CRITICAL - %s" % msg_txt, perfdata)
+  perfdata = [ ( "state", power, "", "", 0, 4 ) ]
+
+  msg_txt = vpl_power_statename[power]
+
+  if power in [0, 4]:
+    return (0, "%s" % msg_txt, perfdata)
+
+  if params["run_hours"][0] < int(this_hour) < params["run_hours"][1]:
+    if power in [3]:
+      return (0, "%s" % msg_txt, perfdata)
+  elif power == 3:
+    return (1, "%s" % msg_txt, perfdata)
   else:
-    return (0, "OK - %s" % msg_txt, perfdata)
+    return (3, "%s" % msg_txt, perfdata)
 
-  return (3, "UNKNOWN - %s info not found" % item)
+  return (3, "UNKNOWN - data not found")
 
-check_info["sony_srx_lamp"] = {
-    "inventory_function"       : inventory_sony_srx_lamp,
-    "check_function"           : check_sony_srx_lamp,
+check_info["sony_vpl_power"] = {
+    "inventory_function"       : inventory_sony_vpl_power,
+    "check_function"           : check_sony_vpl_power,
     "has_perfdata"             : True,
-    "service_description"      : "Lamp %s",
-    "default_levels_variable"  : "sony_srx_default_levels",
+    "service_description"      : "Power",
+    "default_levels_variable"  : "sony_vpl_power_default_levels",
 }
 
-snmp_info["sony_srx_lamp"] = ( ".1.3.6.1.4.1.122.8501.3.109.4.1.1", [ \
-  "1",  # index
-  "2",  # bulb model
-  "3",  # hours
+snmp_info["sony_vpl_power"] = ( ".1.3.6.1.4.1.122.8501.3.101.3", [ \
+  "1", # power {0 => off, 3 => on, 4 => cooldown}
 ] )
 
-snmp_scan_functions['sony_srx_lamp'] = \
+snmp_scan_functions['sony_vpl_power'] = \
   lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.122.8501")

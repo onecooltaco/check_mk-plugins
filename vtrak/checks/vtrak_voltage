@@ -45,7 +45,7 @@ def check_vtrak_voltage(item, params, info):
   chk_info = vtinfo.next()
   voltage = savefloat(chk_info[1].replace("V", "") )
   perfdata = [ ("Voltage", voltage) ]
-  msg_txt = "%f Volts" % voltage
+  msg_txt = "%.1f Volts" % voltage
   if voltage:
     return (0, "OK - %s" % msg_txt, perfdata)
   else:
