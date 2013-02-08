@@ -46,7 +46,7 @@ def check_vtrak_chassis(item, params, info):
   # Performance counters
   datatransferred, readdatatransferred, writedatatransferred, numoferrors, numofnonrwerrors, \
     numofreaderrors, numofwriteerrors, numofiorequests, numofnonrwrequests, numofreadrequests, \
-    numofwriterequests = map(int, chk_info[-11:])
+    numofwriterequests = map(saveint, chk_info[-11:])
   this_time = time.time()
   rates = []
   wrapped = False

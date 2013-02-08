@@ -62,7 +62,7 @@ def check_vtrak_storage(item, params, info):
 
   datatransferred, readdatatransferred, writedatatransferred, numoferrors, numofnonrwerrors, \
     numofreaderrors, numofwriteerrors, numofiorequests, numofnonrwrequests, numofreadrequests, \
-    numofwriterequests = map(int, chk_info[-11:])
+    numofwriterequests = map(saveint, chk_info[-11:])
 
   # Performance counters
   this_time = time.time()
