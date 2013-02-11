@@ -15,17 +15,20 @@ perfometers["check_mk-sony_vpl_lamp"] = perfometer_check_mk_lamp
 perfometers["check_mk-sony_srx_lamp"] = perfometer_check_mk_lamp
 
 def perfometer_check_mk_sony_power(row, check_command, perf_data):
-    state = float(perf_data[0][1])
-    statetxt = row["service_plugin_output"]
+    state = int(perf_data[0][1])
 
     if state == 0:
         color = "#FFFFFF"
+        statetxt = "Off"
     elif state == 3:
         color = "#00FF00"
+        statetxt = "On"
     elif state == 4:
         color = "#00FFFF"
+        statetxt = "Cool Down"
     else:
         color = "#FFA500"
+        statetxt = "Unknown"
 
     return "%s" % statetxt, perfometer_linear(100, color)
 

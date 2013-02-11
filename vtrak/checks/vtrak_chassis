@@ -110,9 +110,14 @@ def check_vtrak_chassis(item, params, info):
     warn = True
     str_list.append("%s/%s Physical Drives report Unconfigured" % (phydrvunconfig, phydrv))
 
-  str_list.append("Enclosure reports %s and %s" % (opstatus, readiness))
+  if opstatus != 'OK':
+    crit = True
+  str_list.append("Operational Status is %s" % opstatus)
+  if readiness != 'Active':
+    crit = True
+  str_list.append("Readiness reports %s" % readiness)
 
-  out_str = ' '.join(str_list)
+  out_str = ', '.join(str_list)
   if crit:
     return (2, "CRITICAL - %s" % out_str, perfdata)
   elif warn:
