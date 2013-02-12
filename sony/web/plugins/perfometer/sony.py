@@ -19,13 +19,13 @@ def perfometer_check_mk_sony_power(row, check_command, perf_data):
 
     if state == 0:
         color = "#FFFFFF"
-        statetxt = "Off"
-    elif state == 3:
+        statetxt = "Standby"
+    elif state in [1,2,3]:
         color = "#00FF00"
         statetxt = "On"
-    elif state == 4:
+    elif state in [4,5,6]:
         color = "#00FFFF"
-        statetxt = "Cool Down"
+        statetxt = "Cooling1"
     else:
         color = "#FFA500"
         statetxt = "Unknown"
