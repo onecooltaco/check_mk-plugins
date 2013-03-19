@@ -144,15 +144,21 @@ def get_cvlag(vol_name):
   lag = []
   cvlog = "/Library/Filesystems/Xsan/data/" + vol_name + "/log/cvlog"
   match_re = re.compile(r'\[(\d\d\d\d) (\d\d:\d\d:\d\d)\.\d*\] .* PIO HiPriWr SUMMARY (\w+) sysavg\/(\d+) sysmin\/(\d+) sysmax\/(\d+)')
-  if os.path.isfile(cvlog):
+  try:
+    modtime = os.path.getmtime(cvlog)
+    timestamp = time.time()
     lines = open( cvlog, "r" ).readlines()
+  except:
+    return lag
+  else:
     for line in lines:
       m = match_re.search(line)
       if m:
         attribs = []
         for x in m.groups(): attribs.append(x)
-        lag = attribs
-  return lag
+        lag.append(attribs)
+    if ( timestamp - modtime ) <= 3600:
+      return lag.pop()
 
 def main():
 
