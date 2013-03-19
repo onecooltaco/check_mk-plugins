@@ -140,6 +140,20 @@ def get_disks(lines):
       d[match.group(1)] = [match.group(2), match.group(3)]
   return d
 
+def get_cvlag(vol_name):
+  lag = []
+  cvlog = "/Library/Filesystems/Xsan/data/" + vol_name + "/log/cvlog"
+  match_re = re.compile(r'\[(\d\d\d\d) (\d\d:\d\d:\d\d)\.\d*\] .* PIO HiPriWr SUMMARY (\w+) sysavg\/(\d+) sysmin\/(\d+) sysmax\/(\d+)')
+  if os.path.isfile(cvlog):
+    lines = open( cvlog, "r" ).readlines()
+    for line in lines:
+      m = match_re.search(line)
+      if m:
+        attribs = []
+        for x in m.groups(): attribs.append(x)
+        lag = attribs
+  return lag
+
 def main():
 
   cvadmin = "/usr/sbin/cvadmin"
@@ -164,6 +178,9 @@ def main():
       print 'stats\t' + key + "\t" + "\t".join(stizzle)
       for sg in strizzies:
         print 'stripe\t' + key + "\t" + "\t".join(sg)
+
+      lags = get_cvlag(key)
+      print 'lag\t' + key + "\t" + "\t".join(lags)
   paths = exec_cvadmin(cvadmin,["-e", "paths"])
 #  disks = exec_cvadmin(cvadmin,["-e", "disks"])
 
