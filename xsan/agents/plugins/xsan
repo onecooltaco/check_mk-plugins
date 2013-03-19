@@ -141,16 +141,14 @@ def get_disks(lines):
   return d
 
 def get_cvlag(vol_name):
-  lag = []
+  current = []
   cvlog = "/Library/Filesystems/Xsan/data/" + vol_name + "/log/cvlog"
   match_re = re.compile(r'\[(\d\d\d\d) (\d\d:\d\d:\d\d)\.\d*\] .* PIO HiPriWr SUMMARY (\w+) sysavg\/(\d+) sysmin\/(\d+) sysmax\/(\d+)')
   try:
+    lag = []
     modtime = os.path.getmtime(cvlog)
     timestamp = time.time()
     lines = open( cvlog, "r" ).readlines()
-  except:
-    return lag
-  else:
     for line in lines:
       m = match_re.search(line)
       if m:
@@ -158,7 +156,9 @@ def get_cvlag(vol_name):
         for x in m.groups(): attribs.append(x)
         lag.append(attribs)
     if ( timestamp - modtime ) <= 3600:
-      return lag.pop()
+      current = lag.pop()
+  finally:
+    return current
 
 def main():
 
