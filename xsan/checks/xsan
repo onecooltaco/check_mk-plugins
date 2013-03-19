@@ -62,6 +62,7 @@ factory_settings["xsan_default_levels"] = {
     "allowed_fsm_states" : ["REGISTERED"],
     "free_percent_crit"  : 20,
     "free_percent_warn"  : 30,
+    "lag_crit" 			 : 3000,
 }
 
 def inventory_xsan_fsm(checkname, info):
@@ -210,34 +211,30 @@ check_info['xsan.paths'] = {
     "group"                   : "filesystem",
 }
 
-## XSAN Disks
+## XSAN Lag
 
-def inventory_xsan_disks(checkname, info):
-    inventory = []
-    for line in info:
-        if line[0] == "disks" and len(line) == 666:
-            inventory.append((line[1],{"sectors": line[3],"sect_size": line[4]}))
+def inventory_xsan_lag(checkname, info):
+    return [(line[1], {}) for line in info if line[0] == "lag" and len(line) >= 2]
 
-    return inventory
 
-def check_xsan_disks(item, params, info):
-    for line in info:
-        if line[0] == "disks" and line[1] == item:
-            chk, vol, device, sectors, sect_size = line
-            if (sectors, sect_size) != (params["sectors"], params["sect_size"]):
-                return (1, "WARN - %s sectors / %s sector size changed from  %s sectors / %s sector size" \
-                  % (sectors, sect_size, params["sectors"], params["sect_size"]))
-            else:
-                return (0, "OK - device:%s sectors: %s sector size: %s" % (device, sectors, sect_size))
-            continue
+def check_xsan_lag(item, params, info):
+    cvlag = (line for line in info if line[0] == "lag" and line[1] == item)
+    chk, vol, date, time, meta, avg, low, high = cvlag.next()
+
+    text = "Average: %s min: %s max: %s reported on %s at %s" % (avg, low, high, vol, time)
+
+    if avg >= params["lag_crit"]:
+        return (2, "CRITICAL - %s" % text)
+    else:
+        return (0, "OK - %s" % text)
 
     return (3, "UNKNOWN - %s info not found" % item)
 
-check_info['xsan.disks'] = {
-    "inventory_function"      : inventory_xsan_disks,
-    "check_function"          : check_xsan_disks,
+check_info['xsan.lag'] = {
+    "inventory_function"      : inventory_xsan_lag,
+    "check_function"          : check_xsan_lag,
     "has_perfdata"            : False,
-    "service_description"     : "XSAN Disk %s",
+    "service_description"     : "XSAN Lag for Volume %s",
     "default_levels_variable" : "xsan_default_levels",
     "group"                   : "filesystem",
 }
