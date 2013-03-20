@@ -8,7 +8,6 @@ def perfometer_temperature(row, check_command, perf_data):
 
 def perfometer_blower(row, check_command, perf_data):
     rpm = saveint(perf_data[0][1])
-    perc = rpm / 10000.0 * 100.0
     return "%d RPM" % rpm, perfometer_logarithmic(rpm, 2000, 1.5, "#88c")
 ##
 perfometers["check_mk-vtrak_temp"] = perfometer_temperature

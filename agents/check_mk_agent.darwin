@@ -69,7 +69,7 @@ echo AgentDirectory: $MK_CONFDIR
 osver="$(uname -r)"
 
 echo '<<<df>>>';
-df -kPT hfs,acfs | sed -e 's/^\([^ ][^ ]*\) \(.*\)$/\1 hfs \2/' | sed 1d
+df -kPT hfs | sed -e 's/^\([^ ][^ ]*\) \(.*\)$/\1 hfs \2/' | sed 1d
 
 # processes including username, without kernel processes
 echo '<<<ps>>>'

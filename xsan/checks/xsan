@@ -62,7 +62,6 @@ factory_settings["xsan_default_levels"] = {
     "allowed_fsm_states" : ["REGISTERED"],
     "free_percent_crit"  : 20,
     "free_percent_warn"  : 30,
-    "lag_crit" 			 : 3000,
 }
 
 def inventory_xsan_fsm(checkname, info):
@@ -218,23 +217,21 @@ def inventory_xsan_lag(checkname, info):
 
 
 def check_xsan_lag(item, params, info):
-    cvlag = (line for line in info if line[0] == "lag" and line[1] == item)
+    cvlag = (line for line in info if line[0] == "lag" and len(line) == 8 and line[1] == item)
     chk, vol, date, time, meta, avg, low, high = cvlag.next()
 
-    text = "Average: %s min: %s max: %s reported on %s at %s" % (avg, low, high, vol, time)
+    text = "%s average reported on %s at %s (min: %s max: %s)" % (avg, meta, time, low, high)
+    perfdata = [ ( "average", int(avg) ), ( "low", int(low) ), ( "high", int(high) ) ]
 
-    if avg >= params["lag_crit"]:
-        return (2, "CRITICAL - %s" % text)
-    else:
-        return (0, "OK - %s" % text)
+    return (0, text, perfdata)
 
     return (3, "UNKNOWN - %s info not found" % item)
 
 check_info['xsan.lag'] = {
     "inventory_function"      : inventory_xsan_lag,
     "check_function"          : check_xsan_lag,
-    "has_perfdata"            : False,
-    "service_description"     : "XSAN Lag for Volume %s",
+    "has_perfdata"            : True,
+    "service_description"     : "XSAN Lag for %s",
     "default_levels_variable" : "xsan_default_levels",
     "group"                   : "filesystem",
 }
