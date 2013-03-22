@@ -43,75 +43,75 @@ $def[1] .= "HRULE:$CRIT[1]#FF0000:\"Critical ($NAME[1])\: " . $CRIT[1] . " " . $
 $ds_name[2] = 'Requests';
 $opt[2] = "--imgformat=PNG --title \"Requests For $hostname / $servicedesc\" --slope-mode ";
 # Assign data types and create data sets
-$def[2] =  "DEF:ds_io=$RRDFILE[8]:$DS[1]:AVERAGE " ;
-$def[2] .=  "DEF:ds_nonrw=$RRDFILE[9]:$DS[1]:AVERAGE " ;
-$def[2] .=  "DEF:ds_r=$RRDFILE[10]:$DS[1]:AVERAGE " ;
-$def[2] .=  "DEF:ds_w=$RRDFILE[11]:$DS[1]:AVERAGE " ;
+$def[2] =  "DEF:ds_io=$RRDFILE[4]:$DS[1]:AVERAGE " ;
+$def[2] .=  "DEF:ds_nonrw=$RRDFILE[5]:$DS[1]:AVERAGE " ;
+$def[2] .=  "DEF:ds_r=$RRDFILE[6]:$DS[1]:AVERAGE " ;
+$def[2] .=  "DEF:ds_w=$RRDFILE[7]:$DS[1]:AVERAGE " ;
 $def[2] .= "CDEF:io_requests=ds_io ";
 $def[2] .= "CDEF:non_requests=ds_nonrw ";
 $def[2] .= "CDEF:r_requests=ds_r ";
 $def[2] .= "CDEF:w_requests=ds_w ";
 
 # Draw fill area under line
-$def[2] .= "AREA:io_requests" . "#DCDCDC:\"$NAME[8]\t\" ";
+$def[2] .= "AREA:io_requests" . "#DCDCDC:\"$NAME[4]\t\" ";
 
 # write out averages
-$def[2] .= "GPRINT:io_requests:LAST:\"%3.4lg %s$UNIT[8] LAST \" ";
-$def[2] .= "GPRINT:io_requests:MAX:\"%3.4lg %s$UNIT[8] MAX \" ";
-$def[2] .= "GPRINT:io_requests:AVERAGE:\"%3.4lg %s$UNIT[8] AVERAGE\\n\" ";
+$def[2] .= "GPRINT:io_requests:LAST:\"%3.4lg %s$UNIT[4] LAST \" ";
+$def[2] .= "GPRINT:io_requests:MAX:\"%3.4lg %s$UNIT[4] MAX \" ";
+$def[2] .= "GPRINT:io_requests:AVERAGE:\"%3.4lg %s$UNIT[4] AVERAGE\\n\" ";
 
 # Draw lines
-$def[2] .= "LINE1:non_requests" . "#FF00FF:\"$NAME[9]\t\" ";
-$def[2] .= "GPRINT:non_requests:LAST:\"%3.4lg %s$UNIT[9] LAST \" ";
-$def[2] .= "GPRINT:non_requests:MAX:\"%3.4lg %s$UNIT[9] MAX \" ";
-$def[2] .= "GPRINT:non_requests:AVERAGE:\"%3.4lg %s$UNIT[9] AVERAGE\\n\" ";
+$def[2] .= "LINE1:non_requests" . "#FF00FF:\"$NAME[5]\t\" ";
+$def[2] .= "GPRINT:non_requests:LAST:\"%3.4lg %s$UNIT[5] LAST \" ";
+$def[2] .= "GPRINT:non_requests:MAX:\"%3.4lg %s$UNIT[5] MAX \" ";
+$def[2] .= "GPRINT:non_requests:AVERAGE:\"%3.4lg %s$UNIT[5] AVERAGE\\n\" ";
 
-$def[2] .= "LINE1:r_requests" . "#0000FF:\"$NAME[10]\t\" ";
-$def[2] .= "GPRINT:r_requests:LAST:\"%3.4lg %s$UNIT[10] LAST \" ";
-$def[2] .= "GPRINT:r_requests:MAX:\"%3.4lg %s$UNIT[10] MAX \" ";
-$def[2] .= "GPRINT:r_requests:AVERAGE:\"%3.4lg %s$UNIT[10] AVERAGE\\n\" ";
+$def[2] .= "LINE1:r_requests" . "#0000FF:\"$NAME[6]\t\" ";
+$def[2] .= "GPRINT:r_requests:LAST:\"%3.4lg %s$UNIT[6] LAST \" ";
+$def[2] .= "GPRINT:r_requests:MAX:\"%3.4lg %s$UNIT[6] MAX \" ";
+$def[2] .= "GPRINT:r_requests:AVERAGE:\"%3.4lg %s$UNIT[6] AVERAGE\\n\" ";
 
-$def[2] .= "LINE1:w_requests" . "#00FF00:\"$NAME[11]\t\" ";
-$def[2] .= "GPRINT:w_requests:LAST:\"%3.4lg %s$UNIT[11] LAST \" ";
-$def[2] .= "GPRINT:w_requests:MAX:\"%3.4lg %s$UNIT[11] MAX \" ";
-$def[2] .= "GPRINT:w_requests:AVERAGE:\"%3.4lg %s$UNIT[11] AVERAGE\\n\" ";
+$def[2] .= "LINE1:w_requests" . "#00FF00:\"$NAME[7]\t\" ";
+$def[2] .= "GPRINT:w_requests:LAST:\"%3.4lg %s$UNIT[7] LAST \" ";
+$def[2] .= "GPRINT:w_requests:MAX:\"%3.4lg %s$UNIT[7] MAX \" ";
+$def[2] .= "GPRINT:w_requests:AVERAGE:\"%3.4lg %s$UNIT[7] AVERAGE\\n\" ";
 
 # Errors
 $ds_name[3] = 'Errors';
 $opt[3] = "--imgformat=PNG --title \"Errors For $hostname / $servicedesc\" --slope-mode ";
 # Assign data types and create data sets
-$def[3] =  "DEF:ds_e=$RRDFILE[4]:$DS[1]:AVERAGE " ;
-$def[3] .=  "DEF:ds_nonrwe=$RRDFILE[5]:$DS[1]:AVERAGE " ;
-$def[3] .=  "DEF:ds_re=$RRDFILE[6]:$DS[1]:AVERAGE " ;
-$def[3] .=  "DEF:ds_we=$RRDFILE[7]:$DS[1]:AVERAGE " ;
+$def[3] =  "DEF:ds_e=$RRDFILE[8]:$DS[1]:AVERAGE " ;
+$def[3] .=  "DEF:ds_nonrwe=$RRDFILE[9]:$DS[1]:AVERAGE " ;
+$def[3] .=  "DEF:ds_re=$RRDFILE[10]:$DS[1]:AVERAGE " ;
+$def[3] .=  "DEF:ds_we=$RRDFILE[11]:$DS[1]:AVERAGE " ;
 $def[3] .= "CDEF:numerrors=ds_e ";
 $def[3] .= "CDEF:nonrwerrors=ds_nonrwe ";
 $def[3] .= "CDEF:rerrors=ds_re ";
 $def[3] .= "CDEF:werrors=ds_we ";
 
 # Draw fill area under line
-$def[3] .= "AREA:numerrors" . "#FF4500:\"$NAME[4]\t\" ";
+$def[3] .= "AREA:numerrors" . "#FF4500:\"$NAME[8]\t\" ";
 
 # write out averages
-$def[3] .= "GPRINT:numerrors:LAST:\"%3.4lg %s$UNIT[4] LAST \" ";
-$def[3] .= "GPRINT:numerrors:MAX:\"%3.4lg %s$UNIT[4] MAX \" ";
-$def[3] .= "GPRINT:numerrors:AVERAGE:\"%3.4lg %s$UNIT[4] AVERAGE\\n\" ";
+$def[3] .= "GPRINT:numerrors:LAST:\"%3.4lg %s$UNIT[8] LAST \" ";
+$def[3] .= "GPRINT:numerrors:MAX:\"%3.4lg %s$UNIT[8] MAX \" ";
+$def[3] .= "GPRINT:numerrors:AVERAGE:\"%3.4lg %s$UNIT[8] AVERAGE\\n\" ";
 
 # Draw lines
-$def[3] .= "LINE1:nonrwerrors" . "#DC143C:\"$NAME[5]\t\" ";
-$def[3] .= "GPRINT:nonrwerrors:LAST:\"%3.4lg %s$UNIT[5] LAST \" ";
-$def[3] .= "GPRINT:nonrwerrors:MAX:\"%3.4lg %s$UNIT[5] MAX \" ";
-$def[3] .= "GPRINT:nonrwerrors:AVERAGE:\"%3.4lg %s$UNIT[5] AVERAGE\\n\" ";
+$def[3] .= "LINE1:nonrwerrors" . "#DC143C:\"$NAME[9]\t\" ";
+$def[3] .= "GPRINT:nonrwerrors:LAST:\"%3.4lg %s$UNIT[9] LAST \" ";
+$def[3] .= "GPRINT:nonrwerrors:MAX:\"%3.4lg %s$UNIT[9] MAX \" ";
+$def[3] .= "GPRINT:nonrwerrors:AVERAGE:\"%3.4lg %s$UNIT[9] AVERAGE\\n\" ";
 
-$def[3] .= "LINE1:rerrors" . "#B22222:\"$NAME[6]\t\" ";
-$def[3] .= "GPRINT:rerrors:LAST:\"%3.4lg %s$UNIT[6] LAST \" ";
-$def[3] .= "GPRINT:rerrors:MAX:\"%3.4lg %s$UNIT[6] MAX \" ";
-$def[3] .= "GPRINT:rerrors:AVERAGE:\"%3.4lg %s$UNIT[6] AVERAGE\\n\" ";
+$def[3] .= "LINE1:rerrors" . "#B22222:\"$NAME[10]\t\" ";
+$def[3] .= "GPRINT:rerrors:LAST:\"%3.4lg %s$UNIT[10] LAST \" ";
+$def[3] .= "GPRINT:rerrors:MAX:\"%3.4lg %s$UNIT[10] MAX \" ";
+$def[3] .= "GPRINT:rerrors:AVERAGE:\"%3.4lg %s$UNIT[10] AVERAGE\\n\" ";
 
-$def[3] .= "LINE1:werrors" . "#8B0000:\"$NAME[7]\t\" ";
-$def[3] .= "GPRINT:werrors:LAST:\"%3.4lg %s$UNIT[7] LAST \" ";
-$def[3] .= "GPRINT:werrors:MAX:\"%3.4lg %s$UNIT[7] MAX \" ";
-$def[3] .= "GPRINT:werrors:AVERAGE:\"%3.4lg %s$UNIT[7] AVERAGE\\n\" ";
+$def[3] .= "LINE1:werrors" . "#8B0000:\"$NAME[11]\t\" ";
+$def[3] .= "GPRINT:werrors:LAST:\"%3.4lg %s$UNIT[11] LAST \" ";
+$def[3] .= "GPRINT:werrors:MAX:\"%3.4lg %s$UNIT[11] MAX \" ";
+$def[3] .= "GPRINT:werrors:AVERAGE:\"%3.4lg %s$UNIT[11] AVERAGE\\n\" ";
 
 # Graph 4: Cache
 
