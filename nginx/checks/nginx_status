@@ -25,47 +25,38 @@
 # Boston, MA 02110-1301 USA.
 
 #<<<nginx_status>>>
-#Active connections: 1
-#server accepts handled requests
+# Active connections: 1
+# server accepts handled requests
 # 25 25 25
-#Reading: 0 Writing: 1 Waiting: 0
+# Reading: 0 Writing: 1 Waiting: 0
 #
 
 nginx_status_fields = {
     # key           sort  convert-func param_function
-    'Active':	(0,  int),
-    'Accepts':	(1,  int),
-    'Handled':	(2,  int),
-    'Requests':	(3,  int,
-    'Reading':	(4,  int),
-    'Writing':	(5,  int),
-    'Waiting':	(6, int),
-    'ReqPerCon': (7, float),
+    'Active': (0, int),
+    'Reading': (1, int),
+    'Writing': (2, int),
+    'Waiting': (3, int),
+    'Accepts': (4, int),
+    'Handled': (5, int),
+    'Total': (6, int),
 }
 
 def nginx_status_parse(info):
     data = {}
-    address, port = int(info[0][:2])
+    address, port = info[0][:2]
     item = '%s:%s' % (address, port)
 
-	if item not in data:
-		data[item] = {}
-
-    crt_time = time.time()
-    timedif, crt_accepts = get_counter("nginx_status.Accepts", crt_time, int(info[3][0]))
-    timedif, crt_handled = get_counter("nginx_status.Handled", crt_time, int(info[3][1]))
-    timedif, crt_requests = get_counter("nginx_status.Requests", crt_time, int(info[3][2]))
+    if item not in data:
+        data[item] = {}
 
     data[item]['Active'] = int(info[1][2])
     data[item]['Reading'] = int(info[4][1])
     data[item]['Writing'] = int(info[4][3])
     data[item]['Waiting'] = int(info[4][5])
-    data[item]['Accepts'] = crt_accepts
-    data[item]['Handled'] = crt_handled
-    data[item]['Requests'] = crt_requests
-
-	# Calculate number of requests per connection handled by Nginx
-	data[item]['ReqPerCon'] = int(info[3][2]) / int(info[3][1])
+    data[item]['Accepts'] = int(info[3][0])
+    data[item]['Handled'] = int(info[3][1])
+    data[item]['Total'] = int(info[3][2])
 
     return data
 
@@ -75,13 +66,6 @@ def inventory_nginx_status(info):
     for item in data.keys():
         inv.append((item, {}))
     return inv
-
-
-#   .----------------------------------------------------------------------.
-#   |                                                                      |
-#   |      nginx Scoreboard                                                |
-#   |                                                                      |
-#   '----------------------------------------------------------------------'
 
 def check_nginx_status(item, params, info):
     if params == None:
@@ -96,6 +80,7 @@ def check_nginx_status(item, params, info):
     worst_state = 0
     output = []
     perfdata = []
+    crt_time = time.time()
 
     # Sort keys
     data.sort(cmp = lambda x, y: cmp(nginx_status_fields.get(x[0], (0, None))[0],
@@ -103,6 +88,17 @@ def check_nginx_status(item, params, info):
 
     for key, value in data:
         if key not in nginx_status_fields.keys():
+            continue
+
+        if  type(value) == float:
+            display_value = '%0.2f' % value
+        else:
+            display_value = '%d' % value
+
+        if key in ['Accepts', 'Handled', 'Total']:
+            timedif, ctr_val = get_counter("nginx_status.%s" % key, crt_time, value)
+            perfdata.append(('Requests_' + key, ctr_val))
+            output.append('Requests %s %s' % (key, display_value))
             continue
 
         extra_info = ""
