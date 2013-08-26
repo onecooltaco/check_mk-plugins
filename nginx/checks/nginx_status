@@ -1,0 +1,125 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+# +------------------------------------------------------------------+
+# |             ____ _               _        __  __ _  __           |
+# |            / ___| |__   ___  ___| | __   |  \/  | |/ /           |
+# |           | |   | '_ \ / _ \/ __| |/ /   | |\/| | ' /            |
+# |           | |___| | | |  __/ (__|   <    | |  | | . \            |
+# |            \____|_| |_|\___|\___|_|\_\___|_|  |_|_|\_\           |
+# |                                                                  |
+# | Copyright Mathias Kettner 2013             mk@mathias-kettner.de |
+# +------------------------------------------------------------------+
+#
+# This file is part of Check_MK.
+# The official homepage is at http://mathias-kettner.de/check_mk.
+#
+# check_mk is free software;  you can redistribute it and/or modify it
+# under the  terms of the  GNU General Public License  as published by
+# the Free Software Foundation in version 2.  check_mk is  distributed
+# in the hope that it will be useful, but WITHOUT ANY WARRANTY;  with-
+# out even the implied warranty of  MERCHANTABILITY  or  FITNESS FOR A
+# PARTICULAR PURPOSE. See the  GNU General Public License for more de-
+# ails.  You should have  received  a copy of the  GNU  General Public
+# License along with GNU Make; see the file  COPYING.  If  not,  write
+# to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
+# Boston, MA 02110-1301 USA.
+
+#<<<nginx_status>>>
+#Active connections: 1
+#server accepts handled requests
+# 25 25 25
+#Reading: 0 Writing: 1 Waiting: 0
+#
+
+nginx_status_fields = {
+    # key           sort  convert-func param_function
+    'Active':	(0,  int),
+    'Accepts':	(1,  int),
+    'Handled':	(2,  int),
+    'Requests':	(3,  int,
+    'Reading':	(4,  int),
+    'Writing':	(5,  int),
+    'Waiting':	(6, int),
+    'ReqPerCon': (7, float),
+}
+
+def nginx_status_parse(info):
+    data = {}
+    address, port = int(info[0][:2])
+    item = '%s:%s' % (address, port)
+
+	if item not in data:
+		data[item] = {}
+
+    crt_time = time.time()
+    timedif, crt_accepts = get_counter("nginx_status.Accepts", crt_time, int(info[3][0]))
+    timedif, crt_handled = get_counter("nginx_status.Handled", crt_time, int(info[3][1]))
+    timedif, crt_requests = get_counter("nginx_status.Requests", crt_time, int(info[3][2]))
+
+    data[item]['Active'] = int(info[1][2])
+    data[item]['Reading'] = int(info[4][1])
+    data[item]['Writing'] = int(info[4][3])
+    data[item]['Waiting'] = int(info[4][5])
+    data[item]['Accepts'] = crt_accepts
+    data[item]['Handled'] = crt_handled
+    data[item]['Requests'] = crt_requests
+
+	# Calculate number of requests per connection handled by Nginx
+	data[item]['ReqPerCon'] = int(info[3][2]) / int(info[3][1])
+
+    return data
+
+def inventory_nginx_status(info):
+    data = nginx_status_parse(info)
+    inv = []
+    for item in data.keys():
+        inv.append((item, {}))
+    return inv
+
+
+#   .----------------------------------------------------------------------.
+#   |                                                                      |
+#   |      nginx Scoreboard                                                |
+#   |                                                                      |
+#   '----------------------------------------------------------------------'
+
+def check_nginx_status(item, params, info):
+    if params == None:
+        params = {}
+
+    all_data = nginx_status_parse(info)
+    if item not in all_data:
+        return (3, 'Unable to find instance in agent output')
+    data_dict = all_data[item]
+    data = data_dict.items()
+
+    worst_state = 0
+    output = []
+    perfdata = []
+
+    # Sort keys
+    data.sort(cmp = lambda x, y: cmp(nginx_status_fields.get(x[0], (0, None))[0],
+                                     nginx_status_fields.get(y[0], (0, None))[0]))
+
+    for key, value in data:
+        if key not in nginx_status_fields.keys():
+            continue
+
+        extra_info = ""
+        extra_perf = []
+        if params.get(key) and len(nginx_status_fields[key]) > 2:
+            key_state, extra_info, extra_perf = nginx_status_fields[key][2](value, params.get(key))
+            worst_state = max(key_state, worst_state)
+
+        output.append('%s: %s%s' % (key, display_value, extra_info))
+        perfdata.append(tuple([key.replace(' ', '_'), value] + extra_perf))
+
+    return (worst_state, ', '.join(output), perfdata)
+
+check_info['nginx_status'] = {
+    "check_function"          : check_nginx_status,
+    "inventory_function"      : inventory_nginx_status,
+    "service_description"     : "Nginx %s Status",
+    "has_perfdata"            : True,
+    "group"                   : "nginx_status",
+}
