@@ -1,0 +1,123 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+
+#
+# 2012-09-27 FLX f@qsol.ro
+#    - started to modify an already modified apache check
+#
+
+#<<<nginx>>>
+#Active connections: 1
+#server accepts handled requests
+# 25 25 25
+#Reading: 0 Writing: 1 Waiting: 0
+#
+
+
+def inventory_nginx(info):
+    if len(info) >= 4: # should be at least 4 lines
+        return [(None, {})]
+
+    
+#   .----------------------------------------------------------------------.
+#   |                                                                      |
+#   |      nginx Scoreboard                                                |
+#   |                                                                      |
+#   '----------------------------------------------------------------------'
+
+def check_nginx_scoreboard(_no_item, params, info):
+    crt_reading = int(info[3][1])
+    crt_writing = int(info[3][3])
+    crt_waiting = int(info[3][5])
+    crt_active = int(info[0][2])    # no use yet
+    
+    infos = []
+    perfdata = []
+    status = 0
+
+    for value, what, format, unit, convert, maxval in [
+        ( crt_reading,  "Reading",   "%d",   "", "",  None ),
+        ( crt_writing,  "Writing",   "%d",   "", "",  None ),
+        ( crt_waiting,  "Waiting",   "%d",   "", "",  None ),
+
+        ]:
+
+        infos.append(("%s "+format + "%s") % (what, value, unit))
+        if what in params:
+            warn, crit = params[what]
+            #sys.stderr.write("what %s : w %s c %s\n" % (what, warn, crit))
+
+            if value >= crit:
+                status = 2
+                infos[-1] += "(!!)"
+            elif value >= warn:
+                status = max(status, 1)
+                infos[-1] += "(!)"
+        else:
+            warn, crit = None, None
+        perfdata.append((what, value, warn, crit, 0, maxval))
+
+    infotext = " - " + ", ".join(infos)
+    return (status, nagios_state_names[status] + infotext, perfdata) 
+
+check_info['nginx.scoreboard'] = {
+    "check_function"          : check_nginx_scoreboard,
+    "inventory_function"      : inventory_nginx,
+    "service_description"     : "nginx Scoreboard",
+    "has_perfdata"            : True,
+    "group"                   : "nginx_scoreboard",
+}
+
+#   .----------------------------------------------------------------------.
+#   |                                                                      |
+#   |      nginx Requests                                                  |
+#   |                                                                      |
+#   '----------------------------------------------------------------------'
+
+def check_nginx_requests(_no_item, params, info):
+    all_accepts = int(info[2][0])
+    all_handled = int(info[2][1])
+    all_requests = int(info[2][2])
+
+    crt_time = time.time()
+    
+    timedif, crt_accepts = get_counter("nginx.requests.all_accepts", crt_time, all_accepts)
+    timedif, crt_handled = get_counter("nginx.requests.all_handled", crt_time, all_handled)
+    timedif, crt_requests = get_counter("nginx.requests.all_requests", crt_time, all_requests)
+    
+    infos = []
+    perfdata = []
+    status = 0
+
+    for value, what, format, unit, convert, maxval in [
+        ( crt_accepts,  "Accepted ",   "%.2f",   "", "",  None ),
+        ( crt_handled,  "Handled",   "%.2f",   "", "",  None ),
+        ( crt_requests,  "Requests",   "%.2f",   "", "",  None ),
+        ]:
+
+        infos.append(("%s "+format + "%s") % (what, value, unit))
+        if what in params:
+            warn, crit = params[what]
+            #sys.stderr.write("what %s : w %s c %s\n" % (what, warn, crit))
+
+            if value >= crit:
+                status = 2
+                infos[-1] += "(!!)"
+            elif value >= warn:
+                status = max(status, 1)
+                infos[-1] += "(!)"
+        else:
+            warn, crit = None, None
+        perfdata.append((what, value, warn, crit, 0, maxval))
+
+    infotext = " - " + ", ".join(infos)
+    return (status, nagios_state_names[status] + infotext, perfdata) 
+
+check_info['nginx.requests'] = {
+    "check_function"          : check_nginx_requests,
+    "inventory_function"      : inventory_nginx,
+    "service_description"     : "nginx Requests",
+    "has_perfdata"            : True,
+    "group"                   : "nginx_requests",
+}
+
