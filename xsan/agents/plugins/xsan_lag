@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if uname 2>/dev/null | grep -qv Darwin; then
+  exit
+fi
+
+num=`uname -r`
+if [ "${num/\.*}" -gt "10" ]; then
+  DATA=/Library/Logs/Xsan/data
+else
+  DATA=/Library/Filesystems/Xsan/data
+fi
+
+if [[ -d $DATA ]]; then
+  CVLOGS=$(find $DATA -name cvlog -type f -mmin -60)
+fi
+
+for FILE in $CVLOGS; do
+  cat $FILE | grep sysavg
+#  sed -n 's/\[\(.*\)\] .* PIO HiPriWr SUMMARY \(.*\) sysavg\/\(.*\) sysmin\/\(.*\) sysmax\/\(.*\)\./\1 \2 \3 \4 \5/p' | tail -n 1
+done

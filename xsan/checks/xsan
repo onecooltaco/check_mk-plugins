@@ -213,7 +213,8 @@ check_info['xsan.paths'] = {
 ## XSAN Lag
 
 def inventory_xsan_lag(checkname, info):
-    return [(line[1], {}) for line in info if line[0] == "lag" and len(line) >= 2]
+	return
+#    return [(line[1], {}) for line in info if line[0] == "lag" and len(line) >= 2]
 
 
 def check_xsan_lag(item, params, info):
