@@ -27,49 +27,42 @@
 # Author: Jeremy Leggat <jleggat@asu.edu>
 # --------------------------------------------------------------------------------
 
-factory_settings["sony_vpl_power_default_levels"] = {
-    "run_hours"	: [7, 22],
+factory_settings["sony_vpl_error_default_levels"] = {
 }
 
-vpl_power_statename = [ "Standby", "Start Up", "Start Up Lamp", "On", "Cooling1", "Saving Cooling1", "Saving Standby" ]
 vpl_error_statename = [ "NO ERROR", "LAMP ERROR", "FAN ERROR", "COVER ERROR", "TEMP ERROR", "D5V ERROR", "POWER ERROR", "WARNING ERROR" ]
 
-def inventory_sony_vpl_power(checkname, info):
+def inventory_sony_vpl_error(checkname, info):
   if len(info) > 0: return [(None, {})]
 
-def check_sony_vpl_power(item, params, info):
+def check_sony_vpl_error(item, params, info):
   chk_info = info[0]
 
-  this_hour = time.strftime("%H")
+  error = int(chk_info[0])
 
-  power = int(chk_info[0])
+  msg_txt = vpl_error_statename[error]
 
-  perfdata = [ ( "state", power, "", "", 0, 6 ) ]
-
-  msg_txt = vpl_power_statename[power]
-
-  if power in [0, 4, 5, 6]:
-    return (0, "%s" % msg_txt, perfdata)
-
-  if params["run_hours"][0] < int(this_hour) < params["run_hours"][1]:
-    return (0, "%s" % msg_txt, perfdata)
+  if error != 0:
+    if error < 6:
+      return (2, "%s" % msg_txt)
+    else:
+      return (1, "%s" % msg_txt)
   else:
-    return (1, "%s" % msg_txt, perfdata)
+    return (0, "%s" % msg_txt)
 
   return (3, "UNKNOWN - data not found")
 
-check_info["sony_vpl_power"] = {
-    "inventory_function"       : inventory_sony_vpl_power,
-    "check_function"           : check_sony_vpl_power,
-    "has_perfdata"             : True,
-    "service_description"      : "Power",
-    "default_levels_variable"  : "sony_vpl_power_default_levels",
+check_info["sony_vpl_error"] = {
+    "inventory_function"       : inventory_sony_vpl_error,
+    "check_function"           : check_sony_vpl_error,
+    "has_perfdata"             : False,
+    "service_description"      : "Error Status",
+    "default_levels_variable"  : "sony_vpl_error_default_levels",
 }
 
-snmp_info["sony_vpl_power"] = ( ".1.3.6.1.4.1.122.8501.3.101.3", [ \
-  "1", # power {0 => Standby, 1 =>Start Up, 2 =>Start Up Lamp, 3 => On, 4 => Cooling1, 5 => Saving Cooling1, 6=> Saving Standby}
+snmp_info["sony_vpl_error"] = ( ".1.3.6.1.4.1.122.8501.3.101.3", [ \
   "3", # {0 => NO ERROR, 1 => LAMP ERROR, 2 => FAN ERROR, 3 => COVER ERROR, 4 => TEMP ERROR, 5 => D5V ERROR, 6 => POWER ERROR, 7 => WARNING ERROR}
 ] )
 
-snmp_scan_functions['sony_vpl_power'] = \
+snmp_scan_functions['sony_vpl_error'] = \
   lambda oid: oid(".1.3.6.1.2.1.1.2.0").startswith(".1.3.6.1.4.1.122.8501")
