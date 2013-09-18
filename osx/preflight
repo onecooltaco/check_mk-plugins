@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+set -u
+
+JOB="de.mathias-kettner.check_mk"
+#----------------------------------------------------------------------
+# Disable launchd item in preperation of install.
+#----------------------------------------------------------------------
+if [ -e "/Library/LaunchDaemons/${JOB}.plist" ]; then
+	if sudo /bin/launchctl list | grep -q "$JOB"; then
+		sudo /bin/launchctl unload -w "/Library/LaunchDaemons/${JOB}.plist"
+	fi
+fi

@@ -46,15 +46,17 @@ import sys
 from datetime import datetime
 import time
 
+# wrapper for exec of commands
 def exec_cvadmin(cmd,args):
   args.insert(0,cmd)
   stdout, stderr = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
   return stdout
 
+# Display the state of FSM (File System Manager) processes, running or not.
 def get_fsm(lines):
   dict = {}
   title_re = re.compile(r'(\*|\s)(\w+)\[(\d)\]  port (\d+), pid (\d+)\n')
-  state_re = re.compile(r'State: (\w+) (.*)\n')
+  state_re = re.compile(r'State: (\w+) .*(\d\d\d\d\-\d\d\-\d\d \d\d:\d\d:\d\d)\n')
   launch_re = re.compile(r'Launches (\d+), core dumps (\d+), flags \<(.*)\>')
   admin_re = re.compile(r'Last Admin: (\w+) (.*)\n')
   term_re = re.compile(r'Last Termination: (\w+\(\d+\)) (.*)\n')
@@ -93,6 +95,7 @@ def get_fsm(lines):
       dict[attribs.pop(0)] = attribs
   return dict
 
+# Display information about the storage pools associated with the selected volume includeing information about the disk units.
 def get_stripes(lines):
   sgroups = []
   for group in lines.split("\n\n"):
@@ -103,6 +106,7 @@ def get_stripes(lines):
       sgroups.append(attribs)
   return sgroups
 
+# Display the general status of the volume including users connected and blocks free.
 def get_stats(lines):
   attribs = []
   for line in lines.split("\n"):
@@ -117,6 +121,7 @@ def get_stats(lines):
       else: attribs.append(v)
   return attribs
 
+# Display  the  Xsan  disk volumes visible to the local system.
 def get_paths(lines):
   vols = []
   for groups in lines.split("\n\n"):

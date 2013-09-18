@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+set -u
+
+JOB="de.mathias-kettner.check_mk"
+#----------------------------------------------------------------------
+# Enable launchd item
+#----------------------------------------------------------------------
+if [ -e "/Library/LaunchDaemons/${JOB}.plist" ]; then
+	if sudo /bin/launchctl list | grep -q "$JOB"; then
+		sudo /bin/launchctl unload -w "/Library/LaunchDaemons/${JOB}.plist"
+	fi
+	sudo /bin/launchctl load -w "/Library/LaunchDaemons/${JOB}.plist"
+fi

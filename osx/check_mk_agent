@@ -101,11 +101,10 @@ fi
 if which sysctl >/dev/null
 then
   echo '<<<cpu>>>'
-  loads=$(sysctl -n vm.loadavg| tr -cd "[:digit:] .")
-  runningp=$(ps axo state | grep "R" | wc -l| tr -cd "[:digit:]")
-  totalp=$(ps axo state | wc -l| tr -cd "[:digit:]")
+  loads=$(sysctl -n vm.loadavg| tr -cd "[:digit:] ." | sed 's/^[ \t]*//;s/[ \t]*$//')
+  procs=$(ps ax -o start,state,pid | sed 1d | awk '$2 ~ /R/{n++} END{printf("%d/%d %d", n, NR, $3)}')
   cpus=$(sysctl -n hw.ncpu)
-  echo "$loads $runningp/$totalp $$ $cpus"
+  echo "$loads $procs $cpus"
 fi
 
 # Uptime
@@ -125,11 +124,36 @@ if ( match($0,/\<full-duplex\>/)) {duplex = "Full"} else {duplex = " "} \
 if ( match($0,/[0-9]+baseT/)) {speed = substr($0,RSTART,RLENGTH-5)"Mb/s"} else {speed = " "} \
 print name, speed, duplex, auto, status}'
 
+# I want my network info like it is on my linux machines!
+echo '<<<lnx_if:sep(58)>>>'
+netstat -inb | grep Link | awk '/en[0-9]+/{
+  if (match($3, /\<Link#.+\>/))
+  { printf( "\t%s:%s %s %s\t0\t0\t0\t0\t0\t%s\t%s\t%s\t0\t0\t%s\t0\t0\n", $1,$7,$5,$6,$10,$8,$9,$11) }
+}'
+eths=$(networksetup -listallhardwareports | awk '/Device: en/{print $2}')
+i="0"
+for i in $eths
+do
+echo "[$i]"
+networksetup -getMedia $i | \
+ awk '
+ {
+  gsub (/<|>/, "")
+  if (sub(/baseT/, "Mb\/s")) {printf("\t%s: %s\n", "Speed",$2)}
+  if (sub(/-duplex/, "")) {printf("\t%s: %s\n", "Duplex",toupper($3))}
+ }
+ /Current:/{$2 == "autoselect" ? x["Auto-negotiation"] = "on" :x["Auto-negotiation"] = "off" }
+ /Active:/{ $2 == "autoselect" ? x["Link detected"] = "no" : x["Link detected"] = "yes" }
+ { for ( item in x ); printf("\t%s: %s\n", item, x[item])}
+ '
+done
+
 # Network device statistics (Packets, Collisions, etc)
 # only the "Link/Num" interface has all counters.
 # filter out no network and virtual adapters.
 echo '<<<netctr>>>';
-date +'%s'; netstat -inb | egrep -v '(^Name|lo|plip|gif|stf|vnic|vbox|fw)' | \
+date +'%s'
+netstat -inb | egrep -v '(^Name|lo|plip|gif|stf|vnic|vbox|fw)' | \
 grep Link | awk '{print $1,$7,$5,$6,"0","0","0","0","0",$10,$8,$9,"0","0",$11,"0","0"; }'
 
 # TCP Conn stats
@@ -137,8 +161,16 @@ echo '<<<tcp_conn_stats>>>'
 netstat -ntfinet | awk ' /^tcp/ { c[$6]++; } END { for (x in c) { print x, c[x]; } }'
 
 # Performance Counters for Disks
-# echo '<<<diskstat>>>'
-# date +%s
+## Order of the numbers comming out of ioreg:
+## 1 Operations Write, 2 Latency Time Write , 3 Bytes Read , 4 Errors Write ,
+## 5 Total Time Read , 6 Retries Read , 7 Latency Time Read , 8 Errors Read ,
+## 9 Total Time Write , 10 Bytes Write , 11 Operations Read , 12 Retries Write
+echo '<<<diskstat>>>'
+date +%s
+ioreg -c IOBlockStorageDriver -k Statistics -r -w0 | \
+ sed -n '/IOBlockStorageDriver/,/Statistics/p' | \
+ grep 'Statistics' | tr -d [:alpha:] | tr -d [:punct:] | \
+ awk '{print "0", "0", "disk"FNR, $11, "0", int($3/512), $5, $1, "0", int($10/512), $9, "0", "0", "0"}'
 
 # IPMI-Info (Fans, CPU, Temperature, etc)
 if which ipmitool >/dev/null
@@ -182,7 +214,7 @@ echo '<<<ntp>>>'
 ntpq -pn | sed -e 1,2d -e 's/^\(.\)/\1 /' -e 's/^ /%/'
 
 # Checks for cups monitoring
-if which lpstat > /dev/null 2>&1; then
+if which lpstat >/dev/null 2>&1; then
 		echo '<<<cups_queues>>>'
 		waitmax 3 lpstat -p
 		echo '---'
@@ -192,7 +224,7 @@ if which lpstat > /dev/null 2>&1; then
 fi
 
 # Heartbeat monitoring
-if which cl_status > /dev/null 2>&1; then
+if which cl_status >/dev/null 2>&1; then
 	# Different handling for heartbeat clusters with and without CRM
 	# for the resource state
 	if [ -S /var/run/heartbeat/crm/cib_ro ]; then
@@ -236,24 +268,14 @@ fi
 # Einbinden von lokalen Plugins, die eine eigene Sektion ausgeben
 if cd $PLUGINSDIR
 then
-	for skript in $(ls)
-	do
-		if [ -x "$skript" ] ; then
-				./$skript
-		fi
-	done
+	for skript in *; do [ -x "$skript" ] && ./$skript; done
 fi
 
 # Lokale Einzelchecks
 echo '<<<local>>>'
 if cd $LOCALDIR
 then
-	for skript in $(ls)
-	do
-		if [ -x "$skript" ] ; then
-				./$skript
-		fi
-	done
+	for skript in *; do [ -x "$skript" ] && ./$skript; done
 fi
 
 # MK's Remote Plugin Executor

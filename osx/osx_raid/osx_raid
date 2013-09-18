@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# !!! DO NOT EDIT !!!
+# Managed by Puppet
+#
+# software RAID
+if which diskutil &>/dev/null ; then
+  diskutil listRAID 2>/dev/null | awk '
+$1 ~ /^Status/{
+  if ($2 ~ /Online/){
+    printf("%d OS_X_RAID_Status - %s\n", 0, $2)
+    next
+  }
+  printf("%d OS_X_RAID_Status - %s\n", 2, $2)
+}
+$1 ~ /^[0-9]/{
+  if ($4 ~ /Online/){
+    printf("%d XRAID_%s - RAID member %s %s is %s\n", 0, $2, $1, $2, $4)
+    next
+  }
+  printf("%d XRAID_%s - RAID member %s %s is %s\n", 1, $2, $1, $2, $4)
+}'
+fi
+
+# hardware RAID
+if which raidutil &>/dev/null ; then
+  raidutil list status 2>/dev/null | awk '
+$1 ~ /General|Battery/{
+  if ($3 ~ /Good|Charged/){
+    printf("%d XRAID_%s_%s - %s\n", 0, $1, $2, $0)
+    next
+  }
+  if ($3 ~ /Charging|Conditioning/){
+    printf("%d XRAID_%s_%s - %s\n", 1, $1, $2, $0)
+    next
+  }
+  printf("%d XRAID_%s_%s - %s\n", 2, $1, $2, $0)
+}
+$1 ~ /R[0-9]V[0-9]/{
+  if ($9 ~ /Good/){
+    printf("%d XRAID_%s - %s %s %s %s %s\n", 0, $1, $1, $2, $3, $8, $9)
+    next
+  }
+  printf("%d XRAID_%s - %s %s %s %s %s\n", 2, $1, $1, $2, $3, $8, $9)
+}'
+fi

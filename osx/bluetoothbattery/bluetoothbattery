@@ -1,0 +1,79 @@
+#!/bin/bash
+
+#### bluetooth keyboard and mouse battery info.
+## from: http://bellsouthpwp2.net/c/r/crumbletop/mm/
+
+# For the keyboard:
+# % ioreg -n "IOAppleBluetoothHIDDriver" | grep -i "batterypercent" | sed
+# 's/[^[:digit:]]//g'
+# 
+# For the Mouse:
+# % ioreg -n "AppleBluetoothHIDMouse" | grep -i "batterypercent" | sed
+# 's/[^[:digit:]]//g'
+if which iostat >/dev/null ; then
+	declare -i mywarn
+	declare -i mycrit
+	mywarn=15
+	mycrit=10
+	
+	##Keyboard
+	mykeyboard=`ioreg -n "IOAppleBluetoothHIDDriver" | grep -i "batterypercent" | sed 's/[^[:digit:]]//g'`
+	
+	if [ -n "$mykeyboard" ]; then
+			if [ "$mykeyboard" -le "$mycrit" ]; then
+			mystatus=2
+			mystatustext=CRITICAL
+		else
+			if [ "$mykeyboard" -le "$mywarn" ]; then
+				mystatus=1
+				mystatustext=WARNING
+			else
+				mystatus=0
+				mystatustext=OK
+			fi
+		fi
+		echo -n "$mystatus Battery_keyboard level=$mykeyboard;$mywarn;$mycrit;0; "
+		echo	"$mystatustext - Keyboard battery at $mykeyboard percent"
+	fi
+	
+	##MightyMouse
+	mymouse=`ioreg -n "AppleBluetoothHIDMouse" | grep -i "batterypercent" | sed 's/[^[:digit:]]//g'`
+	
+	if [ -n  "$mymouse" ]; then
+
+		if [ "$mymouse" -le "$mycrit" ]; then
+			mystatus=2
+			mystatustext=CRITICAL
+		else
+			if [ "$mymouse" -le "$mywarn" ]; then
+				mystatus=1
+				mystatustext=WARNING
+			else
+				mystatus=0
+				mystatustext=OK
+			fi
+		fi
+		echo -n "$mystatus Battery_mouse level=$mymouse;$mywarn;$mycrit;0; "
+		echo	"$mystatustext - Mouse battery at $mymouse percent"
+	fi
+	
+	##MagicMouse
+	mymagicmouse=`ioreg -n "BNBMouseDevice" | grep -i "batterypercent" | sed 's/[^[:digit:]]//g'`
+	
+	if [ -n  "$mymagicmouse" ]; then
+		if [ "$mymagicmouse" -le $mycrit ]; then
+			mystatus=2
+			mystatustext=CRITICAL
+		else
+			if [ "$mymagicmouse" -le "$mywarn" ]; then
+				mystatus=1
+				mystatustext=WARNING
+			else
+				mystatus=0
+				mystatustext=OK
+			fi
+		fi
+		echo -n "$mystatus Battery_mouse level=$mymagicmouse;$mywarn;$mycrit;0; "
+		echo	"$mystatustext - Mouse battery at $mymagicmouse percent"
+	fi
+fi

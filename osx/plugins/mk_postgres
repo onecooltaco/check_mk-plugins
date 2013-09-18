@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Try to detect the postgres user
+if id pgsql >/dev/null 2>&1; then
+    USER=pgsql
+elif id postgres >/dev/null 2>&1; then
+    USER=postgres
+else
+    exit 0
+fi
+
+echo '<<<postgres_sessions>>>'
+echo "select current_query = '<IDLE>', count(*) from pg_stat_activity group by (current_query = '<IDLE>');" | su - $USER -c "psql -d postgres -A -t -F' '"
+
+echo '<<<postgres_stat_database:sep(59)>>>'
+echo 'select *, pg_database_size(datname) as "datsize" from pg_stat_database;' \
+    | su - $USER -c "psql -d postgres -A -F';'" | sed '$d'

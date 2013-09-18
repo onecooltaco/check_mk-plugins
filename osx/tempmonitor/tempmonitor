@@ -1,0 +1,57 @@
+#!/bin/bash
+
+#### tempmonitor data
+## uses http://www.bresink.com/osx/0TemperatureMonitor/download.html
+## Copy tempmonitor (Temperature Monitor.app/Contents/Resources/tempmonitor) in to /opt/local/sbin/
+
+### Alert temp ranges Ambient: 30 HDD: 55 Memory Module: 85 Power Supply: 90 CPU and others: 65
+### out: mystatus itemname perfdata output
+
+if which "/usr/local/sbin/tempmonitor" >/dev/null ; then
+	/usr/local/sbin/tempmonitor -l -a | awk -F ":" '$1 {gsub(/ /, "_",$1)}; 1'| awk '(/^C$/) && ($2 > 0) 
+	{
+		mytype = $1
+		mydata = $2
+		myunit = $3
+		mymax = 0
+		mywarn = 0
+		mystatus = 0
+		mystatustext = ""
+		if ($1 ~ /MEMORY/) {
+			mymax = 85
+			mywarn = 75
+			}
+		else if ($1 ~ /AMBIENT/) {
+			mymax = 30
+			mywarn = 25
+			}
+		else if (($1 ~ /DRIVE/) || ($1 ~ /Disk/)) {
+			mymax = 55
+			mywarn = 40
+			}
+		else if ($1 ~ /POWER/) {
+			mymax = 90
+			mywarn = 75
+			}
+		else {
+			mymax = 65
+			mywarn = 40
+			}
+		
+		if (mydata > mymax){
+			mystatus = 2
+			mystatustext = "CRITICAL"
+			}
+		else if (mydata > mywarn){
+			mystatus = 1
+			mystatustext = "WARNING"
+			}
+		else {
+			mystatus = 0
+			mystatustext = "OK"
+			}
+		
+		print mystatus, mytype, "temp=" mydata ";" mymax ";"  mywarn ";0;", mystatustext, "-", mydata, myunit
+		
+	}'
+	fi
