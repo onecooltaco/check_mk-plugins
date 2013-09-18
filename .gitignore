@@ -18,3 +18,13 @@ checks/vtrack_voltagec
 vtrack_storagec
 fa.includec
 vtrak_chassisc
+*.sql
+*.gz
+.DS_Store
+*.pkg
+*.mpkg
+*.dmg
+*.tar
+*.gz
+*.tgz
+*.bz2
