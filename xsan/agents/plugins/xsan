@@ -39,6 +39,10 @@
 # for disks:
 # disks	name device	sectors	sectorsize
 
+#####
+## /Library/Preferences/Xsan/*.cfg
+#####
+
 import os
 import re
 import subprocess
@@ -46,9 +50,11 @@ import sys
 from datetime import datetime
 import time
 
+CVADMIN = "/usr/sbin/cvadmin"
+CONFDIRS = [ '/Library/Preferences/Xsan', '/Library/Filesystems/Xsan/config' ]
 # wrapper for exec of commands
-def exec_cvadmin(cmd,args):
-  args.insert(0,cmd)
+def exec_cvadmin(args):
+  args.insert(0,CVADMIN)
   stdout, stderr = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
   return stdout
 
@@ -60,7 +66,11 @@ def get_fsm(lines):
   launch_re = re.compile(r'Launches (\d+), core dumps (\d+), flags \<(.*)\>')
   admin_re = re.compile(r'Last Admin: (\w+) (.*)\n')
   term_re = re.compile(r'Last Termination: (\w+\(\d+\)) (.*)\n')
-  for line in lines.split("\n\n"):
+
+  arr = re.split(r'FSM Processes on [\w\.]+\n\n', lines );
+  data = arr[1].split("\n\n")
+
+  for line in data:
     m = title_re.search(line)
     if m:
       attribs = []
@@ -147,22 +157,20 @@ def get_disks(lines):
 
 def main():
 
-  cvadmin = "/usr/sbin/cvadmin"
-
-  if os.path.isfile(cvadmin): pass
+  if os.path.isfile(CVADMIN): pass
   else: sys.exit()
 
-  retcode = subprocess.call([cvadmin, "-e", "quit"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  retcode = subprocess.call([CVADMIN, "-e", "quit"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   if retcode > 0: sys.exit()
   print '<<<xsan>>>'
 
-  fsm_data = exec_cvadmin(cvadmin,["-e", "fsmlist"])
+  fsm_data = exec_cvadmin(["-e", "fsmlist"])
   fsm = get_fsm(fsm_data)
 
   if fsm:
     for key in fsm:
-      stats = exec_cvadmin(cvadmin,["-F",key,"-e", "stat"])
-      showl = exec_cvadmin(cvadmin,["-F",key,"-e", "show", "long"])
+      stats = exec_cvadmin(["-F",key,"-e", "stat"])
+      showl = exec_cvadmin(["-F",key,"-e", "show", "long"])
       stizzle = get_stats(stats)
       strizzies = get_stripes(showl)
       print 'fsm\t' + key + "\t" + "\t".join(fsm[key])
@@ -170,8 +178,8 @@ def main():
       for sg in strizzies:
         print 'stripe\t' + key + "\t" + "\t".join(sg)
 
-  paths = exec_cvadmin(cvadmin,["-e", "paths"])
-#  disks = exec_cvadmin(cvadmin,["-e", "disks"])
+  paths = exec_cvadmin(["-e", "paths"])
+#  disks = exec_cvadmin(["-e", "disks"])
 
   pathlists = get_paths(paths)
 
