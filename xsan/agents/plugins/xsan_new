@@ -3,7 +3,7 @@
 # save and change IFS
 OLDIFS=$IFS
 IFS=$'\n\n'
-FSM_OUT=$(cvadmin -e fsmlist 2>/dev/null | sed -e '1,/FSM Processes on [A-z0-9\.]/d')
+FSM_OUT=$(cvadmin -e fsmlist 2>/dev/null | awk 'BEGIN { FS="\n"; RS="" } !/^ /{next} {$1=$1}1')
 # restore it
 IFS=$OLDIFS
 
@@ -22,15 +22,15 @@ then
   echo '<<<xsan_stats>>>'
   for VOL in $XSAN_VOLS
   do
-    cvadmin -F $VOL -e stat 2>/dev/null | sed -n '/Stat \(.*\)/,$p'
+    cvadmin -F $VOL -e stat 2>/dev/null | awk -v VOL=$VOL 'BEGIN { ORS=" "; print VOL } !/^ /{next}  {gsub(/[ \t]+/, " ")}1'
+  	echo
   done
   echo '<<<xsan_stripe_groups>>>'
   for VOL in $XSAN_VOLS
   do
-    OLDIFS=$IFS
-    IFS=$'\n\n'
-    FSM_OUT=$(cvadmin -F $VOL  -e show long 2>/dev/null | sed -n '/Show stripe groups \(.*\)/,$p')
-    IFS=$OLDIFS
+    # the $1=$1 is to rebuild the record, using the current OFS.
+    cvadmin -F $VOL -e show long 2>/dev/null | awk -v VOL=$VOL 'BEGIN { FS="\n"; RS="" } !/^Stripe Group/{next}  {$1=$1; print VOL, $0}'
+    echo
   done
 fi
 

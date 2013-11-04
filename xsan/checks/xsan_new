@@ -39,18 +39,24 @@
 # for disks:
 # disks	name device	sectors	sectorsize
 
+factory_settings["xsan_new_default_levels"] = {
+    "allowed_fsm_states" : ["REGISTERED"],
+    "free_percent_crit"  : 20,
+    "free_percent_warn"  : 30,
+}
+
 # the inventory function (dummy)
-def inventory_xsan_fsm(info):
+def inventory_xsan_new_fsm(info):
    print info
    return [] # return empty list: nothing found
 
 # the check function (dummy)
-def check_xsan_fsm(item, params, info):
+def check_xsan_new_fsm(item, params, info):
    return (3, "Sorry - not implemented")
 
 # declare the check to Check_MK
-check_info["xsan_fsm"] = {
-    'check_function':            check_xsan_fsm,
-    'inventory_function':        inventory_xsan_fsm,
+check_info["xsan_new_fsm"] = {
+    'check_function':            check_xsan_new_fsm,
+    'inventory_function':        inventory_xsan_new_fsm,
     'service_description':       'XSAN FSM %s',
 }
