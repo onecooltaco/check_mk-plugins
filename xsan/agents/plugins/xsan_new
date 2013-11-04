@@ -1,11 +1,7 @@
 #!/bin/sh
 
-# save and change IFS
-OLDIFS=$IFS
-IFS=$'\n\n'
+# the $1=$1 is to rebuild the record, using the current OFS.
 FSM_OUT=$(cvadmin -e fsmlist 2>/dev/null | awk 'BEGIN { FS="\n"; RS="" } !/^ /{next} {$1=$1}1')
-# restore it
-IFS=$OLDIFS
 
 if [ -n "$FSM_OUT" ]
 then
@@ -28,7 +24,6 @@ then
   echo '<<<xsan_stripe_groups>>>'
   for VOL in $XSAN_VOLS
   do
-    # the $1=$1 is to rebuild the record, using the current OFS.
     cvadmin -F $VOL -e show long 2>/dev/null | awk -v VOL=$VOL 'BEGIN { FS="\n"; RS="" } !/^Stripe Group/{next}  {$1=$1; print VOL, $0}'
     echo
   done
