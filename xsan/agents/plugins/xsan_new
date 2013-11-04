@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# save and change IFS
+OLDIFS=$IFS
+IFS=$'\n\n'
+FSM_OUT=$(cvadmin -e fsmlist 2>/dev/null | sed -e '1,/FSM Processes on [A-z0-9\.]/d')
+# restore it
+IFS=$OLDIFS
+
+if [ -n "$FSM_OUT" ]
+then
+  echo '<<<xsan_fsm>>>'
+  for fs in "$FSM_OUT"
+  do
+    echo "$fs"
+  done
+fi
+
+XSAN_VOLS=$(echo "$FSM_OUT" | sed -n 's/[ |\*]\(.*\)\[[0-9]\].*$/\1/p')
+if [ -n "$XSAN_VOLS" ]
+then
+  echo '<<<xsan_stats>>>'
+  for VOL in $XSAN_VOLS
+  do
+    cvadmin -F $VOL -e stat 2>/dev/null | sed -n '/Stat \(.*\)/,$p'
+  done
+  echo '<<<xsan_stripe_groups>>>'
+  for VOL in $XSAN_VOLS
+  do
+    OLDIFS=$IFS
+    IFS=$'\n\n'
+    FSM_OUT=$(cvadmin -F $VOL  -e show long 2>/dev/null | sed -n '/Show stripe groups \(.*\)/,$p')
+    IFS=$OLDIFS
+  done
+fi
+
+PATHS_OUT=$(cvadmin -e paths 2>/dev/null | sed -e '1,/acfs/d')
+if [ -n "$PATHS_OUT" ]
+then
+  echo '<<<xsan_paths>>>'
+  echo "$PATHS_OUT"
+fi
+
+DISKS_OUT=$(cvadmin -e disks 2>/dev/null | sed -e '1,/acfs/d')
+if [ -n "$DISKS_OUT" ]
+then
+  echo '<<<xsan_disks>>>'
+  echo "$DISKS_OUT"
+fi
