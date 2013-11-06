@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- encoding: utf-8; py-indent-offset: 4 -*-
 # +------------------------------------------------------------------+
 # |             ____ _               _        __  __ _  __           |
@@ -38,25 +37,60 @@
 # paths	name device	hba	ctl	lun	state	controller
 # for disks:
 # disks	name device	sectors	sectorsize
+import re
 
-factory_settings["xsan_new_default_levels"] = {
-    "allowed_fsm_states" : ["REGISTERED"],
-    "free_percent_crit"  : 20,
-    "free_percent_warn"  : 30,
-}
+def extract_fsm(text):
+	m = re.search('^\*?(\w+)\[\d+\]', text)
+	if m:
+		return m.group(1)
 
-# the inventory function (dummy)
-def inventory_xsan_new_fsm(info):
-   print info
-   return [] # return empty list: nothing found
+## XSAN FSM
+# the inventory function
+def inventory_xsan_fsmlist(checkname, info):
+    inventory = []
+    for line in info:
+    	fs = extract_fsm(line[0])
+    	if fs: inventory.append( (fs, {}) )
+    return inventory
 
-# the check function (dummy)
-def check_xsan_new_fsm(item, params, info):
-   return (3, "Sorry - not implemented")
+# the check function
+def check_xsan_fsmlist(item, params, info):
+    for line in info:
+    	# is this our line?
+    	fs = extract_fsm(line[0])
+    	if fs == item:
+			port = list_get_next(line, "port")
+			pid = list_get_next(line, "pid")
+			launches = int(list_get_next(line, "Launches"))
+			launches = int(list_get_next(line, "Launches"))
+			dumps = int(list_get_next(line, "dumps"))
+			dumps = int(list_get_next(line, "dumps"))
+			flags = list_get_next(line, "flags")
+			state = list_get_next(line, "State:")
+			ymd = list_get_next(line, state)
+			hms = list_get_next(line, ymd)
+			this_time = time.time()
+
+			launch_timedif, launch_rate = get_counter("xsan_fsmlist.launchcount.%s" % (item), this_time, launches)
+			dump_timedif, dump_rate = get_counter("xsan_fsmlist.coredumps.%s" % (item), this_time, dumps)
+			perfdata = [ ( "launch_count", launch_rate ), ( "core_dumps", dump_rate ) ]
+
+			msg_txt = "pid: %s port: %s launch count: %d core dumps: %d" % (pid, port, launches, dumps)
+
+			if state not in params["allowed_fsm_states"]:
+				return (2, "CRITICAL - %s - %s" % (state, msg_txt), perfdata)
+			else:
+				return (0, "OK - %s - %s" % (state, msg_txt), perfdata)
+
+    return (3, "file system %s not found in agent output" % item)
 
 # declare the check to Check_MK
-check_info["xsan_new_fsm"] = {
-    'check_function':            check_xsan_new_fsm,
-    'inventory_function':        inventory_xsan_new_fsm,
-    'service_description':       'XSAN FSM %s',
+check_info["xsan_fsmlist"] = {
+	'check_function':			check_xsan_fsmlist,
+	'inventory_function':		inventory_xsan_fsmlist,
+	"service_description":		"XSAN Vol %s File System Master",
+	"default_levels_variable":	"xsan_default_levels",
+	"has_perfdata":				True,
+    "includes"                : [ "xsan.include" ],
+    "group"                   : "filesystem",
 }
