@@ -13,7 +13,9 @@ include /usr/local/share/luggage/luggage.make
 TITLE=check_mk_agent_xsan
 REVERSE_DOMAIN=de.mathias-kettner.check_mk
 
-PAYLOAD = pack-mk-plugins-xsan
+PAYLOAD = \
+	pack-mk-plugins-xsan \
+	pack-mk-plugins-xsan_cvlog
 
 
 # Make sure /usr/lib/check_mk_agent exists

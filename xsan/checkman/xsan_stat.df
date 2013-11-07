@@ -1,0 +1,20 @@
+title: Check for Apple XSAN, monitors volume statistics.
+agents: darwin
+author: Jeremy Leggat <jleggat@asu.edu>
+license: GPL
+distribution:
+description:
+ This check makes use of the output of a working {cvadmin} on
+ an OS X system. If the XSAN is properly configured and {cvadmin}
+ is installed, then the agent will print out volume statistics.
+
+item:
+ The Volume name.
+
+inventory:
+ One item per volume if system is a XSAN Controller.
+
+perfdata:
+ block free percentage, blocks free total.
+
+[parameters]

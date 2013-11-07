@@ -83,14 +83,14 @@ def check_xsan_fsmlist(item, params, info):
 			dump_timedif, dump_rate = get_counter( "xsan_fsmlist.coredumps.%s" % (item), this_time, int(dumps) )
 			perfdata.append( ( "core_dumps", dump_rate ) )
 
+			infos.append( state )
 			if state not in params["allowed_fsm_states"]:
 				infos[-1] += "(!!)"
 				status = max(status, 2)
-			infos.append( state )
 
 			if flags != params["flags"]:
-				infos[-1] += "(!)"
 				infos.append ("flags: %s not %s as expected" % (flags, params["flags"]) )
+				infos[-1] += "(!)"
 				status = max(status, 1)
 
 			infos.append ("pid: %s port: %s launch count: %s core dumps: %s" % (pid, port, launches, dumps) )

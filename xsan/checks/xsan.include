@@ -40,8 +40,7 @@
 
 factory_settings["xsan_default_levels"] = {
     "allowed_fsm_states" : ["REGISTERED"],
-    "free_percent_crit"  : 20,
-    "free_percent_warn"  : 30,
+    "avg_levels"    : (1500, 5000),
 }
 
 def list_get_next(L, value, v=None):

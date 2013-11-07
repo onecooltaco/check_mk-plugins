@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if uname 2>/dev/null | grep -qv Darwin; then
+  exit
+fi
+
+LOGDIR="/Library/Logs/Xsan/data /Library/Filesystems/Xsan/data"
+CVLOGS=$(find $LOGDIR -name cvlog -type f 2>/dev/null)
+
+if [ -z $CVLOGS ]; then
+  exit
+fi
+
+echo '<<<xsan_cvlog>>>'
+
+for FILE in $CVLOGS; do
+  VOLNAME=$(basename $(dirname $(dirname $CVLOGS)))
+  YEAR=$(stat -t "%Y" -f "%Sm" $FILE)
+  HIPRIWR=$(cat $FILE | grep HiPriWr | tail -n 1)
+  echo $VOLNAME $YEAR $HIPRIWR
+done

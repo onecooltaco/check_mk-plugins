@@ -102,38 +102,38 @@ def check_xsan_stat_info(item, params, info):
             infos.append( "%s ActiveConnections" % connections )
 
             if stripegroups != params["stripegroups"]:
-                infos[-1] += "(!!)"
                 infos.append( "Expected %s StripeGroups" % params["stripegroups"] )
+                infos[-1] += "(!!)"
                 status = max(status, 2)
             infos.append( "%s StripeGroups" % stripegroups )
 
             if diskdevices != params["diskdevices"]:
-                infos[-1] += "(!!)"
                 infos.append( "Expected %s DiskDevices" % params["diskdevices"] )
+                infos[-1] += "(!!)"
                 status = max(status, 2)
             infos.append( "%s DiskDevices" % diskdevices )
 
             if blocks != params["blocks"]:
-                infos[-1] += "(!!)"
                 infos.append( "Expected %s FsBlocks" % params["blocks"] )
+                infos[-1] += "(!!)"
                 status = max(status, 2)
             infos.append( "%s FsBlocks" % blocks )
 
             if blocksize != params["blocksize"]:
-                infos[-1] += "(!!)"
                 infos.append( "Expected %s FsBlockSize" % params["blocksize"] )
+                infos[-1] += "(!!)"
                 status = max(status, 2)
             infos.append( "%s FsBlockSize" % blocksize )
 
             if buffersize != params["buffersize"]:
-                infos[-1] += "(!)"
                 infos.append( "Expected %s MsgBufferSize" % params["buffersize"] )
+                infos[-1] += "(!)"
                 status = max(status, 1)
             infos.append( "%s MsgBufferSize" % buffersize )
 
             if created != params["created"]:
-                infos[-1] += "(!)"
                 infos.append( "Created date %s Expected %s" % (params["created"], created) )
+                infos[-1] += "(!)"
                 status = max(status, 1)
 
             return (status, ", ".join(infos) , perfdata)

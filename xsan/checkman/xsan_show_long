@@ -1,0 +1,21 @@
+title: Check for Apple XSAN, monitors stripe groups and storage pools.
+agents: darwin
+author: Jeremy Leggat <jleggat@asu.edu>
+license: GPL
+distribution:
+description:
+ This check makes use of the output of a working {cvadmin} on
+ an OS X system. If the XSAN is properly configured and {cvadmin}
+ is installed, then the agent will will output information about
+ the stripe groups/storage pools used by this volume.
+
+item:
+ The name of the Volume and index number for each stripe group.
+
+inventory:
+ Stripe groups collects info for the storage pools associated with volumes on the system.
+ stat, the general status of the volume.
+
+perfdata:
+
+examples:

@@ -1,5 +1,9 @@
 #!/bin/sh
 
+if uname 2>/dev/null | grep -qv Darwin; then
+  exit
+fi
+
 # the $1=$1 is to rebuild the record, using the current OFS.
 FSM_OUT=$(cvadmin -e fsmlist 2>/dev/null | awk 'BEGIN { FS="\n"; RS="" } !/^ /{next} {gsub(/,/, ""); $1=$1}1')
 

@@ -72,34 +72,37 @@ def check_xsan_show_long(item, params, info):
 			write = line[23].split(':').pop()
 
 			if status != params["status"]:
+				infos.append( "Status %s expected" % params["status"] )
 				infos[-1] += "(!!)"
 				state = max(state, 2)
 			infos.append( status )
 
 			if read != params["read"]:
+				infos.append( "Expected read %s" % params["read"] )
 				infos[-1] += "(!)"
 				state = max(state, 1)
 			infos.append( "Read: %s" % read )
 
 			if write != params["write"]:
+				infos.append( "Expected write %s" % params["write"] )
 				infos[-1] += "(!)"
 				state = max(state, 1)
 			infos.append( "Write: %s" % write )
 
 			if method != params["method"]:
-				infos[-1] += "(!)"
 				infos.append ("Expected: %s" % params["method"] )
+				infos[-1] += "(!)"
 				state = max(state, 1)
 			infos.append( "MultiPath Method: %s" % method )
 
 			if blocks != params["blocks"]:
-				infos[-1] += "(!)"
 				infos.append ("%s Total Blocks but %s expected" % (blocks, params["blocks"]) )
+				infos[-1] += "(!)"
 				state = max(state, 1)
 
 			if reserved != params["reserved"]:
-				infos[-1] += "(!)"
 				infos.append ("%s Reserved Blocks but %s expected" % (reserved, params["reserved"]) )
+				infos[-1] += "(!)"
 				state = max(state, 1)
 
 			infos.append( "%s %s" % (line[8], line[9]) )
