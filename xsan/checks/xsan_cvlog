@@ -51,10 +51,15 @@ def inventory_xsan_cvlog(checkname, info):
 
 # the check function
 def check_xsan_cvlog(item, params, info):
-    warn, crit = params["avg_levels"]
     perfdata = []
     infos = []
     status = 0
+    # error checking might be turned off
+    if "avg_levels" in params:
+    	warn, crit = params["avg_levels"]
+    else:
+    	warn, crit = None, None
+
     for line in info:
         # is this our line?
         if line[7] != 'HiPriWr': continue
@@ -77,10 +82,10 @@ def check_xsan_cvlog(item, params, info):
             perfdata.append( ( "Maximum", int(maxlen) ) )
 
             infos.append ("Average: %s μs" % avglen )
-            if int(avglen) > crit:
+            if crit != None and int(avglen) > crit:
                 infos[-1] += "(!!)"
                 status = max(status, 2)
-            elif int(avglen) > warn:
+            elif warn != None and int(avglen) > warn:
                 infos[-1] += "(!)"
                 status = max(status, 1)
             infos.append ("Minimium: %s μs Maximum: %s μs" % (minlen, maxlen) )

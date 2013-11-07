@@ -40,7 +40,6 @@
 
 factory_settings["xsan_default_levels"] = {
     "allowed_fsm_states" : ["REGISTERED"],
-    "avg_levels"    : (1500, 5000),
 }
 
 def list_get_next(L, value, v=None):
