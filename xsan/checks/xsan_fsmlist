@@ -1,0 +1,110 @@
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+# +------------------------------------------------------------------+
+# |             ____ _               _        __  __ _  __           |
+# |            / ___| |__   ___  ___| | __   |  \/  | |/ /           |
+# |           | |   | '_ \ / _ \/ __| |/ /   | |\/| | ' /            |
+# |           | |___| | | |  __/ (__|   <    | |  | | . \            |
+# |            \____|_| |_|\___|\___|_|\_\___|_|  |_|_|\_\           |
+# |                                                                  |
+# | Copyright Mathias Kettner 2012             mk@mathias-kettner.de |
+# +------------------------------------------------------------------+
+#
+# This file is part of Check_MK.
+# The official homepage is at http://mathias-kettner.de/check_mk.
+#
+# check_mk is free software;  you can redistribute it and/or modify it
+# under the  terms of the  GNU General Public License  as published by
+# the Free Software Foundation in version 2.  check_mk is  distributed
+# in the hope that it will be useful, but WITHOUT ANY WARRANTY;  with-
+# out even the implied warranty of  MERCHANTABILITY  or  FITNESS FOR A
+# PARTICULAR PURPOSE. See the  GNU General Public License for more de-
+# ails.  You should have  received  a copy of the  GNU  General Public
+# License along with GNU Make; see the file  COPYING.  If  not,  write
+# to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
+# Boston, MA 02110-1301 USA.
+
+# Author: Jeremy Leggat <jleggat@asu.edu>
+
+### Collect and dump XSAN information.
+# from `cvadmin -e fsmlist` will put out:
+# fsm	name index port pid ismaster state timestamp launchcount coredumps flags lastadminaction timestamp lastterminationcode timestamp
+# For each volume will put out `cvadmin -F Volume -e stat` with:
+# stats	volume timestamp activeconnections blocksize devices groups blockstotal blocksfree
+# and `cvadmin -F Volume -e show long` with:
+# stripe volume	number name status totalblocks reserverblocks freeblocks
+# not output with above: multipathmethod primarystripe readenabled writeenbaled
+# for paths:
+# paths	name device	hba	ctl	lun	state	controller
+# for disks:
+# disks	name device	sectors	sectorsize
+import re
+
+def extract_fsm(text):
+	m = re.search('^\*?(\w+)\[\d+\]', text)
+	if m:
+		return m.group(1)
+
+## XSAN FSM
+# the inventory function
+def inventory_xsan_fsmlist(checkname, info):
+    inventory = []
+    for line in info:
+    	fs = extract_fsm(line[0])
+    	params = {}
+    	flags = list_get_next(line, "flags")
+    	params["flags"] = re.sub('[<>]', '', flags)
+    	if fs: inventory.append( (fs, params) )
+    return inventory
+
+# the check function
+def check_xsan_fsmlist(item, params, info):
+    perfdata = []
+    infos = []
+    status = 0
+    for line in info:
+    	# is this our line?
+    	fs = extract_fsm(line[0])
+    	if fs == item:
+			port = list_get_next(line, "port")
+			pid = list_get_next(line, "pid")
+			launches = list_get_next(line, "Launches")
+			dumps = list_get_next(line, "dumps")
+			flags = list_get_next(line, "flags")
+			flags = re.sub('[<>]', '', flags)
+			state = list_get_next(line, "State:")
+#			ymd = list_get_next(line, state)
+#			hms = list_get_next(line, ymd)
+
+			this_time = time.time()
+
+			launch_timedif, launch_rate = get_counter( "xsan_fsmlist.launchcount.%s" % (item), this_time, int(launches) )
+			perfdata.append( ( "launch_count", launch_rate ) )
+
+			dump_timedif, dump_rate = get_counter( "xsan_fsmlist.coredumps.%s" % (item), this_time, int(dumps) )
+			perfdata.append( ( "core_dumps", dump_rate ) )
+
+			if state not in params["allowed_fsm_states"]:
+				infos[-1] += "(!!)"
+				status = max(status, 2)
+			infos.append( state )
+
+			if flags != params["flags"]:
+				infos[-1] += "(!)"
+				infos.append ("flags: %s not %s as expected" % (flags, params["flags"]) )
+				status = max(status, 1)
+
+			infos.append ("pid: %s port: %s launch count: %s core dumps: %s" % (pid, port, launches, dumps) )
+			return (status, ", ".join(infos) , perfdata)
+
+    return (3, "file system %s not found in agent output" % item)
+
+# declare the check to Check_MK
+check_info["xsan_fsmlist"] = {
+	'check_function':			check_xsan_fsmlist,
+	'inventory_function':		inventory_xsan_fsmlist,
+	"service_description":		"XSAN Vol %s File System Master",
+	"default_levels_variable":	"xsan_default_levels",
+	"has_perfdata":				True,
+    "includes"                : [ "xsan.include" ],
+    "group"                   : "filesystem",
+}
