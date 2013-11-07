@@ -1,6 +1,6 @@
 <?php
 # labels
-$ds_name[1] = 'Lag';
+$ds_name[1] = 'Write Latency';
 
 $opt[1] = "--imgformat=PNG --title \"Lag For $hostname / $servicedesc\" --slope-mode ";
 # Assign data types and create data sets
