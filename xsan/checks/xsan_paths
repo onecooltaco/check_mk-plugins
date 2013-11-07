@@ -60,6 +60,8 @@ def inventory_xsan_paths(checkname, info):
 
 # the check function
 def check_xsan_paths(item, params, info):
+    infos = []
+    status = 0
     for line in info:
     	if line[0] == item:
 			state = list_get_next(line, "state:")
@@ -67,11 +69,34 @@ def check_xsan_paths(item, params, info):
 			ctl = list_get_next(line, "ctl:")
 			hba = list_get_next(line, "hba:")
 			device = list_get_next(line, "device:")
+
 			if state != params["state"]:
-				return (2, "CRITICAL - state: %s changed from %s - device: %s hba: %s ctl: %s lun: %s" \
-					% (state, params["state"], device, hba, ctl, lun))
-			return (0, "OK - state: %s device: %s hba: %s ctl: %s lun: %s" \
-				% (state, device, hba, ctl, lun))
+				infos[-1] += "(!!)"
+				status = max(status, 2)
+				infos.append( "Expected %s state" % params["state"] )
+			infos.append( "current state %s" % state  )
+
+			if hba != params["hba"]:
+				infos[-1] += "(!)"
+				status = max(status, 1)
+				infos.append( "Expected hba %s" % params["hba"] )
+			infos.append( "hba %s" % hba )
+
+			if ctl != params["ctl"]:
+				infos[-1] += "(!)"
+				status = max(status, 1)
+				infos.append( "Expected controller %s" % params["ctl"] )
+			infos.append( "controller %s" % ctl )
+
+			if lun != params["lun"]:
+				infos[-1] += "(!)"
+				status = max(status, 1)
+				infos.append( "Expected lun %s" % params["lun"] )
+			infos.append( "lun %s" % lun )
+
+			infos.append( "device name %s" % device )
+
+			return ( status, ", ".join(infos) )
 
     return (3, "Path %s not found in agent output" % item)
 

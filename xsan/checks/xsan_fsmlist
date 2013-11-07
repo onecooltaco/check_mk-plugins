@@ -50,37 +50,51 @@ def inventory_xsan_fsmlist(checkname, info):
     inventory = []
     for line in info:
     	fs = extract_fsm(line[0])
-    	if fs: inventory.append( (fs, {}) )
+    	params = {}
+    	flags = list_get_next(line, "flags")
+    	params["flags"] = re.sub('[<>]', '', flags)
+    	if fs: inventory.append( (fs, params) )
     return inventory
 
 # the check function
 def check_xsan_fsmlist(item, params, info):
+    perfdata = []
+    infos = []
+    status = 0
     for line in info:
     	# is this our line?
     	fs = extract_fsm(line[0])
     	if fs == item:
 			port = list_get_next(line, "port")
 			pid = list_get_next(line, "pid")
-			launches = int(list_get_next(line, "Launches"))
-			launches = int(list_get_next(line, "Launches"))
-			dumps = int(list_get_next(line, "dumps"))
-			dumps = int(list_get_next(line, "dumps"))
+			launches = list_get_next(line, "Launches")
+			dumps = list_get_next(line, "dumps")
 			flags = list_get_next(line, "flags")
+			flags = re.sub('[<>]', '', flags)
 			state = list_get_next(line, "State:")
-			ymd = list_get_next(line, state)
-			hms = list_get_next(line, ymd)
+#			ymd = list_get_next(line, state)
+#			hms = list_get_next(line, ymd)
+
 			this_time = time.time()
 
-			launch_timedif, launch_rate = get_counter("xsan_fsmlist.launchcount.%s" % (item), this_time, launches)
-			dump_timedif, dump_rate = get_counter("xsan_fsmlist.coredumps.%s" % (item), this_time, dumps)
-			perfdata = [ ( "launch_count", launch_rate ), ( "core_dumps", dump_rate ) ]
+			launch_timedif, launch_rate = get_counter( "xsan_fsmlist.launchcount.%s" % (item), this_time, int(launches) )
+			perfdata.append( ( "launch_count", launch_rate ) )
 
-			msg_txt = "pid: %s port: %s launch count: %d core dumps: %d" % (pid, port, launches, dumps)
+			dump_timedif, dump_rate = get_counter( "xsan_fsmlist.coredumps.%s" % (item), this_time, int(dumps) )
+			perfdata.append( ( "core_dumps", dump_rate ) )
 
 			if state not in params["allowed_fsm_states"]:
-				return (2, "CRITICAL - %s - %s" % (state, msg_txt), perfdata)
-			else:
-				return (0, "OK - %s - %s" % (state, msg_txt), perfdata)
+				infos[-1] += "(!!)"
+				status = max(status, 2)
+			infos.append( state )
+
+			if flags != params["flags"]:
+				infos[-1] += "(!)"
+				infos.append ("flags: %s not %s as expected" % (flags, params["flags"]) )
+				status = max(status, 1)
+
+			infos.append ("pid: %s port: %s launch count: %s core dumps: %s" % (pid, port, launches, dumps) )
+			return (status, ", ".join(infos) , perfdata)
 
     return (3, "file system %s not found in agent output" % item)
 

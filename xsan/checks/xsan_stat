@@ -27,53 +27,136 @@
 
 ### Collect and dump XSAN information.
 # from `cvadmin -e fsmlist` will put out:
-# fsm	name index port pid ismaster state timestamp launchcount coredumps flags lastadminaction timestamp lastterminationcode timestamp
+# fsm   name index port pid ismaster state timestamp launchcount coredumps flags lastadminaction timestamp lastterminationcode timestamp
 # For each volume will put out `cvadmin -F Volume -e stat` with:
-# stats	volume timestamp activeconnections blocksize devices groups blockstotal blocksfree
+# stats volume timestamp activeconnections blocksize devices groups blockstotal blocksfree
 # and `cvadmin -F Volume -e show long` with:
-# stripe volume	number name status totalblocks reserverblocks freeblocks
+# stripe volume number name status totalblocks reserverblocks freeblocks
 # not output with above: multipathmethod primarystripe readenabled writeenbaled
 # for paths:
-# paths	name device	hba	ctl	lun	state	controller
+# paths name device hba ctl lun state   controller
 # for disks:
-# disks	name device	sectors	sectorsize
+# disks name device sectors sectorsize
 import re
 
-## XSAN Status
+## XSAN Status Disk Usage ##
 # the inventory function
-def inventory_xsan_stat(checkname, info):
+def inventory_xsan_stat_df(checkname, info):
     inventory = []
     for line in info:
-    	inventory.append( (line[0], {}) )
+        inventory.append( (line[0], {}) )
     return inventory
 
 # the check function
-def check_xsan_stat(item, params, info):
+def check_xsan_stat_df(item, params, info):
     p = re.compile(r'\(.*\)')
     for line in info:
-    	# is this our line?
-    	if line[0] == item:
-    		connections = line[2].split(':').pop()
-    		blocksize = line[3].split(':').pop()
-    		blocksize = blocksize[:-1]
-    		blocks = line[7].split(':').pop()
-    		blocks = p.sub( '',blocks )
-    		blocks_free = line[8].split(':').pop()
-    		blocks_free = p.sub( '',blocks_free )
+        # is this our line?
+        if line[0] == item:
+            blocksize = line[3].split(':').pop()
+            blocksize = blocksize[:-1]
+            blocks = line[7].split(':').pop()
+            blocks = p.sub( '',blocks )
+            blocks_free = line[8].split(':').pop()
+            blocks_free = p.sub( '',blocks_free )
 
-    		size_mb = int(blocks) * int(blocksize) / (1024.0 * 1024.0)
-    		avail_mb = int(blocks_free) * int(blocksize) / (1024.0 * 1024.0)
-    		return df_check_filesystem(g_hostname, item, size_mb, avail_mb, params)
+            size_mb = int(blocks) * int(blocksize) / (1024.0 * 1024.0)
+            avail_mb = int(blocks_free) * int(blocksize) / (1024.0 * 1024.0)
+            return df_check_filesystem(g_hostname, item, size_mb, avail_mb, params)
 
     return (3, "UNKNOWN - %s info not found" % item)
 
-# declare the check to Check_MK
-check_info['xsan_stat'] = {
-    "inventory_function"      : inventory_xsan_stat,
-    "check_function"          : check_xsan_stat,
-    "service_description"     : "XSAN Vol %s Usage",
+## XSAN Status Info check ##
+# the inventory function
+def inventory_xsan_stat_info(checkname, info):
+    inventory = []
+    for line in info:
+        params = {}
+        params["created"] = line[1].split(':').pop()
+        params["blocksize"] = line[3].split(':').pop()
+        params["buffersize"] = line[4].split(':').pop()
+        params["diskdevices"] = line[5].split(':').pop()
+        params["stripegroups"] = line[6].split(':').pop()
+        params["blocks"] = line[7].split(':').pop()
+        inventory.append( (line[0], params) )
+    return inventory
+
+# the check function
+def check_xsan_stat_info(item, params, info):
+    p = re.compile(r'\(.*\)')
+    perfdata = []
+    infos = []
+    status = 0
+    for line in info:
+        # is this our line?
+        if line[0] == item:
+            created = line[1].split(':').pop()
+            connections = line[2].split(':').pop()
+            blocksize = line[3].split(':').pop()
+            buffersize = line[4].split(':').pop()
+            diskdevices = line[5].split(':').pop()
+            stripegroups = line[6].split(':').pop()
+            blocks = line[7].split(':').pop()
+
+            perfdata.append( ( "ActiveConnections", int(connections) ) )
+            infos.append( "%s ActiveConnections" % connections )
+
+            if stripegroups != params["stripegroups"]:
+                infos[-1] += "(!!)"
+                infos.append( "Expected %s StripeGroups" % params["stripegroups"] )
+                status = max(status, 2)
+            infos.append( "%s StripeGroups" % stripegroups )
+
+            if diskdevices != params["diskdevices"]:
+                infos[-1] += "(!!)"
+                infos.append( "Expected %s DiskDevices" % params["diskdevices"] )
+                status = max(status, 2)
+            infos.append( "%s DiskDevices" % diskdevices )
+
+            if blocks != params["blocks"]:
+                infos[-1] += "(!!)"
+                infos.append( "Expected %s FsBlocks" % params["blocks"] )
+                status = max(status, 2)
+            infos.append( "%s FsBlocks" % blocks )
+
+            if blocksize != params["blocksize"]:
+                infos[-1] += "(!!)"
+                infos.append( "Expected %s FsBlockSize" % params["blocksize"] )
+                status = max(status, 2)
+            infos.append( "%s FsBlockSize" % blocksize )
+
+            if buffersize != params["buffersize"]:
+                infos[-1] += "(!)"
+                infos.append( "Expected %s MsgBufferSize" % params["buffersize"] )
+                status = max(status, 1)
+            infos.append( "%s MsgBufferSize" % buffersize )
+
+            if created != params["created"]:
+                infos[-1] += "(!)"
+                infos.append( "Created date %s Expected %s" % (params["created"], created) )
+                status = max(status, 1)
+
+            return (status, ", ".join(infos) , perfdata)
+
+    return (3, "UNKNOWN - %s info not found" % item)
+
+# declare the checks to Check_MK
+check_info['xsan_stat.df'] = {
+    "inventory_function"      : inventory_xsan_stat_df,
+    "check_function"          : check_xsan_stat_df,
+    "service_description"     : "XSAN fs_%s",
     "default_levels_variable" : "xsan_default_levels",
     "includes"                : [ "df.include", "xsan.include" ],
+    "has_perfdata"            : True,
+    "group"                   : "filesystem",
+}
+
+check_info['xsan_stat.info'] = {
+    "inventory_function"      : inventory_xsan_stat_info,
+    "check_function"          : check_xsan_stat_info,
+    "service_description"     : "XSAN Stats %s",
+    "default_levels_variable" : "xsan_default_levels",
+    "includes"                : [ "xsan.include" ],
     "has_perfdata"            : True,
     "group"                   : "filesystem",
 }
