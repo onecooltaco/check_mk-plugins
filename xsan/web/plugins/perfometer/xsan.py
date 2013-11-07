@@ -1,4 +1,4 @@
-perfometers["check_mk-xsan.stats"] = perfometer_check_mk_df
+perfometers["check_mk-xsan_stat.df"] = perfometer_check_mk_df
 
 def perfometer_check_mk_xsan_lag(row, check_command, perf_data):
     lag = float(perf_data[0][1])
