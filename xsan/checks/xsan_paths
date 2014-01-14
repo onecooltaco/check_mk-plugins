@@ -39,7 +39,6 @@
 # for disks:
 # disks	name device	sectors	sectorsize
 import re
-import unittest
 
 ## XSAN PATHS
 # the inventory function
