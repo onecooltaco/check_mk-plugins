@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- encoding: utf-8; py-indent-offset: 4 -*-
 # +------------------------------------------------------------------+
 # |             ____ _               _        __  __ _  __           |
@@ -38,6 +39,7 @@
 # for disks:
 # disks	name device	sectors	sectorsize
 import re
+import unittest
 
 ## XSAN PATHS
 # the inventory function
@@ -51,10 +53,6 @@ def inventory_xsan_paths(checkname, info):
     	params = {}
  #   	params["controller"] = controller
     	params["state"] = list_get_next(line, "state:")
-    	params["lun"] = list_get_next(line, "lun:")
-    	params["ctl"] = list_get_next(line, "ctl:")
-    	params["hba"] = list_get_next(line, "hba:")
-    	params["device"] = list_get_next(line, "device:")
     	inventory.append( (line[0], params) )
     return inventory
 
@@ -75,25 +73,9 @@ def check_xsan_paths(item, params, info):
 				infos[-1] += "(!!)"
 				status = max(status, 2)
 			infos.append( "current state %s" % state  )
-
-			if hba != params["hba"]:
-				infos.append( "Expected hba %s" % params["hba"] )
-				infos[-1] += "(!)"
-				status = max(status, 1)
 			infos.append( "hba %s" % hba )
-
-			if ctl != params["ctl"]:
-				infos.append( "Expected controller %s" % params["ctl"] )
-				infos[-1] += "(!)"
-				status = max(status, 1)
 			infos.append( "controller %s" % ctl )
-
-			if lun != params["lun"]:
-				infos.append( "Expected lun %s" % params["lun"] )
-				infos[-1] += "(!)"
-				status = max(status, 1)
 			infos.append( "lun %s" % lun )
-
 			infos.append( "device name %s" % device )
 
 			return ( status, ", ".join(infos) )
