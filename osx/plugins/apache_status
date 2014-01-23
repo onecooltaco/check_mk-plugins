@@ -37,21 +37,16 @@ if os.path.exists(config_file):
 def try_detect_servers():
     pids    = []
     results = []
-    for line in os.popen('netstat -tlnp 2>/dev/null').readlines():
+    for line in os.popen('lsof -n -i 4TCP -P 2>/dev/null').readlines():
         parts = line.split()
         # Skip lines with wrong format
-        if len(parts) < 7 or '/' not in parts[6]:
+	if len(parts) < 10 or 'LISTEN' not in parts[9]:
             continue
 
-        pid, proc = parts[6].split('/', 1)
-        to_replace = re.compile('^.*/')
-        proc = to_replace.sub('', proc)
+	proc = parts[0]
+	pid = parts[1]
 
         procs = [ 'apache2', 'httpd', 'httpd2-prefork', 'httpd2-worker', 'httpd.worker' ]
-        # the pid/proc field length is limited to 19 chars. Thus in case of
-        # long PIDs, the process names are stripped of by that length.
-        # Workaround this problem here
-        procs = [ p[:19 - len(pid) - 1] for p in procs ]
 
         # Skip unwanted processes
         if proc not in procs:
@@ -63,11 +58,11 @@ def try_detect_servers():
         pids.append(pid)
 
         proto = 'http'
-        address, port = parts[3].rsplit(':', 1)
+	address, port = parts[8].rsplit(':', 1)
         port = int(port)
 
         # Use localhost when listening globally
-        if address == '0.0.0.0':
+	if address == '*':
             address = '127.0.0.1'
         elif address == '::':
             address = '::1'
