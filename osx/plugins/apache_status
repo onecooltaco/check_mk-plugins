@@ -40,11 +40,11 @@ def try_detect_servers():
     for line in os.popen('lsof -n -i 4TCP -P 2>/dev/null').readlines():
         parts = line.split()
         # Skip lines with wrong format
-	if len(parts) < 10 or 'LISTEN' not in parts[9]:
+        if len(parts) < 10 or 'LISTEN' not in parts[9]:
             continue
 
-	proc = parts[0]
-	pid = parts[1]
+        proc = parts[0]
+        pid = parts[1]
 
         procs = [ 'apache2', 'httpd', 'httpd2-prefork', 'httpd2-worker', 'httpd.worker' ]
 
@@ -58,11 +58,11 @@ def try_detect_servers():
         pids.append(pid)
 
         proto = 'http'
-	address, port = parts[8].rsplit(':', 1)
+        address, port = parts[8].rsplit(':', 1)
         port = int(port)
 
         # Use localhost when listening globally
-	if address == '*':
+        if address == '*':
             address = '127.0.0.1'
         elif address == '::':
             address = '::1'
@@ -116,7 +116,7 @@ for server in servers:
                 break
             print address, port, line
     except urllib2.HTTPError, e:
-        sys.stderr.write('HTTP-Error (%s:%d): %s %s\n' % (address, port, e.code, e))
+        sys.stderr.write('Exception (%s:%d): %s\n' % (address, port, e))
 
     except Exception, e:
         sys.stderr.write('Exception (%s:%d): %s\n' % (address, port, e))
