@@ -9,7 +9,7 @@ if which smartctl > /dev/null 2>&1 ; then
     if which tw_cli > /dev/null 2>&1 ; then
 	# support for only one controller at the moment
 	TWAC=$(tw_cli show | awk 'NR < 4 { next } { print $1 }' | head -n 1)
-	
+
        # - add a trailing zero to handle case of unused slot
        #   trailing zeros are part of the device links in /dev/disk/by-id/... anyway
        # - only the last 9 chars seem to be relevant
@@ -23,7 +23,10 @@ if which smartctl > /dev/null 2>&1 ; then
     fi
 
     echo '<<<smart>>>'
-    for D in /dev/disk/by-id/scsi-*; do
+    SEEN=
+    for D in /dev/disk/by-id/{scsi,ata}-*; do
+        [ "$D" != "${D%scsi-\*}" ] && continue
+        [ "$D" != "${D%ata-\*}" ] && continue
         [ "$D" != "${D%-part*}" ] && continue
         N=$(readlink $D)
         N=${N##*/}
@@ -43,8 +46,15 @@ if which smartctl > /dev/null 2>&1 ; then
             continue
         fi
 
-	# strip device name for final output
-	DNAME=${D#/dev/disk/by-id/scsi-}
+	# Avoid duplicate entries for same device
+	if [ "${SEEN//.$N./}" != "$SEEN" ] ; then
+            continue
+        fi
+        SEEN="$SEEN.$N."
+
+        # strip device name for final output
+        DNAME=${D#/dev/disk/by-id/scsi-}
+        DNAME=${DNAME#/dev/disk/by-id/ata-}
         # 2012-01-25 Stefan Kaerst CDJ - special option in case vendor is AMCC
 	CMD=
         if [ "$VEND" == "AMCC" -a -n "$TWAC" ]; then
@@ -70,7 +80,7 @@ if which smartctl > /dev/null 2>&1 ; then
 	else
 	    CMD="smartctl -d ata -v 9,raw48 -A $D"
 	fi
-	
+
         [ -n "$CMD" ] && $CMD | grep Always | egrep -v '^190(.*)Temperature(.*)' | sed "s|^|$DNAME $VEND $MODEL |"
     done 2>/dev/null
 fi
