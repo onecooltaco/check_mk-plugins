@@ -229,44 +229,7 @@ ioreg -c IOBlockStorageDriver -k Statistics -r -w0 | \
 # Hardware sensors via IPMI (need ipmitool)
 if type ipmitool > /dev/null
 then
-    run_cached -s ipmi 300 "ipmitool sensor list | sed -e '1d' > $IPMI_FILE.new && mv $IPMI_FILE.new $IPMI_FILE || rm -f $IPMI_FILE*"
-fi
-
-# IPMI-Info (Fans, CPU, Temperature, etc)
-if which ipmitool >/dev/null
-then
-    echo '<<<ipmi>>>'
-    IPMI_FILE=$MK_CONFDIR/ipmitool_sensors.cache
-    if [ ! -d $MK_CONFDIR ]; then
-        mkdir -p $MK_CONFDIR
-    fi
-
-    # Do not use cache file after 20 minutes
-    IPMI_MAXAGE=1200
-
-    # Check if file exists and is recent enough
-    if [ -s $IPMI_FILE ]
-    then
-        NOW=$(date +%s)
-        MTIME=$(stat -c %Y $IPMI_FILE)
-        if [ $((NOW - MTIME)) -le $IPMI_MAXAGE ] ; then
-            USE_IPMI_FILE=1
-        fi
-    fi
-
-    if [ -s "$IPMI_FILE" ]
-    then
-        grep -v 'command failed' "$IPMI_FILE" \
-        | sed -e 's/ *| */|/g' -e "s/ /_/g" -e 's/_*$//' -e 's/|/ /g' \
-        | egrep -v '^[^ ]+ na ' \
-        | grep -v ' discrete '
-    fi
-
-    if [ -z "$USE_IPMI_FILE" -a ! -e "$IPMI_FILE.new" ]
-    then
-		bash -c "ipmitool sensor list | sed -e '1d' > $IPMI_FILE.new && mv $IPMI_FILE.new $IPMI_FILE || rm -f $IPMI_FILE*" &
-		disown %1
-	fi
+    run_cached -s ipmi 300 "ipmitool sensor list | sed -e '1d' | sed -e 's/ *| */|/g' -e 's/ /_/g' -e 's/_*$//' -e 's/|/ /g' | egrep -v '^[^ ]+ na ' | grep -v ' discrete '"
 fi
 
 # NTP seems to be enabled as a default
