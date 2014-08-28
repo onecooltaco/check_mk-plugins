@@ -87,7 +87,7 @@ function run_cached () {
     # nothing if the age (access time) of $CACHEFILE.new is twice the MAXAGE
     local NOW=$(date +%s)
     if [ -e "$CACHEFILE.new" ] ; then
-        local CF_ATIME=$(stat -c %X "$CACHEFILE.new")
+        local CF_ATIME=$(stat -f %a "$CACHEFILE.new")
         if [ $((NOW - CF_ATIME)) -ge $((MAXAGE * 2)) ] ; then
             return
         fi
@@ -95,7 +95,7 @@ function run_cached () {
 
     # Check if cache file exists and is recent enough
     if [ -s "$CACHEFILE" ] ; then
-        local MTIME=$(stat -c %Y "$CACHEFILE")
+        local MTIME=$(stat -f %m "$CACHEFILE")
         if [ $((NOW - MTIME)) -le $MAXAGE ] ; then local USE_CACHEFILE=1 ; fi
         # Output the file in any case, even if it is
         # outdated. The new file will not yet be available
@@ -367,7 +367,7 @@ then
 
         # If there is at least one digit, than we honor that.
         if [ "$maxage" ] ; then
-            mtime=$(stat -c %Y "$file")
+            mtime=$(stat -f %m "$file")
             if [ $((now - mtime)) -gt $maxage ] ; then
                 continue
             fi
