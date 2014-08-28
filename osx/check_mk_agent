@@ -306,10 +306,10 @@ if pushd /var/lib/check_mk_agent/job >/dev/null; then
     echo '<<<job>>>'
     for username in *
     do
-	if [ -d "$username" ] && cd "$username" ; then
-	    su "$username" -c "head -n -0 -v *"
-	    cd ..
-	fi
+        if [ -d "$username" ] && cd "$username" ; then
+            su "$username" -c "head -n -0 -v *"
+            cd ..
+        fi
     done
     popd > /dev/null
 fi
@@ -319,30 +319,30 @@ fi
 echo '<<<local>>>'
 if cd $LOCALDIR ; then
     for skript in $(ls) ; do
-	if [ -f "$skript" -a -x "$skript" ] ; then
-	    ./$skript
-	fi
+        if [ -f "$skript" -a -x "$skript" ] ; then
+            ./$skript
+        fi
     done
     # Call some plugins only every X'th minute
     for skript in [1-9]*/* ; do
-	if [ -x "$skript" ] ; then
-	    run_cached local_${skript//\//\\} ${skript%/*} "$skript"
-	fi
+        if [ -x "$skript" ] ; then
+            run_cached local_${skript//\//\\} ${skript%/*} "$skript"
+        fi
     done
 fi
 
 # Plugins
 if cd $PLUGINSDIR ; then
     for skript in $(ls) ; do
-	if [ -f "$skript" -a -x "$skript" ] ; then
-	    ./$skript
-	fi
+        if [ -f "$skript" -a -x "$skript" ] ; then
+            ./$skript
+        fi
     done
     # Call some plugins only every Xth minute
     for skript in [1-9]*/* ; do
-	if [ -x "$skript" ] ; then
-	    run_cached plugins_${skript//\//\\} ${skript%/*} "$skript"
-	fi
+        if [ -x "$skript" ] ; then
+            run_cached plugins_${skript//\//\\} ${skript%/*} "$skript"
+        fi
     done
 fi
 
@@ -369,30 +369,30 @@ then
 
     for file in *
     do
-	# output every file in this directory. If the file is prefixed
-	# with a number, then that number is the maximum age of the
-	# file in seconds. If the file is older than that, it is ignored.
-	maxage=""
-	part="$file"
+        # output every file in this directory. If the file is prefixed
+        # with a number, then that number is the maximum age of the
+        # file in seconds. If the file is older than that, it is ignored.
+        maxage=""
+        part="$file"
 
-	# Each away all digits from the front of the filename and
-	# collect them in the variable maxage.
-	while [ "${part/#[0-9]/}" != "$part" ]
-	do
-	    maxage=$maxage${part:0:1}
-	    part=${part:1}
-	done
+        # Each away all digits from the front of the filename and
+        # collect them in the variable maxage.
+        while [ "${part/#[0-9]/}" != "$part" ]
+        do
+            maxage=$maxage${part:0:1}
+            part=${part:1}
+        done
 
-	# If there is at least one digit, than we honor that.
-	if [ "$maxage" ] ; then
-	    mtime=$(stat -c %Y "$file")
-	    if [ $((now - mtime)) -gt $maxage ] ; then
-		continue
-	    fi
-	fi
+        # If there is at least one digit, than we honor that.
+        if [ "$maxage" ] ; then
+            mtime=$(stat -c %Y "$file")
+            if [ $((now - mtime)) -gt $maxage ] ; then
+                continue
+            fi
+        fi
 
-	# Output the file
-	cat "$file"
+        # Output the file
+        cat "$file"
     done
     popd > /dev/null
 fi
