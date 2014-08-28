@@ -232,9 +232,11 @@ then
     run_cached -s ipmi 300 "ipmitool sensor list | sed -e '1d' | sed -e 's/ *| */|/g' -e 's/ /_/g' -e 's/_*$//' -e 's/|/ /g' | egrep -v '^[^ ]+ na ' | grep -v ' discrete '"
 fi
 
-# NTP seems to be enabled as a default
-echo '<<<ntp>>>'
-ntpq -pn | sed -e 1,2d -e 's/^\(.\)/\1 /' -e 's/^ /%/'
+# Time synchronization with NTP
+if type ntpq > /dev/null 2>&1 ; then
+   # remove heading, make first column space separated
+   run_cached -s ntp 30 "waitmax 5 ntpq -np | sed -e 1,2d -e 's/^\(.\)/\1 /' -e 's/^ /%/'"
+fi
 
 # Checks for cups monitoring
 if which lpstat >/dev/null 2>&1; then
