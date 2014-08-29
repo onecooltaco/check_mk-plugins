@@ -234,8 +234,9 @@ fi
 
 # Time synchronization with NTP
 if type ntpq > /dev/null 2>&1 ; then
+   echo '<<<ntp>>>'
    # remove heading, make first column space separated
-   run_cached -s ntp 30 "waitmax 10 ntpq -np | sed -e '1,2d' -e 's/^\(.\)/\1 /' -e 's/^ /%/'"
+   waitmax 5 ntpq -np | sed -e '1,2d' -e 's/^\(.\)/\1 /' -e 's/^ /%/'
 fi
 
 # Checks for cups monitoring
