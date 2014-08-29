@@ -36,6 +36,8 @@ include /usr/local/share/luggage/luggage.make
 TITLE=check_mk_agent
 REVERSE_DOMAIN=de.mathias-kettner.check_mk
 
+PACKAGE_VERSION=1.2.5i6
+
 PAYLOAD=\
 	pack-script-preflight \
 	pack-usr-bin-check_mk_agent \
