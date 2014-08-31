@@ -70,15 +70,14 @@ else
     exec <&- 2>/dev/null
 fi
 
-
 # Runs a command asynchronous by use of a cache file
 function run_cached () {
     local section=
-    if [ "$1" = -s ] ; then local section="<<<$2>>>" ; shift ; fi
+    if [ "$1" = -s ] ; then local section="echo '<<<$2>>>' ; " ; shift ; fi
     local NAME=$1
     local MAXAGE=$2
     shift 2
-    local CMDLINE="$@"
+    local CMDLINE="$section$@"
 
     if [ ! -d $MK_CONFDIR/cache ]; then mkdir -p $MK_CONFDIR/cache ; fi
     CACHEFILE="$MK_CONFDIR/cache/$NAME.cache"
@@ -87,7 +86,7 @@ function run_cached () {
     # nothing if the age (access time) of $CACHEFILE.new is twice the MAXAGE
     local NOW=$(date +%s)
     if [ -e "$CACHEFILE.new" ] ; then
-        local CF_ATIME=$(stat -f %a "$CACHEFILE.new")
+        local CF_ATIME=$(stat -c %X "$CACHEFILE.new")
         if [ $((NOW - CF_ATIME)) -ge $((MAXAGE * 2)) ] ; then
             return
         fi
@@ -95,7 +94,7 @@ function run_cached () {
 
     # Check if cache file exists and is recent enough
     if [ -s "$CACHEFILE" ] ; then
-        local MTIME=$(stat -f %m "$CACHEFILE")
+        local MTIME=$(stat -c %Y "$CACHEFILE")
         if [ $((NOW - MTIME)) -le $MAXAGE ] ; then local USE_CACHEFILE=1 ; fi
         # Output the file in any case, even if it is
         # outdated. The new file will not yet be available
@@ -104,7 +103,7 @@ function run_cached () {
 
     # Cache file outdated and new job not yet running? Start it
     if [ -z "$USE_CACHEFILE" -a ! -e "$CACHEFILE.new" ] ; then
-        ( set -o noclobber ; exec > "$CACHEFILE.new" || exit 1 ; echo $section; $CMDLINE && mv "$CACHEFILE.new" "$CACHEFILE" || rm -f "$CACHEFILE" "$CACHEFILE.new" ) 2>/dev/null &
+        echo "set -o noclobber ; exec > \"$CACHEFILE.new\" || exit 1 ; $CMDLINE && mv \"$CACHEFILE.new\" \"$CACHEFILE\" || rm -f \"$CACHEFILE\" \"$CACHEFILE.new\"" | bash 2>/dev/null &
     fi
 }
 
@@ -229,14 +228,13 @@ ioreg -c IOBlockStorageDriver -k Statistics -r -w0 | \
 # Hardware sensors via IPMI (need ipmitool)
 if type ipmitool > /dev/null
 then
-    run_cached -s ipmi 300 "ipmitool sensor list | sed -e '1d' | sed -e 's/ *| */|/g' -e 's/ /_/g' -e 's/_*$//' -e 's/|/ /g' | egrep -v '^[^ ]+ na ' | grep -v ' discrete '"
+    run_cached -s ipmi 300 "ipmitool sensor list | tail -n +2 | grep -v 'command failed' | sed -e 's/ *| */|/g' -e 's/ /_/g' -e 's/_*"'$'"//' -e 's/|/ /g' | egrep -v '^[^ ]+ na ' | grep -v ' discrete '"
 fi
 
 # Time synchronization with NTP
 if type ntpq > /dev/null 2>&1 ; then
-   echo '<<<ntp>>>'
    # remove heading, make first column space separated
-   waitmax 5 ntpq -np | sed -e '1,2d' -e 's/^\(.\)/\1 /' -e 's/^ /%/'
+   run_cached -s ntp 30 "waitmax 5 ntpq -np | sed -e 1,2d -e 's/^\(.\)/\1 /' -e 's/^ /%/'"
 fi
 
 # Checks for cups monitoring
