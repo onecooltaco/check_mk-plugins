@@ -111,7 +111,7 @@ function run_cached () {
 export -f run_cached
 
 echo '<<<check_mk>>>'
-echo Version: 1.2.5i6
+echo Version: 1.2.5i6a
 echo AgentOS: darwin
 echo PluginsDirectory: $PLUGINSDIR
 echo LocalDirectory: $LOCALDIR
@@ -136,17 +136,17 @@ then
   ## ( free active inactive speculative "wired down" "copy-on-write" "zero filled" reactivated ins outs )
   paging=4096
   vstats=( $(vm_stat | egrep '^Pages' | sed 's/^.*: *//' | tr -d '.' | tr '\n' ' ') )
-  echo "MemTotal:\t$((`sysctl -n hw.memsize` >> 10)) KB"
-  echo "MemFree:\t$(( (${vstats[0]} * $paging) >> 10 )) KB"
-  echo "Active:\t\t$(( (${vstats[1]} * $paging) >> 10 )) KB"
-  echo "Inactive:\t$(( (${vstats[2]} * $paging) >> 10 )) KB"
-  echo "Mapped:\t\t$(( (${vstats[4]} * $paging) >> 10 )) KB"
+  echo "MemTotal:   $((`sysctl -n hw.memsize` >> 10)) KB"
+  echo "MemFree:    $(( (${vstats[0]} * $paging) >> 10 )) KB"
+  echo "Active:     $(( (${vstats[1]} * $paging) >> 10 )) KB"
+  echo "Inactive:   $(( (${vstats[2]} * $paging) >> 10 )) KB"
+  echo "Mapped:     $(( (${vstats[4]} * $paging) >> 10 )) KB"
 fi
 if which sysctl >/dev/null
 then
   swapusage=( $(sysctl -n vm.swapusage | tr -cd "[:digit:] .") )
-  echo "SwapTotal:\t$(bc -l -q <<< "${swapusage[0]} * 1024" | xargs printf "%1.0f") KB"
-  echo "SwapFree:\t$(bc -l -q <<< "${swapusage[2]} * 1024" | xargs printf "%1.0f") KB"
+  echo "SwapTotal:  $(bc -l -q <<< "${swapusage[0]} * 1024" | xargs printf "%1.0f") KB"
+  echo "SwapFree:   $(bc -l -q <<< "${swapusage[2]} * 1024" | xargs printf "%1.0f") KB"
 fi
 
 # CPU Usage.
