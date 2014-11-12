@@ -40,6 +40,7 @@
 
 factory_settings["xsan_default_levels"] = {
     "allowed_fsm_states" : ["REGISTERED"],
+    "path_not_found_level" : 1,
 }
 
 def list_get_next(L, value, v=None):

@@ -79,7 +79,7 @@ def check_xsan_paths(item, params, info):
 
 			return ( status, ", ".join(infos) )
 
-    return (3, "Path %s not found in agent output" % item)
+#    return (params["path_not_found_level"], "Path %s not found in agent output" % item)
 
 # declare the check to Check_MK
 check_info["xsan_paths"] = {
