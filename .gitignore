@@ -28,3 +28,4 @@ vtrak_chassisc
 *.gz
 *.tgz
 *.bz2
+osx/build
