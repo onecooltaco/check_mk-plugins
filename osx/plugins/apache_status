@@ -19,6 +19,8 @@
 # check contact other ports than 443 with HTTPS requests.
 
 import os, sys, urllib2, re
+import subprocess, shlex
+from threading import Timer
 
 config_dir = os.getenv("MK_CONFDIR", "/etc/check_mk")
 config_file = config_dir + "/apache_status.conf"
@@ -30,35 +32,48 @@ if not os.path.exists(config_file):
 # proto is 'http' or 'https'
 servers = None
 ssl_ports = [ 443, ]
+procs = [ 'apache2', 'httpd', 'httpd2-prefork', 'httpd2-worker', 'httpd.worker' ]
 
 if os.path.exists(config_file):
     execfile(config_file)
 
+def kill_proc(proc, timeout):
+  timeout["value"] = True
+  proc.kill()
+
+def run_command_with_timeout(cmd, timeout_sec):
+  proc = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  timeout = {"value": False}
+  timer = Timer(timeout_sec, kill_proc, [proc, timeout])
+  timer.start()
+  stdout, stderr = proc.communicate()
+  timer.cancel()
+  return proc.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"), timeout["value"]
+
 def try_detect_servers():
     pids    = []
-    results = []
-    for line in os.popen('lsof -n -i 4TCP -P 2>/dev/null').readlines():
+    servers = []
+
+    results = run_command_with_timeout('/usr/sbin/lsof -c "/' + "|".join(procs) + '/" -a -i 4TCP -sTCP:LISTEN -n -P -b -w -R', 10)
+    if results[0]:
+        sys.exit(results[0])
+
+    for line in results[1].splitlines():
         parts = line.split()
         # Skip lines with wrong format
-        if len(parts) < 10 or 'LISTEN' not in parts[9]:
+        if len(parts) < 11 or 'LISTEN' not in parts[10]:
             continue
 
-        proc = parts[0]
         pid = parts[1]
+        ppid = parts[2]
 
-        procs = [ 'apache2', 'httpd', 'httpd2-prefork', 'httpd2-worker', 'httpd.worker' ]
-
-        # Skip unwanted processes
-        if proc not in procs:
-            continue
-
-        # Add only the first found port of a single server process
-        if pid in pids:
+        # Add only the parent pid of a single server process
+        if ppid != '1':
             continue
         pids.append(pid)
 
         proto = 'http'
-        address, port = parts[8].rsplit(':', 1)
+        address, port = parts[9].rsplit(':', 1)
         port = int(port)
 
         # Use localhost when listening globally
@@ -72,13 +87,12 @@ def try_detect_servers():
         if port in ssl_ports:
             proto = 'https'
 
-        results.append((proto, address, port))
+        servers.append((proto, address, port))
 
-    return results
+    return servers
 
 if servers is None:
     servers = try_detect_servers()
-
 
 if not servers:
     sys.exit(0)
