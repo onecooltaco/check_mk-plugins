@@ -38,7 +38,7 @@ def try_detect_servers():
         if len(parts) < 7 or '/' not in parts[6]:
             continue
 
-        pid, proc = parts[6].lstrip(":").split('/')
+        pid, proc = parts[6].split('/')
 
         procs = [ 'nginx' ]
         # the pid/proc field length is limited to 19 chars. Thus in case of
