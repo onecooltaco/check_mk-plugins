@@ -1,4 +1,5 @@
 #!/bin/sh
+# Check_MK Agent for OS X
 # +------------------------------------------------------------------+
 # |             ____ _               _        __  __ _  __           |
 # |            / ___| |__   ___  ___| | __   |  \/  | |/ /           |
@@ -73,21 +74,19 @@ fi
 
 # Runs a command asynchronous by use of a cache file
 function run_cached () {
+    local NOW=$(date +%s)
     local section=
-    if [ "$1" = -s ] ; then local section="echo '<<<$2>>>' ; " ; shift ; fi
+    if [ "$1" = -s ] ; then local section="echo '<<<$2:cached($NOW,$3)>>>' ; " ; shift ; fi
     local NAME=$1
     local MAXAGE=$2
     shift 2
     local CMDLINE="$section$@"
 
-    if [ ! -d $MK_CONFDIR/cache ]; then mkdir -p $MK_CONFDIR/cache ; fi
-    CACHEFILE="$MK_CONFDIR/cache/$NAME.cache"
     if [ ! -d $MK_VARDIR/cache ]; then mkdir -p $MK_VARDIR/cache ; fi
     CACHEFILE="$MK_VARDIR/cache/$NAME.cache"
 
     # Check if the creation of the cache takes suspiciously long and return
     # nothing if the age (access time) of $CACHEFILE.new is twice the MAXAGE
-    local NOW=$(date +%s)
     if [ -e "$CACHEFILE.new" ] ; then
         local CF_ATIME=$(stat -c %X "$CACHEFILE.new")
         if [ $((NOW - CF_ATIME)) -ge $((MAXAGE * 2)) ] ; then
@@ -119,8 +118,9 @@ function run_cached () {
 export -f run_cached
 
 echo '<<<check_mk>>>'
-echo Version: 1.2.6p12
+echo Version: 1.2.7i4
 echo AgentOS: darwin
+echo Hostname: $HOSTNAME
 echo AgentDirectory: $MK_CONFDIR
 echo DataDirectory: $MK_VARDIR
 echo SpoolDirectory: $SPOOLDIR
@@ -135,7 +135,7 @@ df -kPT hfs | sed -e 's/^\([^ ][^ ]*\) \(.*\)$/\1 hfs \2/' | sed 1d
 # processes including username, without kernel processes
 echo '<<<ps>>>'
 COLUMNS=10000
-ps ax -o user,vsz,rss,pcpu,pid,command | sed -e 1d -e 's/ *\([^ ]*\) *\([^ ]*\) *\([^ ]*\) *\([^ ]*\) */(\1,\2,\3,\4) /' | sed 's/^[ \t]*//;s/[ \t]*$//' | grep -v '(root,0,0,0.0)'
+ps ax -o user,vsz,rss,pcpu,etime,pid,command | sed -e 1d -e 's/ *\([^ ]*\) *\([^ ]*\) *\([^ ]*\) *\([^ ]*\) */(\1,\2,\3,\4) /' | sed 's/^[ \t]*//;s/[ \t]*$//' | grep -v '(root,0,0,0.0)'
 
 # Memory Usage.
 echo '<<<mem>>>'
@@ -319,16 +319,16 @@ fi
 # but it could be used to get the timestamp of the last message.
 # we determine the number of mails and their size in several postfix mail queues
 if type postconf >/dev/null ; then
-    echo '<<<postfix_mailq>>>'
-    postfix_queue_dir=$(postconf -h queue_directory)
-    postfix_count=$(find $postfix_queue_dir/deferred -type f | wc -l)
-    postfix_size=$(du -ks $postfix_queue_dir/deferred | awk '{print $1 }')
-    if [ $postfix_count -gt 0 ]
-    then
-       echo -- $postfix_size Kbytes in $postfix_count Requests.
-    else
-       echo Mail queue is empty
-    fi
+	postfix_queue_dir=$(postconf -h queue_directory 2>/dev/null)
+	if [ -n "$postfix_queue_dir" ]; then
+		echo '<<<postfix_mailq>>>'
+		for queue in deferred active
+		do
+			count=$(find $postfix_queue_dir/$queue -type f | wc -l)
+			size=$(du -s $postfix_queue_dir/$queue | awk '{print $1 }')
+			echo "QUEUE_${queue} $size $count"
+		done
+	fi
 fi
 
 # Fileinfo-Check: put patterns for files into /etc/check_mk/fileinfo.cfg
@@ -359,7 +359,7 @@ if cd $LOCALDIR ; then
             ./$skript
         fi
     done
-    # Call some plugins only every X'th minute
+    # Call some plugins only every X'th second
     for skript in [1-9]*/* ; do
         if [ -x "$skript" ] ; then
             run_cached local_${skript//\//\\} ${skript%/*} "$skript"
@@ -374,7 +374,7 @@ if cd $PLUGINSDIR ; then
             ./$skript
         fi
     done
-    # Call some plugins only every Xth minute
+    # Call some plugins only every Xth second
     for skript in [1-9]*/* ; do
         if [ -x "$skript" ] ; then
             run_cached plugins_${skript//\//\\} ${skript%/*} "$skript"
