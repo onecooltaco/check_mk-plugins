@@ -39,12 +39,12 @@ REVERSE_DOMAIN=de.mathias-kettner.check_mk
 PACKAGE_VERSION=1.2.7i4
 
 PAYLOAD=\
-	pack-script-preflight \
+	pack-script-preinstall \
 	pack-usr-bin-check_mk_agent \
 	pack-usr-bin-waitmax \
 	pack-usr-lib-check_mk \
 	pack-Library-LaunchDaemons-de.mathias-kettner.check_mk.plist \
-	pack-script-postflight
+	pack-script-postinstall
 
 l_etc_check_mk: l_private_etc
 	@sudo mkdir -p ${WORK_D}/private/etc/check_mk
