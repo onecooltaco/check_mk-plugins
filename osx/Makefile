@@ -36,7 +36,7 @@ include /usr/local/share/luggage/luggage.make
 TITLE=check_mk_agent
 REVERSE_DOMAIN=de.mathias-kettner.check_mk
 
-PACKAGE_VERSION=1.2.5i6
+PACKAGE_VERSION=1.2.6p12
 
 PAYLOAD=\
 	pack-script-preflight \
