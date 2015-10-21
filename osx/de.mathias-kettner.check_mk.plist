@@ -28,6 +28,8 @@
 		<key>Wait</key>
 		<false/>
 	</dict>
+	<key>AbandonProcessGroup</key>
+	<true/>
 	<key>StandardErrorPath</key>
 	<string>/var/log/check_mk.err</string>
 	<key>WorkingDirectory</key>
