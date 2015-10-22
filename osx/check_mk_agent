@@ -136,7 +136,7 @@ df -kPT hfs | sed -e 's/^\([^ ][^ ]*\) \(.*\)$/\1 hfs \2/' | sed 1d
 # processes including username, without kernel processes
 echo '<<<ps>>>'
 COLUMNS=10000
-ps ax -o user,vsz,rss,pcpu,pid,command | sed -e 1d -e 's/ *\([^ ]*\) *\([^ ]*\) *\([^ ]*\) *\([^ ]*\) */(\1,\2,\3,\4) /' | sed 's/^[ \t]*//;s/[ \t]*$//' | grep -v '(root,0,0,0.0)'
+ps ax -o user=,vsz=,rss=,pcpu=,pid=,command= | awk 'BEGIN{OFS=","} $6 != "(mv)"{print "("$1,$2,$3,$4,$5") "$6}'
 
 # Memory Usage.
 echo '<<<mem>>>'
