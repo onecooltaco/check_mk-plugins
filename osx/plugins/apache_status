@@ -128,6 +128,9 @@ for server in servers:
             if line.lstrip()[0] == '<':
                 # seems to be html output. Skip this server.
                 break
+            if "TLSSessionCacheStatus" in line:
+                # Fix for Apache 2.4 output.
+                break
             print address, port, line
     except urllib2.HTTPError, e:
         sys.stderr.write('HTTP-Error (%s:%d): %s %s\n' % (address, port, e.code, e))
