@@ -25,6 +25,8 @@ config_file = os.getenv("MK_CONFDIR", "/etc/check_mk") + "/nginx_status.conf"
 # None or list of (ipaddress, port) tuples
 servers = None
 ssl_ports = [ 443, ]
+# Set to false in config file to disable verificaton of ssl certificates.
+ssl_verify = True
 
 if os.path.exists(config_file):
     execfile(config_file)
@@ -79,6 +81,11 @@ if servers is None:
 
 if not servers:
     sys.exit(0)
+
+if not ssl_verify:
+    import ssl
+    # Force python to skip the validation of certificates by default.
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 print '<<<nginx_status>>>'
 for proto, address, port in servers:
