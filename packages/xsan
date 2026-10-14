@@ -1,6 +1,6 @@
 {'author': 'Jeremy Leggat(jleggat@asu.edu)',
  'description': 'check XSAN filesystems on hosts',
- 'download_url': 'http://example.com/xsan/',
+ 'download_url': 'https://github.com/onecooltaco/check_mk-plugins/tree/master/xsan',
  'files': {'agents': ['plugins/xsan'],
            'checkman': ['xsan'],
            'checks': ['xsan'],

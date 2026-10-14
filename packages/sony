@@ -1,6 +1,6 @@
 {'author': 'Jeremy Leggat (jleggat@asu.edu)',
  'description': 'Check for Sony LCD projectors',
- 'download_url': 'http://example.com/sony/',
+ 'download_url': 'https://github.com/onecooltaco/check_mk-plugins/tree/master/sony',
  'files': {'agents': [],
            'checkman': [],
            'checks': ['sony_srx_lamp', 'sony_vpl_lamp', 'sony_vpl_power'],

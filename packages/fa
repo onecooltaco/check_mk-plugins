@@ -1,6 +1,6 @@
-{'author': 'Add your name here',
+{'author': 'Jeremy Leggat (jleggat@asu.edu)',
  'description': 'Check Fibre Alliance devices',
- 'download_url': 'http://example.com/fa/',
+ 'download_url': 'https://github.com/onecooltaco/check_mk-plugins/tree/master/fa',
  'files': {'agents': [],
            'checkman': [],
            'checks': ['fa.include', 'fa_sensor', 'fa_sys'],

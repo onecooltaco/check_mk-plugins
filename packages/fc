@@ -1,6 +1,6 @@
 {'author': 'Jeremy Leggat (jleggat@asu.edu)',
  'description': 'Check Fibre Channel Devices',
- 'download_url': 'http://example.com/fc/',
+ 'download_url': 'https://github.com/onecooltaco/check_mk-plugins/tree/master/fc',
  'files': {'agents': [],
            'checkman': ['fc_port'],
            'checks': ['fc.include', 'fc_port', 'fc_unit'],

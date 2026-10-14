@@ -1,6 +1,6 @@
 {'author': 'Jeremy Leggat (jleggat@asu.edu)',
  'description': 'check for Promise VTrak raid devices.',
- 'download_url': 'http://example.com/vtrak/',
+ 'download_url': 'https://github.com/onecooltaco/check_mk-plugins/tree/master/vtrak',
  'files': {'agents': [],
            'checkman': ['vtrack'],
            'checks': ['vtrak_battery',
